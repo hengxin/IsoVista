@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class HistoryLoaderSerializerTest {
     @Test
     public void testHistoryLoaderAndSerializer() {
-        String currentDirectory = System.getProperty("user.dir") + "\\src\\test\\";
+        String currentDirectory = System.getProperty("user.dir") + "/src/test/";
         String tempFilePath = currentDirectory + "temp_test_history.txt";
 
         TextHistoryLoader historyLoader = new TextHistoryLoader();
