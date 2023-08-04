@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class HistoryLoaderSerializerTest {
     @Test
     public void testHistoryLoaderAndSerializer() {
-        String currentDirectory = System.getProperty("user.dir") + "/src/test/";
+        String currentDirectory = System.getProperty("user.dir") + "/src/test/java/resources/";
         String tempFilePath = currentDirectory + "temp_test_history.txt";
 
         TextHistoryLoader historyLoader = new TextHistoryLoader();
@@ -23,11 +23,7 @@ public class HistoryLoaderSerializerTest {
 
         assertEquals(history, loadedHistory);
 
-         File tempFile = new File(tempFilePath);
-         if (tempFile.delete()) {
-            System.out.println("Successfully deleted the temporary file");
-         } else {
-            System.out.println("Failed to delete the temporary file");
-         }
+        File tempFile = new File(tempFilePath);
+        tempFile.delete();
     }
 }
