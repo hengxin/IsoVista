@@ -1,9 +1,11 @@
 package history;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
+@AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Operation<KeyType, ValType> {
     public enum Type {
@@ -18,7 +20,7 @@ public class Operation<KeyType, ValType> {
     private final KeyType key;
 
     @EqualsAndHashCode.Include
-    private final ValType value;
+    private ValType value;
 
     @EqualsAndHashCode.Include
     private final Transaction<KeyType, ValType> transaction;
