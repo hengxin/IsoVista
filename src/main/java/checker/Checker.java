@@ -2,6 +2,6 @@ package checker;
 
 import history.History;
 
-public interface Checker {
-    boolean verify(History<?, ?> history);
+public interface Checker<KeyType, ValType> {
+    boolean verify(History<KeyType, ValType> history);
 }
