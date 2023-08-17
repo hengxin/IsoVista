@@ -56,8 +56,11 @@ public class GeneralGenerator implements Generator<Long, Long> {
                         }
                         // TODO: impl distribution
                         var var = RandomUtils.nextLong(1, key + 1);
-                        var val = counts.getOrDefault(var, 0L);
-                        counts.put(var, val + 1);
+                        var val = 0L;
+                        if (type == Operation.Type.WRITE) {
+                            val = counts.getOrDefault(var, 0L);
+                            counts.put(var, val + 1);
+                        }
                         synchronized (history) {
                             history.addOperation(history.getTransaction(txnId), type, var, val);
                         }
