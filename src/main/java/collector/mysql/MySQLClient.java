@@ -1,7 +1,6 @@
 package collector.mysql;
 
 import collector.DBClient;
-import history.History;
 import history.Operation;
 import history.Session;
 import lombok.SneakyThrows;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 
 @Slf4j
 public class MySQLClient extends DBClient {
@@ -42,9 +40,6 @@ public class MySQLClient extends DBClient {
                             ResultSet resultSet = readStmt.executeQuery();
                             if (resultSet.next()) {
                                 op.setValue(resultSet.getLong("val"));
-                            } else {
-                                System.out.println("test");
-                                int a = 1;
                             }
                         }
                     }

@@ -1,6 +1,7 @@
 package collector.mysql;
 
 import collector.Collector;
+import collector.DBType;
 import history.History;
 import lombok.SneakyThrows;
 
@@ -16,6 +17,7 @@ public class MySQLCollector extends Collector<Long, Long> {
     @SneakyThrows
     public MySQLCollector(Properties config) {
         super(config);
+        this.type = DBType.MYSQL;
     }
 
     @Override
