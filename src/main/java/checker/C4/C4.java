@@ -51,6 +51,9 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
         Map<Long, Node<KeyType, ValType>> prevNodes = new HashMap<>();
 
         for (var txn: hist) {
+            if (!txn.isSuccess()) {
+                continue;
+            }
             // update node with prev node
             var prev = prevNodes.get(txn.getSession().getId());
             var node = constructNode(txn, prev);

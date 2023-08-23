@@ -1,5 +1,5 @@
 import checker.C4.C4;
-import generator.Generator;
+import collector.mysql.MySQLCollector;
 import generator.general.GeneralGenerator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -31,15 +31,22 @@ public class Main implements Callable<Integer> {
 
     public void run(Properties config) {
         // generate history
-        log.info("Start history generation");
-        Generator<Long, Long> generator = new GeneralGenerator(config);
-        var history = generator.generate();
+        int nHist = Integer.parseInt(config.getProperty("workload.history"));
+        for (int i = 1; i <= nHist; i++) {
+            log.info("Start history generation {} of {}", i, nHist);
+            var history = new GeneralGenerator(config).generate();
 
-        // verify history
-        log.info("Start history verification");
-        var checker = new C4();
-        checker.verify(history);
+            // collect result
+            log.info("Start history collection");
+            history = new MySQLCollector(config).collect(history);
 
+            // verify history
+            log.info("Start history verification");
+            boolean result = new C4<Long, Long>().verify(history);
+            if (result) {
+                log.info("find bug");
+            }
+        }
         // collect runtime data
 
     }
