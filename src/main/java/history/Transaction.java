@@ -19,5 +19,8 @@ public class Transaction <KeyType, ValType> {
     @EqualsAndHashCode.Include
     private final Session<KeyType, ValType> session;
 
+    @EqualsAndHashCode.Include
+    private boolean success;
+
     List<Operation<KeyType, ValType>> ops = new ArrayList<>();
 }

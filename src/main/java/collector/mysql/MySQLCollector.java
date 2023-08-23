@@ -5,7 +5,11 @@ import history.History;
 import lombok.SneakyThrows;
 
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MySQLCollector extends Collector<Long, Long> {
 
@@ -15,13 +19,21 @@ public class MySQLCollector extends Collector<Long, Long> {
     }
 
     @Override
+    @SneakyThrows
     public History<Long, Long> collect(History<Long, Long> history) {
         createTable();
         createVariables(nKey);
-        history.getSessions().values().parallelStream().forEach((session -> {
-            var node = new MySQLClient(url, username, password);
-            node.execSession(session);
-        }));
+        ExecutorService executor = Executors.newFixedThreadPool(history.getSessions().size());
+        var todo = new ArrayList<Callable<Void>>();
+        history.getSessions().values().forEach(session -> {
+            Callable<Void> task = () -> {
+                var node = new MySQLClient(url, username, password);
+                node.execSession(session);
+                return null;
+            };
+            todo.add(task);
+        });
+        executor.invokeAll(todo);
         dropDatabase();
         return history;
     }
@@ -39,7 +51,7 @@ public class MySQLCollector extends Collector<Long, Long> {
     @SneakyThrows
     protected void createVariables(long nKey) {
         var insertStmt = connection.prepareStatement("INSERT INTO dbtest.variables (var, val) values (?, 0)");
-        for (long k = 0; k < nKey; k++) {
+        for (long k = 1; k <= nKey; k++) {
             insertStmt.setLong(1, k);
             insertStmt.addBatch();
         }

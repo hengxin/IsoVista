@@ -11,6 +11,7 @@ public abstract class DBClient {
     protected String username;
     protected String password;
     protected Connection connection;
+    protected int maxRestartTimes = 1000;
 
     @SneakyThrows
     public DBClient(String url, String username, String password) {
