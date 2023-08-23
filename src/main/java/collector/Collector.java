@@ -13,6 +13,7 @@ public abstract class Collector<KeyType, ValType> {
     protected String password;
     protected Connection connection;
     protected long nKey;
+    protected DBType type;
 
     @SneakyThrows
     public Collector(Properties config) {
