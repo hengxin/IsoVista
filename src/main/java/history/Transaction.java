@@ -20,5 +20,4 @@ public class Transaction <KeyType, ValType> {
     private final Session<KeyType, ValType> session;
 
     List<Operation<KeyType, ValType>> ops = new ArrayList<>();
-
 }
