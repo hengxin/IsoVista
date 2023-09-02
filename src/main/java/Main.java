@@ -1,5 +1,9 @@
 import checker.C4.C4;
+import collector.H2.H2Client;
+import collector.H2.H2Collector;
 import collector.mysql.MySQLCollector;
+import collector.postgresql.PostgreSQLClient;
+import collector.postgresql.PostgreSQLCollector;
 import generator.general.GeneralGenerator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,13 +42,19 @@ public class Main implements Callable<Integer> {
 
             // collect result
             log.info("Start history collection");
-            history = new MySQLCollector(config).collect(history);
+
+            boolean useMySQL = false;
+//            history = new MySQLCollector(config).collect(history);
+//            history = new PostgreSQLCollector(config).collect(history);
+            history = new H2Collector(config).collect(history);
 
             // verify history
             log.info("Start history verification");
             boolean result = new C4<Long, Long>().verify(history);
             if (result) {
                 log.info("find bug");
+            } else {
+                log.info("No bugs found");
             }
         }
         // collect runtime data
