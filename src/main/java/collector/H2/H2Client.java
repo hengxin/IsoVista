@@ -1,21 +1,18 @@
-package collector.mysql;
+package collector.H2;
 
 import collector.DBClient;
-import history.History;
-import history.Operation;
 import history.Session;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import history.Operation;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 
 @Slf4j
-public class MySQLClient extends DBClient {
-
-    public MySQLClient(String url, String username, String password) {
+public class H2Client extends DBClient {
+    public H2Client(String url, String username, String password) {
         super(url, username, password);
     }
 
@@ -58,4 +55,5 @@ public class MySQLClient extends DBClient {
             }
         }
     }
+
 }
