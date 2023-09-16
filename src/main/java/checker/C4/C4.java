@@ -40,26 +40,14 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
     @Override
     public boolean verify(History<KeyType, ValType> history) {
         this.history = history;
-        profiler.startTick("BuildCO");
         buildCO();
-        profiler.endTick("BuildCO");
-
-        profiler.startTick("CheckCOBP");
         checkCOBP();
-        profiler.endTick("CheckCOBP");
         syncClock();
-        profiler.startTick("BuildVO");
         buildVO();
-        profiler.endTick("BuildVO");
-
         if (!hasCircle(Edge.Type.VO)) {
             return badPatternCount.size() == 0;
         }
-
-        profiler.startTick("CheckVOBP");
         checkVOBP();
-        profiler.endTick("CheckVOBP");
-
         return badPatternCount.size() == 0;
     }
 

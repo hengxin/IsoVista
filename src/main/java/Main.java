@@ -42,6 +42,7 @@ public class Main implements Callable<Integer> {
     public void run(Properties config) {
         // generate history
         int nHist = Integer.parseInt(config.getProperty("workload.history"));
+        Profiler profiler = Profiler.getInstance();
         for (int i = 1; i <= nHist; i++) {
             log.info("Start history generation {} of {}", i, nHist);
             var history = new GeneralGenerator(config).generate();
@@ -55,7 +56,11 @@ public class Main implements Callable<Integer> {
 
             // verify history
             log.info("Start history verification");
+
+            profiler.startTick("checker_performance");
             boolean result = new C4<Long, Long>().verify(history);
+            profiler.endTick("checker_performance");
+
             if (result) {
                 log.info("find bug");
             } else {
@@ -64,34 +69,20 @@ public class Main implements Callable<Integer> {
         }
 
         // collect runtime data
-        Profiler profiler = Profiler.getInstance();
-        exportToCSV(profiler.getDurations(), profiler.getMemories());
+        String session = config.getProperty("workload.session");
+        exportToCSV(session, profiler.getDurations(), profiler.getMaxMemory());
     }
 
     @SneakyThrows
-    public void exportToCSV(Collection<Pair<String, Long>> durations, Collection<Pair<String, Long>> memories) {
-        String header = "process,duration(ms),memory(MB)\n";
+    public void exportToCSV(String session, Collection<Pair<String, Long>> durations, long maxMemory) {
         List<String> lines = new ArrayList<>();
-        var memoryIterator = memories.iterator();
-        var durationIterator = durations.iterator();
-
-        while (memoryIterator.hasNext() && durationIterator.hasNext()) {
-            Pair<String, Long> memory = memoryIterator.next();
-            Pair<String, Long> duration = durationIterator.next();
-
-            String process = memory.getKey();
-            long memoryValue = memory.getValue();
-            long durationValue = duration.getValue();
-
-            String line = process + "," + durationValue + "," + Utils.formatMemory(memoryValue) + "\n";
-
-            lines.add(line);
+        for (var p : durations) {
+            lines.add(String.format("%s,%s,%s\n", session, p.getValue(), Utils.formatMemory(maxMemory)));
         }
 
         // output lines to a csv file
         File file = new File("./result/runtime.csv");
-        FileWriter csvWriter = new FileWriter(file);
-        csvWriter.write(header);
+        FileWriter csvWriter = new FileWriter(file, true);
         for (String line : lines) {
             csvWriter.write(line);
         }
@@ -102,7 +93,6 @@ public class Main implements Callable<Integer> {
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
     }
-
 
 }
 

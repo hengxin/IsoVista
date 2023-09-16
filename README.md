@@ -25,3 +25,8 @@ After the compilation, you can use the following command to run DBTest:
 ```
 java -jar ./target/DBTest-1.0-SNAPSHOT-shaded.jar config.properties
 ```
+
+To test the performance for checkers, use the following command and the output file will be under result/:
+```
+bash test_performance.bash
+```
