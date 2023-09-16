@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.sql.ResultSet;
 
 public class PostgreSQLCollector extends Collector<Long, Long> {
+    public static final String NAME = "POSTGRES";
 
     @SneakyThrows
     public PostgreSQLCollector(Properties config) {

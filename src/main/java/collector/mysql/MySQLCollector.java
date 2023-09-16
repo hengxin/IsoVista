@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MySQLCollector extends Collector<Long, Long> {
+    public static final String NAME = "MYSQL";
 
     @SneakyThrows
     public MySQLCollector(Properties config) {
