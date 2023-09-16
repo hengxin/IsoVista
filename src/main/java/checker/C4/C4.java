@@ -1,6 +1,7 @@
 package checker.C4;
 
 import checker.Checker;
+import checker.IsolationLevel;
 import history.History;
 
 import checker.C4.badPattern.BadPatternType;
@@ -36,7 +37,10 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
     private Profiler profiler = Profiler.getInstance();
 
     private static final Long ZERO = 0L;
-    
+
+    public static final String NAME = "C4";
+    public static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.CAUSAL_CONSISTENCY;
+
     @Override
     public boolean verify(History<KeyType, ValType> history) {
         this.history = history;

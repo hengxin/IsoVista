@@ -42,15 +42,11 @@ public class MySQLClient extends DBClient {
                             ResultSet resultSet = readStmt.executeQuery();
                             if (resultSet.next()) {
                                 op.setValue(resultSet.getLong("val"));
-                            } else {
-                                System.out.println("test");
-                                int a = 1;
                             }
                         }
                     }
                     transaction.setSuccess(true);
                 } catch (SQLException e) {
-//                    System.out.println(e);
                     connection.rollback();
                 }
             }
