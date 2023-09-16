@@ -1,7 +1,6 @@
 package collector.H2;
 
 import collector.Collector;
-import collector.mysql.MySQLClient;
 import history.History;
 import lombok.SneakyThrows;
 
@@ -12,6 +11,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 public class H2Collector extends Collector<Long, Long> {
+    public static final String NAME = "H2";
+
     @SneakyThrows
     public H2Collector(Properties config) {
         super(config);
