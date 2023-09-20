@@ -44,10 +44,10 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
         syncClock();
         buildVO();
         if (!hasCircle(Edge.Type.VO)) {
-            return badPatternCount.size() == 0;
+            return badPatternCount.isEmpty();
         }
         checkVOBP();
-        return badPatternCount.size() == 0;
+        return badPatternCount.isEmpty();
     }
 
     private void buildCO() {

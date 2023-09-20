@@ -9,11 +9,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 import java.io.FileInputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
+
+import util.ConfigParser;
+import util.Profiler;
 
 @Slf4j
 @Command(name = "DBTest", mixinStandardHelpOptions = true, version = "DBTest 0.1", description = "Test database isolation level.")
@@ -65,25 +67,74 @@ public class Main implements Callable<Integer> {
             return;
         }
 
-        // generate history
+        var enableProfile = Boolean.parseBoolean(config.getProperty("profiler.enable"));
+        Profiler profiler = Profiler.getInstance();
         int nHist = Integer.parseInt(config.getProperty("workload.history"));
-        for (int i = 1; i <= nHist; i++) {
-            log.info("Start history generation {} of {}", i, nHist);
-            var history = new GeneralGenerator(config).generate();
+        Function<Void, Void> runOneShot = f -> {
+            for (int i = 1; i <= nHist; i++) {
+                // generate history
+                log.info("Start history generation {} of {}", i, nHist);
+                var history = new GeneralGenerator(config).generate();
 
-            // collect result
-            log.info("Start history collection");
-            history = collector.getDeclaredConstructor(Properties.class).newInstance(config).collect(history);
+                // collect result
+                log.info("Start history collection");
+                try {
+                    history = collector.getDeclaredConstructor(Properties.class).newInstance(config).collect(history);
+                } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
+                         IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
 
-            // verify history
-            log.info("Start history verification");
-            boolean result = checker.getDeclaredConstructor().newInstance().verify(history);
-            if (result) {
-                log.info("find bug");
+                // verify history
+                log.info("Start history verification");
+                if (enableProfile) {
+                    profiler.startTick(checker.getName());
+                }
+                boolean result;
+                try {
+                    result = checker.getDeclaredConstructor().newInstance().verify(history);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                         NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+                if (enableProfile) {
+                    profiler.endTick(checker.getName());
+                }
+                if (result) {
+                    log.info("find bug");
+                }
+            }
+            return null;
+        };
+
+        var variable = config.getProperty("workload.variable");
+        if (variable != null) {
+            Profiler.createCSV(variable);
+            variable = "workload." + variable;
+            var valueListString = config.getProperty(variable);
+            var valueList = ConfigParser.parseListString(valueListString);
+            for (var value : valueList) {
+                config.setProperty(variable, value);
+                log.info("Run one shot {} = {}", variable, value);
+                runOneShot.apply(null);
+                var avgTime = profiler.getAvgTime(checker.getName());
+                var maxMemory = profiler.getMemory(checker.getName());
+                Profiler.appendToCSV(value, avgTime, maxMemory);
+                profiler.removeTag(checker.getName());
+            }
+        } else {
+            runOneShot.apply(null);
+        }
+
+        // collect runtime data
+        if (enableProfile) {
+            for (var tag : profiler.getTags()) {
+                log.info("Tag {} run {} times", tag, profiler.getCounter(tag));
+                log.info("Total time: {}ms", profiler.getTotalTime(tag));
+                log.info("Avg time: {}ms", profiler.getAvgTime(tag));
+                log.info("Max memory: {}B", profiler.getMemory(tag));
             }
         }
-        // collect runtime data
-
     }
 
     public static void main(String... args) {
