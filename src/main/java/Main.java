@@ -8,13 +8,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
-import org.apache.commons.lang3.tuple.Pair;
+import util.ConfigParser;
 import util.Profiler;
 
 @Slf4j
@@ -67,64 +67,78 @@ public class Main implements Callable<Integer> {
             return;
         }
 
+        var enableProfile = Boolean.parseBoolean(config.getProperty("profiler.enable"));
         Profiler profiler = Profiler.getInstance();
-        // generate history
         int nHist = Integer.parseInt(config.getProperty("workload.history"));
-        for (int i = 1; i <= nHist; i++) {
-            log.info("Start history generation {} of {}", i, nHist);
-            var history = new GeneralGenerator(config).generate();
+        Function<Void, Void> runOneShot = f -> {
+            for (int i = 1; i <= nHist; i++) {
+                // generate history
+                log.info("Start history generation {} of {}", i, nHist);
+                var history = new GeneralGenerator(config).generate();
 
-            // collect result
-            log.info("Start history collection");
-            history = collector.getDeclaredConstructor(Properties.class).newInstance(config).collect(history);
+                // collect result
+                log.info("Start history collection");
+                try {
+                    history = collector.getDeclaredConstructor(Properties.class).newInstance(config).collect(history);
+                } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
+                         IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
 
-            // verify history
-            log.info("Start history verification");
-            profiler.startTick("checker_performance");
-            boolean result = checker.getDeclaredConstructor().newInstance().verify(history);
-            profiler.endTick("checker_performance");
-            if (result) {
-                log.info("find bug");
+                // verify history
+                log.info("Start history verification");
+                if (enableProfile) {
+                    profiler.startTick(checker.getName());
+                }
+                boolean result;
+                try {
+                    result = checker.getDeclaredConstructor().newInstance().verify(history);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                         NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+                if (enableProfile) {
+                    profiler.endTick(checker.getName());
+                }
+                if (result) {
+                    log.info("find bug");
+                }
+            }
+            return null;
+        };
+
+        var variable = config.getProperty("workload.variable");
+        if (variable != null) {
+            Profiler.createCSV(variable);
+            variable = "workload." + variable;
+            var valueListString = config.getProperty(variable);
+            var valueList = ConfigParser.parseListString(valueListString);
+            for (var value : valueList) {
+                config.setProperty(variable, value);
+                log.info("Run one shot {} = {}", variable, value);
+                runOneShot.apply(null);
+                var avgTime = profiler.getAvgTime(checker.getName());
+                var maxMemory = profiler.getMemory(checker.getName());
+                Profiler.appendToCSV(value, avgTime, maxMemory);
+                profiler.removeTag(checker.getName());
+            }
+        } else {
+            runOneShot.apply(null);
+        }
+
+        // collect runtime data
+        if (enableProfile) {
+            for (var tag : profiler.getTags()) {
+                log.info("Tag {} run {} times", tag, profiler.getCounter(tag));
+                log.info("Total time: {}ms", profiler.getTotalTime(tag));
+                log.info("Avg time: {}ms", profiler.getAvgTime(tag));
+                log.info("Max memory: {}B", profiler.getMemory(tag));
             }
         }
-        // collect runtime data
-        String session = config.getProperty("workload.session");
-        exportToCSV(session, profiler.getDurations(), profiler.getMaxMemory());
-
-    }
-
-    @SneakyThrows
-    public void exportToCSV(String session, Collection<Pair<String, Long>> durations, long maxMemory) {
-        List<String> lines = new ArrayList<>();
-        for (var p : durations) {
-            lines.add(String.format("%s,%s,%s\n", session, p.getValue(), Utils.formatMemory(maxMemory)));
-        }
-
-        // output lines to a csv file
-        File file = new File("./result/runtime.csv");
-        FileWriter csvWriter = new FileWriter(file, true);
-        for (String line : lines) {
-            csvWriter.write(line);
-        }
-        csvWriter.close();
     }
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
-    }
-}
-
-class Utils {
-    static String formatMemory(Long memoryBytes) {
-        double[] scale = { 1, 1024, 1024 * 1024, 1024 * 1024 * 1024 };
-        String[] unit = { "B", "KB", "MB", "GB" };
-
-        for (int i = scale.length - 1; i >= 0; i--) {
-            if (i == 0 || memoryBytes >= scale[i]) {
-                return String.format("%.1f", memoryBytes / scale[i]);
-            }
-        }
-        throw new Error("should not be here");
     }
 }
