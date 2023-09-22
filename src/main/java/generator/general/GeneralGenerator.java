@@ -70,7 +70,7 @@ public class GeneralGenerator implements Generator<Long, Long> {
                         long var = keyDistribution.sample();
                         long val = 0L;
                         if (type == Operation.Type.WRITE) {
-                            val = counts.getOrDefault(var, 0L);
+                            val = counts.getOrDefault(var, 1L);
                             counts.put(var, val + 1);
                         }
                         synchronized (history) {
