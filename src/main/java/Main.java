@@ -1,6 +1,7 @@
 import checker.Checker;
 import collector.Collector;
 import generator.general.GeneralGenerator;
+import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
@@ -92,16 +93,18 @@ public class Main implements Callable<Integer> {
                 }
                 boolean result;
                 try {
-                    result = checker.getDeclaredConstructor().newInstance().verify(history);
+                    result = checker.getDeclaredConstructor(Properties.class).newInstance(config).verify(history);
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                          NoSuchMethodException e) {
                     throw new RuntimeException(e);
                 }
                 if (enableProfile) {
                     profiler.endTick(checker.getName());
+                    System.gc();
                 }
                 if (result) {
                     log.info("find bug");
+                    new TextHistorySerializer().serializeHistory(history, "./result/hist.txt");
                 }
             }
             return null;
