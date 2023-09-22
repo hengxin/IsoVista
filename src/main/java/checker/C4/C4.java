@@ -34,20 +34,27 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
     private static final Long ZERO = 0L;
 
     public static final String NAME = "C4";
-    public static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.CAUSAL_CONSISTENCY;
+    public static IsolationLevel ISOLATION_LEVEL;
+
+    public C4(Properties config) {
+        ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty("db.isolation"));
+    }
 
     @Override
     public boolean verify(History<KeyType, ValType> history) {
         this.history = history;
         buildCO();
         checkCOBP();
+        if (ISOLATION_LEVEL == IsolationLevel.READ_COMMITTED) {
+            return !badPatternCount.isEmpty();
+        }
         syncClock();
         buildVO();
         if (!hasCircle(Edge.Type.VO)) {
-            return badPatternCount.isEmpty();
+            return !badPatternCount.isEmpty();
         }
         checkVOBP();
-        return badPatternCount.isEmpty();
+        return !badPatternCount.isEmpty();
     }
 
     private void buildCO() {
@@ -142,7 +149,7 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
 
     private void checkCOBP() {
         // check aborted read and thin air
-        if (readsWithoutWrites.size() > 0) {
+        if (!readsWithoutWrites.isEmpty()) {
             AtomicInteger count = new AtomicInteger();
             readsWithoutWrites.keySet().forEach((key) -> {
                 if (history.getAbortedWrites().contains(key)) {
@@ -172,16 +179,19 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
                         return;
                     }
 
-                    // check if write(x, k) co-> read
-                    writeRelNodes.forEach((writeNode) -> {
-                        if (writeNode.equals(node)) {
-                            return;
-                        }
-                        if (writeNode.canReachByCO(node)) {
-                            // find writeCOInitRead
-                            findBadPattern(BadPatternType.WriteCOInitRead);
-                        }
-                    });
+                    // check InitialRead if check TCC
+                    if (ISOLATION_LEVEL == IsolationLevel.CAUSAL_CONSISTENCY) {
+                        // check if write(x, k) co-> read
+                        writeRelNodes.forEach((writeNode) -> {
+                            if (writeNode.equals(node)) {
+                                return;
+                            }
+                            if (writeNode.canReachByCO(node)) {
+                                // find writeCOInitRead
+                                findBadPattern(BadPatternType.WriteCOInitRead);
+                            }
+                        });
+                    }
                     return;
                 }
 
@@ -205,17 +215,20 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
             });
         });
 
-        // iter wr edge (t1 wr-> t2)
-        WREdges.forEach((varX, edgesX) -> {
-            edgesX.forEach((edge) -> {
-                var t1 = edge.getKey();
-                var t2 = edge.getValue();
-                if (t1.canReachByCO(t2) && t2.canReachByCO(t1)) {
-                    // find cyclicCO
-                    findBadPattern(BadPatternType.CyclicCO);
-                }
+        // check CyclicCO if check TCC
+        if (ISOLATION_LEVEL == IsolationLevel.CAUSAL_CONSISTENCY) {
+            // iter wr edge (t1 wr-> t2)
+            WREdges.forEach((varX, edgesX) -> {
+                edgesX.forEach((edge) -> {
+                    var t1 = edge.getKey();
+                    var t2 = edge.getValue();
+                    if (t1.canReachByCO(t2) && t2.canReachByCO(t1)) {
+                        // find cyclicCO
+                        findBadPattern(BadPatternType.CyclicCO);
+                    }
+                });
             });
-        });
+        }
     }
 
     private void buildVO() {
@@ -245,61 +258,67 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
     }
 
     private void checkVOBP() {
-        // iter wr edge (t2 wr-> t3)
-        WREdges.forEach((varX, edgesX) -> {
-            edgesX.forEach((edge) -> {
-                var t2 = edge.getKey();
-                var t3 = edge.getValue();
+        // check FracturedReadCO and FracturedReadAO if check RA or TCC
+        if (ISOLATION_LEVEL.equals(IsolationLevel.READ_ATOMICITY) || ISOLATION_LEVEL.equals(IsolationLevel.CAUSAL_CONSISTENCY)) {
+            // iter wr edge (t2 wr-> t3)
+            WREdges.forEach((varX, edgesX) -> {
+                edgesX.forEach((edge) -> {
+                    var t2 = edge.getKey();
+                    var t3 = edge.getValue();
 
-                writeNodes.get(varX).forEach((t1) -> {
-                    if (!t1.equals(t2) && !t1.equals(t3) && t1.canReachByCO(t3) && t2.canReachByCO(t1)) {
-                        // find bp triangle
-                        AtomicBoolean isRA = new AtomicBoolean(false);
-                        WREdges.forEach((varY, edgesY) -> {
-                            if (!varX.equals(varY) && edgesY.contains(new Pair<>(t1, t3))) {
-                                isRA.set(true);
-                                // find fractured read co
-                                findBadPattern(BadPatternType.FracturedReadCO);
+                    writeNodes.get(varX).forEach((t1) -> {
+                        if (!t1.equals(t2) && !t1.equals(t3) && t1.canReachByCO(t3) && t2.canReachByCO(t1)) {
+                            // find bp triangle
+                            AtomicBoolean isRA = new AtomicBoolean(false);
+                            WREdges.forEach((varY, edgesY) -> {
+                                if (!varX.equals(varY) && edgesY.contains(new Pair<>(t1, t3))) {
+                                    isRA.set(true);
+                                    // find fractured read co
+                                    findBadPattern(BadPatternType.FracturedReadCO);
+                                }
+                            });
+                            // continue if is RA bp
+                            if (isRA.get()) {
+                                return;
                             }
-                        });
-                        // continue if is RA bp
-                        if (isRA.get()) {
-                            return;
+                            // find co conflict vo
+                            findBadPattern(BadPatternType.COConflictVO);
                         }
-                        // find co conflict vo
-                        findBadPattern(BadPatternType.COConflictVO);
-                    }
+                    });
                 });
             });
-        });
+        }
 
-        // iter wr edge (t2 wr-> t3)
-        WREdges.forEach((varX, edgesX) -> {
-            edgesX.forEach((edge) -> {
-                var t2 = edge.getKey();
-                var t3 = edge.getValue();
+        // check COConflictAO and ConflictAO if check TCC
+        if (ISOLATION_LEVEL == IsolationLevel.CAUSAL_CONSISTENCY) {
+            // iter wr edge (t2 wr-> t3)
+            WREdges.forEach((varX, edgesX) -> {
+                edgesX.forEach((edge) -> {
+                    var t2 = edge.getKey();
+                    var t3 = edge.getValue();
 
-                writeNodes.get(varX).forEach((t1) -> {
-                    if (!t1.equals(t2) && !t1.equals(t3) && t1.canReachByCO(t3) && !t2.canReachByCO(t1) && t2.canReachByVO(t1)) {
-                        // find bp triangle
-                        AtomicBoolean isRA = new AtomicBoolean(false);
-                        WREdges.forEach((varY, edgesY) -> {
-                            if (!varX.equals(varY) && edgesY.contains(new Pair<>(t1, t3))) {
-                                isRA.set(true);
-                                // find fractured read vo
-                                findBadPattern(BadPatternType.FracturedReadVO);
+                    writeNodes.get(varX).forEach((t1) -> {
+                        if (!t1.equals(t2) && !t1.equals(t3) && t1.canReachByCO(t3) && !t2.canReachByCO(t1) && t2.canReachByVO(t1)) {
+                            // find bp triangle
+                            AtomicBoolean isRA = new AtomicBoolean(false);
+                            WREdges.forEach((varY, edgesY) -> {
+                                if (!varX.equals(varY) && edgesY.contains(new Pair<>(t1, t3))) {
+                                    isRA.set(true);
+                                    // find fractured read vo
+                                    findBadPattern(BadPatternType.FracturedReadVO);
+                                }
+                            });
+                            // continue if is RA bp
+                            if (isRA.get()) {
+                                return;
                             }
-                        });
-                        // continue if is RA bp
-                        if (isRA.get()) {
-                            return;
+                            // find conflict vo
+                            findBadPattern(BadPatternType.ConflictVO);
                         }
-                        // find conflict vo
-                        findBadPattern(BadPatternType.ConflictVO);
-                    }
+                    });
                 });
             });
-        });
+        }
     }
 
     private void updateVec(Set<Node<KeyType, ValType>> visited, Node<KeyType, ValType> cur, Node<KeyType, ValType> upNode, Edge.Type edgeType) {
