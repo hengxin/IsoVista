@@ -2,7 +2,6 @@ package history;
 
 import javafx.util.Pair;
 import lombok.Data;
-import org.checkerframework.checker.units.qual.K;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,6 +72,7 @@ public class History<KeyType, ValType> {
         Session<KeyType, ValType> initSession = addSession(-1);
         Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, -1);
         for (var i : keySet) {
+            // FIXME: Set init value to "" when ValType is String
             addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) (Object)0L);
         }
         initTransaction.setSuccess(true);
