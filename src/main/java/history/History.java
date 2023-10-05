@@ -2,6 +2,7 @@ package history;
 
 import javafx.util.Pair;
 import lombok.Data;
+import org.checkerframework.checker.units.qual.K;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ public class History<KeyType, ValType> {
     private final Map<Long, Transaction<KeyType, ValType>> transactions = new HashMap<>();
 
     private final Set<Pair<KeyType, ValType>> abortedWrites = new HashSet<>();
+    private final Set<KeyType> keySet = new HashSet<>();
 
     public Session<KeyType, ValType> getSession(long id) {
         return sessions.get(id);
@@ -37,6 +39,7 @@ public class History<KeyType, ValType> {
     public Operation<KeyType, ValType> addOperation(Transaction<KeyType, ValType> transaction, Operation.Type type, KeyType variable, ValType value) {
         var operation = new Operation<>(type, variable, value, transaction, transaction.getOps().size());
         transaction.getOps().add(operation);
+        keySet.add(variable);
         return operation;
     }
 
@@ -64,5 +67,18 @@ public class History<KeyType, ValType> {
             }
         }
         return result;
+    }
+
+    public void addInitSession() {
+        Session<KeyType, ValType> initSession = addSession(-1);
+        Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, -1);
+        for (var i : keySet) {
+            addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) (Object)0L);
+        }
+        initTransaction.setSuccess(true);
+    }
+
+    public void removeInitSession() {
+        sessions.remove(-1L);
     }
 }
