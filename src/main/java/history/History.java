@@ -12,6 +12,7 @@ public class History<KeyType, ValType> {
     private final Map<Long, Transaction<KeyType, ValType>> transactions = new HashMap<>();
 
     private final Set<Pair<KeyType, ValType>> abortedWrites = new HashSet<>();
+    private final Set<KeyType> keySet = new HashSet<>();
 
     public Session<KeyType, ValType> getSession(long id) {
         return sessions.get(id);
@@ -37,6 +38,7 @@ public class History<KeyType, ValType> {
     public Operation<KeyType, ValType> addOperation(Transaction<KeyType, ValType> transaction, Operation.Type type, KeyType variable, ValType value) {
         var operation = new Operation<>(type, variable, value, transaction, transaction.getOps().size());
         transaction.getOps().add(operation);
+        keySet.add(variable);
         return operation;
     }
 
@@ -64,5 +66,19 @@ public class History<KeyType, ValType> {
             }
         }
         return result;
+    }
+
+    public void addInitSession() {
+        Session<KeyType, ValType> initSession = addSession(-1);
+        Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, -1);
+        for (var i : keySet) {
+            // FIXME: Set init value to "" when ValType is String
+            addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) (Object)0L);
+        }
+        initTransaction.setSuccess(true);
+    }
+
+    public void removeInitSession() {
+        sessions.remove(-1L);
     }
 }

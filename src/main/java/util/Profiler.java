@@ -1,5 +1,9 @@
 package util;
 
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -8,10 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 public class Profiler {
@@ -122,7 +122,7 @@ public class Profiler {
     }
 
     public synchronized long getAvgTime(String tag) {
-        if (!counter.containsKey(tag)) {
+        if (!counter.containsKey(tag) || counter.get(tag) == 0) {
             return 0;
         }
         return getTotalTime(tag) / counter.get(tag);

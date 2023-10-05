@@ -8,15 +8,17 @@ import org.reflections.Reflections;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+import util.ConfigParser;
+import util.Profiler;
 
 import java.io.FileInputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
-
-import util.ConfigParser;
-import util.Profiler;
 
 @Slf4j
 @Command(name = "DBTest", mixinStandardHelpOptions = true, version = "DBTest 0.1", description = "Test database isolation level.")
@@ -102,7 +104,7 @@ public class Main implements Callable<Integer> {
                     profiler.endTick(checker.getName());
                     System.gc();
                 }
-                if (result) {
+                if (!result) {
                     log.info("find bug");
                     new TextHistorySerializer().serializeHistory(history, "./result/hist.txt");
                 }
