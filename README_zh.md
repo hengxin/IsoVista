@@ -126,9 +126,9 @@ Exception in thread "main" java.lang.UnsatisfiedLinkError: no monosat in java.li
 
 **字段说明**
 
-- `Map<Long， Session<KeyType， ValType>> sessions`：存储所有会话的映射，其键是会话的 ID，值是对应的 `Session` 对象。
-- `Map<Long， Transaction<KeyType， ValType>> transactions`：存储所有事务的映射，其键是事务的 ID，值是对应的 `Transaction` 对象。
-- `Set<Pair<KeyType， ValType>> abortedWrites`：存储所有被中止的写操作。每个中止的写操作表示为一个键值对。
+- `Map<Long, Session<KeyType， ValType>> sessions`：存储所有会话的映射，其键是会话的 ID，值是对应的 `Session` 对象。
+- `Map<Long, Transaction<KeyType， ValType>> transactions`：存储所有事务的映射，其键是事务的 ID，值是对应的 `Transaction` 对象。
+- `Set<Pair<KeyType, ValType>> abortedWrites`：存储所有被中止的写操作。每个中止的写操作表示为一个键值对。
 
 **方法**
 
@@ -186,10 +186,10 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 - `int maxRestartTimes`：最大重启次数，默认值为1000。
 
 **构造函数**
-`DBClient(String url， String username， String password)`：构造函数接收数据库的URL、用户名和密码作为参数，并使用这些信息建立数据库连接。如果连接失败，将抛出异常。
+`DBClient(String url, String username, String password)`：构造函数接收数据库的URL、用户名和密码作为参数，并使用这些信息建立数据库连接。如果连接失败，将抛出异常。
 
 **抽象方法**
-`void execSession(Session<Long， Long> session)`：一个抽象方法，用于执行特定的数据库会话。这个方法的实现应该在 `DBClient` 的具体子类中提供。
+`void execSession(Session<Long, Long> session)`：一个抽象方法，用于执行特定的数据库会话。这个方法的实现应该在 `DBClient` 的具体子类中提供。
 
 详细实现方法可参考`mysql/MySQLClient`或`postgresql/PostgreSQLClient`
 #### Collector
@@ -206,7 +206,7 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 `Collector(Properties config)`：构造函数接收一个 `Properties` 对象作为参数，该对象包含数据库连接的详细信息和工作负载的键值。这些信息包含在 `Properties` 对象的属性中，属性的键分别是 `"db.url"`、`"db.username"`、`"db.password"` 和 `"workload.key"`。构造函数使用这些信息建立数据库连接并设置工作负载的键值。
 
 **抽象方法**
-- `History<KeyType， ValType> collect(History<KeyType， ValType> history)`：一个抽象方法，用于收集数据库中的历史记录。这个方法的实现应该在 `Collector` 类的具体子类中提供。
+- `History<KeyType, ValType> collect(History<KeyType, ValType> history)`：一个抽象方法，用于收集数据库中的历史记录。这个方法的实现应该在 `Collector` 类的具体子类中提供。
 - `void createTable()`：一个抽象方法，用于在数据库中创建表。这个方法的实现应该在 `Collector` 类的具体子类中提供。
 - `void createVariables(long nKey)`：一个抽象方法，用于创建变量。这个方法的实现应该在 `Collector` 类的具体子类中提供。
 - `void dropDatabase()`：一个抽象方法，用于删除数据库。这个方法的实现应该在 `Collector` 类的具体子类中提供。
@@ -218,7 +218,7 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 
 **字段说明**
 
-- `long session， transaction， operation， key`：从配置文件中获取的会话数量、事务数量、操作数量和键值。
+- `long session, transaction, operation, key`：从配置文件中获取的会话数量、事务数量、操作数量和键值。
 - `double readProportion`：读取比例，从配置文件中获取。
 - `IntegerDistribution keyDistribution`：键值的分布方式，可以是均匀分布 (`UniformIntegerDistribution`)、Zipf 分布 (`ZipfDistribution`) 或热点分布 (`HotspotIntegerDistribution`)。
 - `BernoulliDistribution readProbability`：读取概率，由读取比例计算得出。
@@ -227,5 +227,5 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 `GeneralGenerator(Properties config)`：构造函数接收一个 `Properties` 对象作为参数，该对象包含生成历史记录所需的各种配置参数。这些参数包括会话数量(`workload.session`)、事务数量(`workload.transaction`)、操作数量(`workload.operation`)、读取比例(`workload.readproportion`)、键值(`workload.key`)和键值分布方式(`workload.distribution`)。
 
 **方法**
-`History<Long， Long> generate()`：根据指定的参数生成历史记录。首先，创建一个空的 `History` 对象和一个用于计数的 `ConcurrentHashMap`。然后，为每个会话创建一个任务，每个任务生成指定数量的事务，每个事务生成指定数量的操作。操作类型可以是读取或写入，根据读取概率随机确定。对于写入操作，还会更新计数器。所有任务在一个固定大小的线程池中并发执行。最后，返回生成的历史记录。
+`History<Long, Long> generate()`：根据指定的参数生成历史记录。首先，创建一个空的 `History` 对象和一个用于计数的 `ConcurrentHashMap`。然后，为每个会话创建一个任务，每个任务生成指定数量的事务，每个事务生成指定数量的操作。操作类型可以是读取或写入，根据读取概率随机确定。对于写入操作，还会更新计数器。所有任务在一个固定大小的线程池中并发执行。最后，返回生成的历史记录。
 
