@@ -73,6 +73,24 @@ bash test_performance.bash
 | 30       | 38            | 93.2        |
 
 # 平台扩展
+## History
+`History` 类表示一个操作历史记录，包含了一系列的会话和事务。每个会话包含多个事务，每个事务包含多个操作。此外，还包含了一些被中止的写操作。`History`的相关实现会使用到`Operation`、`Session`以及`Transaction`类，并且通过`loader`加载，使用`serializer`进行记录。
+
+**字段说明**
+- `Map<Long, Session<KeyType, ValType>> sessions`：存储所有会话的映射，其键是会话的 ID，值是对应的 `Session` 对象。
+- `Map<Long, Transaction<KeyType, ValType>> transactions`：存储所有事务的映射，其键是事务的 ID，值是对应的 `Transaction` 对象。
+- `Set<Pair<KeyType, ValType>> abortedWrites`：存储所有被中止的写操作。每个中止的写操作表示为一个键值对。
+
+**方法**
+- `Session<KeyType, ValType> getSession(long id)`：根据给定的 ID 返回对应的会话。
+- `Transaction<KeyType, ValType> getTransaction(long id)`：根据给定的 ID 返回对应的事务。
+- `Session<KeyType, ValType> addSession(long id)`：添加一个新的会话并返回它。新会话的 ID 是给定的参数。
+- `Transaction<KeyType, ValType> addTransaction(Session<KeyType, ValType> session, long id)`：在给定的会话中添加一个新的事务并返回它。新事务的 ID 是给定的参数。
+- `Operation<KeyType, ValType> addOperation(Transaction<KeyType, ValType> transaction, Operation.Type type, KeyType variable, ValType value)`：在给定的事务中添加一个新的操作并返回它。新操作的类型、变量和值是给定的参数。
+- `void addAbortedWrite(KeyType variable, ValType value)`：添加一个新的被中止的写操作。被中止的写操作的变量和值是给定的参数。
+- `List<Operation<KeyType, ValType>> getOperations()`：返回所有操作的列表。
+- `List<Transaction<KeyType, ValType>> getFlatTransactions()`：返回所有事务的列表。这个列表是按照会话和事务的顺序排列的。
+
 ## Checker
 #TODO 
 `Checker` 是一个Java接口，它定义了一个验证方法 `verify()`，该方法接受一个 `History` 对象，并返回一个布尔值。`History` 对象通常代表特定类型的键值对（`KeyType` 和 `ValType`）的历史记录。
@@ -128,7 +146,7 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 需要在`generator/`下完成对应历史的生成，可参考以下`GeneralGenerator`实现
 
 **字段说明**
-- `long session, transaction, operation, key`：从配置文件中获取的会话数量、交易数量、操作数量和键值。
+- `long session, transaction, operation, key`：从配置文件中获取的会话数量、事务数量、操作数量和键值。
 - `double readProportion`：读取比例，从配置文件中获取。
 - `IntegerDistribution keyDistribution`：键值的分布方式，可以是均匀分布 (`UniformIntegerDistribution`)、Zipf 分布 (`ZipfDistribution`) 或热点分布 (`HotspotIntegerDistribution`)。
 - `BernoulliDistribution readProbability`：读取概率，由读取比例计算得出。
@@ -137,6 +155,6 @@ DBClient 用于定义数据库客户端的通用逻辑框架。它包含了数�
 `GeneralGenerator(Properties config)`：构造函数接收一个 `Properties` 对象作为参数，该对象包含生成历史记录所需的各种配置参数。这些参数包括会话数量(`workload.session`)、事务数量(`workload.transaction`)、操作数量(`workload.operation`)、读取比例(`workload.readproportion`)、键值(`workload.key`)和键值分布方式(`workload.distribution`)。
 
 **方法**
-`History<Long, Long> generate()`：根据指定的参数生成历史记录。首先，创建一个空的 `History` 对象和一个用于计数的 `ConcurrentHashMap`。然后，为每个会话创建一个任务，每个任务生成指定数量的交易，每个交易生成指定数量的操作。操作类型可以是读取或写入，根据读取概率随机确定。对于写入操作，还会更新计数器。所有任务在一个固定大小的线程池中并发执行。最后，返回生成的历史记录。
+`History<Long, Long> generate()`：根据指定的参数生成历史记录。首先，创建一个空的 `History` 对象和一个用于计数的 `ConcurrentHashMap`。然后，为每个会话创建一个任务，每个任务生成指定数量的事务，每个事务生成指定数量的操作。操作类型可以是读取或写入，根据读取概率随机确定。对于写入操作，还会更新计数器。所有任务在一个固定大小的线程池中并发执行。最后，返回生成的历史记录。
 
 
