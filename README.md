@@ -63,7 +63,7 @@ As there are many running parameters, all parameters are placed in `config.prope
 ### Database Connection
 
 ```
-Copy Codedb.url= # JDBC URL
+db.url= # JDBC URL
 db.username= # username
 db.password= # password
 db.isolation= # transaction isolation level
@@ -73,7 +73,7 @@ db.type= # database type, supports MYSQL, POSTGRESQL and H2
 ### General Workload Configuration
 
 ```
-Copy Codeworkload.type= # workload type, currently only supports general, plan to add support for TPCC, etc.
+workload.type= # workload type, currently only supports general, plan to add support for TPCC, etc.
 workload.history= # historical number of transactions
 workload.session= # number of simulated sessions
 workload.transaction= # number of transactions per session
@@ -93,13 +93,13 @@ checker.isolation= # isolation level for the consistency checking algorithm, sup
 ### Performance Analysis Tool Configuration
 
 ```
-Copy Codeprofiler.enable= # whether to enable performance analysis, true/false
+profiler.enable= # whether to enable performance analysis, true/false
 ```
 
 You can use `workload.variable` to specify a `workload` parameter and use `profiler` to perform performance analysis on `checker`, for example:
 
 ```
-Copy Codeworkload.history=3
+workload.history=3
 workload.session=[2,5,10,20,30]
 workload.variable=workload.session
 profiler.enable=true
@@ -120,13 +120,13 @@ After running this configuration file, a `profiling_{timestamp}.csv` file will b
 After compilation, you can run DBTest with the following command:
 
 ```
-shellCopy Codejava -jar ./target/DBTest-1.0-SNAPSHOT-shaded.jar config.properties
+java -jar ./target/DBTest-1.0-SNAPSHOT-shaded.jar config.properties
 ```
 
 Since PolySI depends on monoSAT, you may see the following linking error when running PolySI:
 
 ```
-Copy CodeException in thread "main" java.lang.UnsatisfiedLinkError: no monosat in java.library.path: /usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib
+Exception in thread "main" java.lang.UnsatisfiedLinkError: no monosat in java.library.path: /usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib
 ```
 
 You can add JVM parameter `-Djava.library.path=src/main/resource/libmonosat.so` or add `src/main/resource/libmonosat.so` to a directory in `java.library.path`. If the `libmonosat.so` provided in this repository cannot run on your environment, please compile it yourself using [monoSAT source code](https://github.com/sambayless/monosat).
