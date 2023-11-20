@@ -281,8 +281,11 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
                             if (isRA.get()) {
                                 return;
                             }
-                            // find co conflict vo
-                            findBadPattern(BadPatternType.COConflictVO);
+                            // check COConflictVO if check TCC, continue if check RA
+                            if (ISOLATION_LEVEL == IsolationLevel.CAUSAL_CONSISTENCY) {
+                                // find co conflict vo
+                                findBadPattern(BadPatternType.COConflictVO);
+                            }
                         }
                     });
                 });
@@ -312,8 +315,11 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
                             if (isRA.get()) {
                                 return;
                             }
-                            // find conflict vo
-                            findBadPattern(BadPatternType.ConflictVO);
+                            // check ConflictVO if check TCC, continue if check RA
+                            if (ISOLATION_LEVEL == IsolationLevel.CAUSAL_CONSISTENCY) {
+                                // find conflict vo
+                                findBadPattern(BadPatternType.ConflictVO);
+                            }
                         }
                     });
                 });
