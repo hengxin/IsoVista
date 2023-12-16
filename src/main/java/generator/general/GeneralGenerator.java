@@ -1,5 +1,6 @@
 package generator.general;
 
+import config.Config;
 import generator.Generator;
 import history.History;
 import history.Operation;
@@ -25,12 +26,12 @@ public class GeneralGenerator implements Generator<Long, Long> {
     private final BernoulliDistribution readProbability;
 
     public GeneralGenerator(Properties config) {
-        this.session = Long.parseLong(config.getProperty("workload.session"));
-        this.transaction = Long.parseLong(config.getProperty("workload.transaction"));
-        this.operation = Long.parseLong(config.getProperty("workload.operation"));
-        this.readProportion = Double.parseDouble(config.getProperty("workload.readproportion"));
-        this.key = Long.parseLong(config.getProperty("workload.key"));
-        var distribution = config.getProperty("workload.distribution");
+        this.session = Long.parseLong(config.getProperty(Config.WORKLOAD_SESSION));
+        this.transaction = Long.parseLong(config.getProperty(Config.WORKLOAD_TRANSACTION));
+        this.operation = Long.parseLong(config.getProperty(Config.WORKLOAD_OPERATION));
+        this.readProportion = Double.parseDouble(config.getProperty(Config.WORKLOAD_READ_PROPORTION));
+        this.key = Long.parseLong(config.getProperty(Config.WORKLOAD_KEY));
+        var distribution = config.getProperty(Config.WORKLOAD_DISTRIBUTION);
         switch (distribution) {
             case "uniform":
                 this.keyDistribution = new UniformIntegerDistribution(1, (int) key);

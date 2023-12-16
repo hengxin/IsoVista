@@ -1,5 +1,6 @@
 import checker.Checker;
 import collector.Collector;
+import config.Config;
 import generator.general.GeneralGenerator;
 import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
@@ -58,21 +59,21 @@ public class Main implements Callable<Integer> {
             checkers.put(name.toLowerCase(), checkerImplClass);
         }
 
-        var collector = collectors.get(config.getProperty("db.type").toLowerCase());
+        var collector = collectors.get(config.getProperty(Config.DB_TYPE).toLowerCase());
         if (collector == null) {
-            log.error("Can not find collector of {}", config.getProperty("db.type"));
+            log.error("Can not find collector of {}", config.getProperty(Config.DB_TYPE));
             return;
         }
 
-        var checker = checkers.get(config.getProperty("checker.type").toLowerCase());
+        var checker = checkers.get(config.getProperty(Config.CHECKER_TYPE).toLowerCase());
         if (checker == null) {
-            log.error("Can not find checker {}", config.getProperty("checker.type"));
+            log.error("Can not find checker {}", config.getProperty(Config.CHECKER_TYPE));
             return;
         }
 
-        var enableProfile = Boolean.parseBoolean(config.getProperty("profiler.enable"));
+        var enableProfile = Boolean.parseBoolean(config.getProperty(Config.PROFILER_ENABLE));
         Profiler profiler = Profiler.getInstance();
-        int nHist = Integer.parseInt(config.getProperty("workload.history"));
+        int nHist = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
         Function<Void, Void> runOneShot = f -> {
             for (int i = 1; i <= nHist; i++) {
                 // generate history
@@ -112,8 +113,8 @@ public class Main implements Callable<Integer> {
             return null;
         };
 
-        var variable = config.getProperty("workload.variable");
-        if (variable != null) {
+        var variable = config.getProperty(Config.WORKLOAD_VARIABLE);
+        if (variable != null && !variable.isBlank()) {
             Profiler.createCSV(variable);
             variable = "workload." + variable;
             var valueListString = config.getProperty(variable);

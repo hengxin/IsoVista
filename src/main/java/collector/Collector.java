@@ -1,5 +1,6 @@
 package collector;
 
+import config.Config;
 import history.History;
 import lombok.SneakyThrows;
 
@@ -16,11 +17,11 @@ public abstract class Collector<KeyType, ValType> {
 
     @SneakyThrows
     public Collector(Properties config) {
-        this.url = config.getProperty("db.url");
-        this.username = config.getProperty("db.username");
-        this.password = config.getProperty("db.password");
+        this.url = config.getProperty(Config.DB_URL);
+        this.username = config.getProperty(Config.DB_USERNAME);
+        this.password = config.getProperty(Config.DB_PASSWORD);
         this.connection = DriverManager.getConnection(url, username, password);
-        this.nKey = Long.parseLong(config.getProperty("workload.key"));
+        this.nKey = Long.parseLong(config.getProperty(Config.WORKLOAD_KEY));
     }
 
     public abstract History<KeyType, ValType> collect(History<KeyType, ValType> history);

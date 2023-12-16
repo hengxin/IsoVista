@@ -4,6 +4,7 @@ import checker.Checker;
 import checker.IsolationLevel;
 import checker.PolySI.verifier.Pruning;
 import checker.PolySI.verifier.SIVerifier;
+import config.Config;
 import history.History;
 import util.Profiler;
 
@@ -22,7 +23,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
     public static IsolationLevel ISOLATION_LEVEL;
 
     public PolySI(Properties config) {
-        ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty("db.isolation"));
+        ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
     }
 
     @Override

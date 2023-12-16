@@ -2,6 +2,7 @@ package checker.C4;
 
 import checker.Checker;
 import checker.IsolationLevel;
+import config.Config;
 import history.History;
 
 import checker.C4.badPattern.BadPatternType;
@@ -37,7 +38,7 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
     public static IsolationLevel ISOLATION_LEVEL;
 
     public C4(Properties config) {
-        ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty("db.isolation"));
+        ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
     }
 
     @Override
