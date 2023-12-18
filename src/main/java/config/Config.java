@@ -1,6 +1,9 @@
 package config;
 
 public class Config {
+    // output configs
+    public static final String OUTPUT_PATH = "output.path";
+
     // database configs
     public static final String DB_URL = "db.url";
     public static final String DB_USERNAME = "db.username";
@@ -25,4 +28,10 @@ public class Config {
 
     // profiler configs
     public static final String PROFILER_ENABLE = "profiler.enable";
+
+
+    // default configs
+    public static final String DEFAULT_OUTPUT_PATH = "./result";
+    public static final String DEFAULT_CURRENT_PATH = "./current";
+
 }

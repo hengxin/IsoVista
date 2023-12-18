@@ -1,11 +1,13 @@
 package util;
 
+import config.Config;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +29,7 @@ public class Profiler {
     private final HashMap<String, Long> memory = new HashMap<>();
 
     private static final AtomicLong MaxMemory = new AtomicLong();
-    private static final String ExportCSVPath = String.format("result/profiling_%d.csv", System.currentTimeMillis());
+    private static final String ExportCSVPath = Paths.get(Config.DEFAULT_CURRENT_PATH, "profile.csv").toString();
     private static final String timeUnit = "ms";
     private static final String memoryUnit = "KB";
 

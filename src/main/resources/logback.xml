@@ -12,9 +12,9 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>utf-8</charset>
         </encoder>
-        <file>result/output.log</file>
+        <file>current/output.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>result/output.log.%i</fileNamePattern>
+            <fileNamePattern>current/output.log.%i</fileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>10MB</MaxFileSize>

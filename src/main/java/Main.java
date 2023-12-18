@@ -11,14 +11,17 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import util.ConfigParser;
 import util.Profiler;
+import util.RuntimeDataSerializer;
 
 import java.io.FileInputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 @Slf4j
@@ -72,8 +75,9 @@ public class Main implements Callable<Integer> {
         }
 
         var enableProfile = Boolean.parseBoolean(config.getProperty(Config.PROFILER_ENABLE));
-        Profiler profiler = Profiler.getInstance();
+        var profiler = Profiler.getInstance();
         int nHist = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
+        AtomicInteger bugCount = new AtomicInteger();
         Function<Void, Void> runOneShot = f -> {
             for (int i = 1; i <= nHist; i++) {
                 // generate history
@@ -106,8 +110,8 @@ public class Main implements Callable<Integer> {
                     System.gc();
                 }
                 if (!result) {
-                    log.info("find bug");
-                    new TextHistorySerializer().serializeHistory(history, "./result/hist.txt");
+                    log.info("FIND BUG");
+                    new TextHistorySerializer().serializeHistory(history, Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_hist_%d.txt", bugCount.getAndIncrement())).toString());
                 }
             }
             return null;
@@ -141,6 +145,10 @@ public class Main implements Callable<Integer> {
                 log.info("Max memory: {}B", profiler.getMemory(tag));
             }
         }
+
+        // output to the specific dir
+        var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);
+        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist, bugCount.get(), config);
     }
 
     public static void main(String... args) {
