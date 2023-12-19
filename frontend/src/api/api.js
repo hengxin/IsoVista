@@ -36,6 +36,6 @@ export function download(bug_id) {
 
 const viewUrl = "/view/"
 
-export function get_dot(bug_id) {
+export function get_graph(bug_id) {
     return request.get(viewUrl + bug_id)
 }

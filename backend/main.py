@@ -3,10 +3,25 @@ import os
 import subprocess
 import zipfile
 
+import pydot
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 app = FastAPI()
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 dbtest_path = "DBTest-1.0-SNAPSHOT-shaded.jar"
 config_path = "config.properties"
 result_path = "result"
@@ -91,12 +106,12 @@ bug_store.scan()
 
 @app.get("/history_count")
 async def get_history_count():
-    return {"history_count": bug_store.hist_count}
+    return bug_store.hist_count
 
 
 @app.get("/bug_count")
 async def get_bug_count():
-    return {"bug_count": bug_store.bug_count}
+    return bug_store.bug_count
 
 
 @app.post("/run")
@@ -115,7 +130,7 @@ async def run(request: Request):
 
     # update data
     bug_store.scan()
-    return
+    return {}
 
 
 @app.get("/bug_list")
@@ -126,12 +141,24 @@ async def get_bug_list():
 @app.get("/view/{bug_id}")
 async def view_bug(bug_id: int):
     bug = bug_store.get(bug_id)
-    try:
-        with open(bug.dot_path) as f:
-            dot = f.read()
-            return dot
-    except FileNotFoundError:
-        return "conflict.dot not found"
+    graphs = pydot.graph_from_dot_file(bug.dot_path)
+    nodes = []
+    edges = []
+    for node in graphs[0].get_nodes():
+        nodes.append({
+            "id": node.get_name().replace("\"", ""),
+            "label": node.get_name().replace("\"", ""),
+            "ops": node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"),
+        })
+
+    for edge in graphs[0].get_edges():
+        edges.append({
+            "source": edge.get_source().replace("\"", ""),
+            "target": edge.get_destination().replace("\"", ""),
+            "label": edge.get("label").replace("\\n", " ").replace("\"", ""),
+        })
+
+    return {"nodes": nodes, "edges": edges}
 
 
 @app.get("/download/{bug_id}")

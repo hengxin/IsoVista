@@ -12,7 +12,6 @@
     "@antv/g6": "^4.8.24",
     "axios": "^1.6.2",
     "element-plus": "^2.4.3",
-    "v-network-graph": "^0.9.13",
     "vue": "^3.3.10",
     "vue-router": "^4.2.5"
   },
