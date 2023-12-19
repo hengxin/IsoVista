@@ -2,20 +2,33 @@
   <el-container class="layout-container-demo" style="height: 100%">
     <el-aside width="200px">
       <el-scrollbar>
-        <el-menu>
+        <h5 class="mb-2">DBTest</h5>
+        <el-menu
+            class="el-menu-vertical-demo"
+            default-active="1"
+        >
           <el-menu-item index="1" @click="this.$router.push('/dashboard')">
             <template #title>
-              <el-icon><House /></el-icon>Dashboard
+              <el-icon>
+                <Setting />
+              </el-icon>
+              <span>Dashboard</span>
             </template>
           </el-menu-item>
           <el-menu-item index="2" @click="this.$router.push('/bugs')">
             <template #title>
-              <el-icon><Failed /></el-icon>Bugs
+              <el-icon>
+                <Failed/>
+              </el-icon>
+              <span>Bugs</span>
             </template>
           </el-menu-item>
           <el-menu-item index="3" @click="this.$router.push('/view')">
             <template #title>
-              <el-icon><View /></el-icon>View
+              <el-icon>
+                <View/>
+              </el-icon>
+              <span>View</span>
             </template>
           </el-menu-item>
         </el-menu>
@@ -29,18 +42,15 @@
 </template>
 
 <script lang="ts" setup>
-import { House, Failed, View } from '@element-plus/icons-vue'
+import {House, Failed, View, Setting} from '@element-plus/icons-vue'
+
 </script>
 
 <style scoped>
+.el-menu-vertical-demo {
+  height: 100vh;
+}
 
-.layout-container-demo .el-aside {
-  color: var(--el-text-color-primary);
-  background: var(--el-color-primary-light-8);
-}
-.layout-container-demo .el-menu {
-  border-right: none;
-}
 .layout-container-demo .toolbar {
   display: inline-flex;
   align-items: center;

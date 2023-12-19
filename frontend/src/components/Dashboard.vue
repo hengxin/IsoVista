@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Setting} from "@element-plus/icons-vue";
+import {Setting, View} from "@element-plus/icons-vue";
 
 defineProps({
   msg: {
@@ -8,18 +8,22 @@ defineProps({
   }
 })
 
-import {ref} from 'vue'
+import {reactive} from "vue";
 
-const url = ref('');
-const selectedDB = ref('');
-const selectedIsolationLevel = ref('');
-const history = ref(10);
-const session = ref(20);
-const txnPerSession = ref(100);
-const opPerTxn = ref(5);
-const key = ref(1000);
-const selectedChecker = ref('');
-const selectedCheckerIsolationLevel = ref('');
+const testingOption = reactive({
+  url: '',
+  selectedDB: '',
+  selectedIsolationLevel: '',
+  history: 10,
+  session: 20,
+  txnPerSession: 100,
+  opPerTxn: 5,
+  key: 1000,
+  selectedChecker: '',
+  selectedCheckerIsolationLevel: '',
+  useProfiler: false
+});
+
 const dbOptions = [
   {label: 'MySQL', value: 'mysql'},
   {label: 'PostgreSQL', value: 'postgres'},
@@ -38,8 +42,7 @@ const checkerOptions = [
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
 };
-const useProfiler = ref(false);
-const onSubmit = () => {
+const submit = () => {
   console.log('submit!')
 };
 const handleNumChange = (value) => {
@@ -49,7 +52,9 @@ const handleNumChange = (value) => {
 
 <template>
   <el-container class="layout-container-demo">
-    <el-header style="text-align: center; font-size: 20px">Dashboard</el-header>
+    <el-header>
+    </el-header>
+
     <el-main>
       <el-row>
         <el-col :span="4">
@@ -57,10 +62,10 @@ const handleNumChange = (value) => {
         <el-col :span="12">
           <el-form label-position="left" label-width="220px">
             <el-form-item label="URL">
-              <el-input v-model="url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
+              <el-input v-model="testingOption.url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
             <el-form-item label="DB Type">
-              <el-select v-model="selectedDB" placeholder="" @change="handleSelectionChange" class="fixed-width">
+              <el-select v-model="testingOption.selectedDB" placeholder="" @change="handleSelectionChange" class="fixed-width">
                 <el-option
                     v-for="option in dbOptions"
                     :key="option.value"
@@ -70,7 +75,7 @@ const handleNumChange = (value) => {
               </el-select>
             </el-form-item>
             <el-form-item label="DB Isolation Level">
-              <el-select v-model="selectedIsolationLevel" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.selectedIsolationLevel" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in isolationLevelOptions"
@@ -82,7 +87,7 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="#History">
               <el-input-number
-                  v-model="history"
+                  v-model="testingOption.history"
                   :min="10"
                   :max="100"
                   controls-position="right"
@@ -91,7 +96,7 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="#Session">
               <el-input-number
-                  v-model="session"
+                  v-model="testingOption.session"
                   :min="20"
                   :max="100"
                   controls-position="right"
@@ -100,7 +105,7 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="#Txn/Sess">
               <el-input-number
-                  v-model="txnPerSession"
+                  v-model="testingOption.txnPerSession"
                   :min="100"
                   :max="200"
                   controls-position="right"
@@ -109,7 +114,7 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="#Op/Txn">
               <el-input-number
-                  v-model="opPerTxn"
+                  v-model="testingOption.opPerTxn"
                   :min="5"
                   :max="10"
                   controls-position="right"
@@ -118,7 +123,7 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="#Key">
               <el-input-number
-                  v-model="key"
+                  v-model="testingOption.key"
                   :min="1000"
                   :max="2000"
                   controls-position="right"
@@ -126,7 +131,7 @@ const handleNumChange = (value) => {
               />
             </el-form-item>
             <el-form-item label="Checker Type">
-              <el-select v-model="selectedChecker" placeholder="" @change="handleSelectionChange" class="fixed-width">
+              <el-select v-model="testingOption.selectedChecker" placeholder="" @change="handleSelectionChange" class="fixed-width">
                 <el-option
                     v-for="option in checkerOptions"
                     :key="option.value"
@@ -136,7 +141,7 @@ const handleNumChange = (value) => {
               </el-select>
             </el-form-item>
             <el-form-item label="DB Isolation Level">
-              <el-select v-model="selectedCheckerIsolationLevel" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.selectedCheckerIsolationLevel" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in isolationLevelOptions"
@@ -148,13 +153,13 @@ const handleNumChange = (value) => {
             </el-form-item>
             <el-form-item label="Enable Profiler">
               <el-switch
-                  v-model="useProfiler"
+                  v-model="testingOption.useProfiler"
                   class="ml-2"
                   style="--el-switch-on-color: #13ce66"
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="onSubmit">start</el-button>
+              <el-button type="primary" @click="submit">start</el-button>
             </el-form-item>
           </el-form>
         </el-col>
@@ -164,13 +169,6 @@ const handleNumChange = (value) => {
 </template>
 
 <style scoped>
-.layout-container-demo .el-header {
-  position: relative;
-  background-color: var(--el-color-primary-light-7);
-  color: var(--el-text-color-primary);
-  text-align: center;
-  line-height: 60px;
-}
 
 .layout-container-demo .el-main {
   padding: 0;
