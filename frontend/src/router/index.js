@@ -7,7 +7,7 @@ const routes = [
   { path: '/', component: Dashboard },
   { path: '/dashboard', component: Dashboard },
   { path: '/bugs', component: Bugs },
-  { path: '/view', component: View }
+  { path: '/view/:bug_id', component: View, props: true }
 ]
 
 const router = createRouter({
