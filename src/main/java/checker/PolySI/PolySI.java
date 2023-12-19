@@ -8,6 +8,7 @@ import config.Config;
 import history.History;
 import util.Profiler;
 
+import java.nio.file.Paths;
 import java.util.Properties;
 
 public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
@@ -15,15 +16,18 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
     private final Boolean noCoalescing = false;
 
-    private final Boolean dotOutput = false;
+    private final Boolean dotOutput = true;
 
     private final Profiler profiler = Profiler.getInstance();
+
+    private SIVerifier verifier;
 
     public static final String NAME = "PolySI";
     public static IsolationLevel ISOLATION_LEVEL;
 
     public PolySI(Properties config) {
         ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
+        assert ISOLATION_LEVEL == IsolationLevel.SNAPSHOT_ISOLATION;
     }
 
     @Override
@@ -35,11 +39,16 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
         profiler.startTick("ENTIRE_EXPERIMENT");
         var pass = true;
-        var verifier = new SIVerifier<>(history);
+        verifier = new SIVerifier<>(history);
         pass = verifier.audit();
         profiler.endTick("ENTIRE_EXPERIMENT");
 
         history.removeInitSession();
         return pass;
+    }
+
+    @Override
+    public void outputDotFile(String path) {
+        verifier.outputDotFile(path);
     }
 }

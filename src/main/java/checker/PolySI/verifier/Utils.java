@@ -206,7 +206,7 @@ class Utils {
         builder.append("digraph {\n");
 
         for (var txn : transactions) {
-            builder.append(String.format("\"%s\";\n", txn));
+            builder.append(String.format("\"%s\" [ops=\"%s\"];\n", txn, txn.getOps()));
         }
 
         for (var e : edges) {

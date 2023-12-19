@@ -58,6 +58,11 @@ public class C4<KeyType, ValType> implements Checker<KeyType, ValType> {
         return !badPatternCount.isEmpty();
     }
 
+    @Override
+    public void outputDotFile(String path) {
+
+    }
+
     private void buildCO() {
         var hist = history.getFlatTransactions();
         Map<Long, Node<KeyType, ValType>> prevNodes = new HashMap<>();

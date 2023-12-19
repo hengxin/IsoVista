@@ -14,7 +14,9 @@ import util.Profiler;
 import util.RuntimeDataSerializer;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -100,18 +102,27 @@ public class Main implements Callable<Integer> {
                 }
                 boolean result;
                 try {
-                    result = checker.getDeclaredConstructor(Properties.class).newInstance(config).verify(history);
+                    var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
+                    result = checkerInstance.verify(history);
+                    if (enableProfile) {
+                        profiler.endTick(checker.getName());
+                        System.gc();
+                    }
+                    if (!result) {
+                        log.info("FIND BUG");
+                        // serialize history and output dotfile
+                        var bugDir = Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_%d", bugCount.getAndIncrement()));
+                        try {
+                            Files.createDirectory(bugDir);
+                        } catch (IOException e) {
+
+                        }
+                        new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                        checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
+                    }
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                          NoSuchMethodException e) {
                     throw new RuntimeException(e);
-                }
-                if (enableProfile) {
-                    profiler.endTick(checker.getName());
-                    System.gc();
-                }
-                if (!result) {
-                    log.info("FIND BUG");
-                    new TextHistorySerializer().serializeHistory(history, Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_hist_%d.txt", bugCount.getAndIncrement())).toString());
                 }
             }
             return null;

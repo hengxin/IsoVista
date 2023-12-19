@@ -1,19 +1,25 @@
 package checker.PolySI.verifier;
 
 
+import checker.PolySI.graph.Edge;
 import checker.PolySI.graph.EdgeType;
 import checker.PolySI.graph.KnownGraph;
 import checker.PolySI.util.TriConsumer;
+import com.google.common.graph.EndpointPair;
 import history.Operation;
 import history.History;
 import history.Transaction;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 
 import util.Profiler;
@@ -29,6 +35,8 @@ public class SIVerifier<KeyType, ValueType> {
     @Getter
     @Setter
     private static boolean dotOutput = false;
+
+    private Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>> conflicts;
 
     public SIVerifier(History<KeyType, ValueType> history) {
         this.history = history;
@@ -72,30 +80,45 @@ public class SIVerifier<KeyType, ValueType> {
         profiler.endTick("ONESHOT_SOLVE");
 
         if (!accepted) {
-            var conflicts = solver.getConflicts();
-            var txns = new HashSet<Transaction<KeyType, ValueType>>();
-
-            conflicts.getLeft().forEach(e -> {
-                txns.add(e.getLeft().source());
-                txns.add(e.getLeft().target());
-            });
-            conflicts.getRight().forEach(c -> {
-                var addEdges = ((Consumer<Collection<SIEdge<KeyType, ValueType>>>) s -> s.forEach(e -> {
-                    txns.add(e.getFrom());
-                    txns.add(e.getTo());
-                }));
-                addEdges.accept(c.getEdges1());
-                addEdges.accept(c.getEdges2());
-            });
-
-            if (dotOutput) {
-                System.out.print(Utils.conflictsToDot(txns, conflicts.getLeft(), conflicts.getRight()));
-            } else {
-                System.out.print(Utils.conflictsToLegacy(txns, conflicts.getLeft(), conflicts.getRight()));
-            }
+            conflicts = solver.getConflicts();
         }
 
         return accepted;
+    }
+
+    /**
+     * Generates a dot file and outputs it to the specified path. The dot file represents the conflicts in the history.
+     *
+     * @param  path	The path where the dot file will be saved.
+     */
+    @SneakyThrows
+    public void outputDotFile(String path) {
+        if (conflicts == null) {
+            return;
+        }
+
+        var txns = new HashSet<Transaction<KeyType, ValueType>>();
+
+        conflicts.getLeft().forEach(e -> {
+            txns.add(e.getLeft().source());
+            txns.add(e.getLeft().target());
+        });
+        conflicts.getRight().forEach(c -> {
+            var addEdges = ((Consumer<Collection<SIEdge<KeyType, ValueType>>>) s -> s.forEach(e -> {
+                txns.add(e.getFrom());
+                txns.add(e.getTo());
+            }));
+            addEdges.accept(c.getEdges1());
+            addEdges.accept(c.getEdges2());
+        });
+
+        if (dotOutput) {
+            var dotOutputStr = Utils.conflictsToDot(txns, conflicts.getLeft(), conflicts.getRight());
+            System.out.print(dotOutputStr);
+            Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
+        } else {
+            System.out.print(Utils.conflictsToLegacy(txns, conflicts.getLeft(), conflicts.getRight()));
+        }
     }
 
     /*
