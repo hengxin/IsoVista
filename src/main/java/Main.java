@@ -5,6 +5,7 @@ import generator.general.GeneralGenerator;
 import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.reflections.Reflections;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -162,8 +163,10 @@ public class Main implements Callable<Integer> {
         RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist, bugCount.get(), config);
     }
 
+    @SneakyThrows
     public static void main(String... args) {
         int exitCode = new CommandLine(new Main()).execute(args);
+        FileUtils.deleteDirectory(Paths.get(Config.DEFAULT_CURRENT_PATH).toFile());
         System.exit(exitCode);
     }
 }

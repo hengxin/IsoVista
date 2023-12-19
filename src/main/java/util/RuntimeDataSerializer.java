@@ -5,7 +5,6 @@ import config.Config;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -56,7 +55,6 @@ public class RuntimeDataSerializer {
                         System.err.println("Failed to copy file: " + e.getMessage());
                     }
                 });
-        FileUtils.deleteDirectory(sourceDirectory.toFile());
 
         // serialize config file
         var configOutputStream = new FileOutputStream(Paths.get(outputPath.toString(), "config.properties").toString());
