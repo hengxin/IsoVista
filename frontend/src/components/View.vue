@@ -20,14 +20,14 @@ onMounted(async () => {
     offsetY: 0,
     fixToNode: [1, 0],
     // the types of items that allow the tooltip show up
-    itemTypes: ['node', 'edge'],
+    itemTypes: ['node'],
     // custom the tooltip's content
     getContent: (e) => {
       const outDiv = document.createElement('div');
       outDiv.style.width = 'fit-content';
       //outDiv.style.padding = '0px 0px 20px 0px';
       outDiv.innerHTML = `
-      <h4>Custom Content</h4>
+      <h4>Details</h4>
       <ul>
         <li>Type: ${e.item.getType()}</li>
       </ul>
@@ -35,7 +35,7 @@ onMounted(async () => {
         <li>Label: ${e.item.getModel().label || e.item.getModel().id}</li>
       </ul>
       <ul>
-        <li>Ops: ${e.item.getModel().ops}</li>
+        <li>Ops: <br> ${e.item.getModel().ops.replace(/\n/g, "<br>")}</li>
       </ul>`;
       return outDiv;
     },
@@ -61,7 +61,7 @@ onMounted(async () => {
     // translate the graph to align the canvas's center, support by v3.5.1
     fitCenter: true,
     // the edges are linked to the center of source and target ndoes
-    linkCenter: true,
+    linkCenter: false,
     plugins: [tooltip],
     defaultNode: {
       type: 'circle',
@@ -84,6 +84,7 @@ onMounted(async () => {
         autoRotate: true,
       },
       style: {
+        stroke: 'gray',
         endArrow: true,
       }
     },
@@ -101,8 +102,6 @@ onMounted(async () => {
       },
     },
   });
-  G6.Util.processParallelEdges(data.edges);
-
   graph.data(data);
   graph.render();
 

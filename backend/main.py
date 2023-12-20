@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import zipfile
 
@@ -148,7 +149,8 @@ async def view_bug(bug_id: int):
         nodes.append({
             "id": node.get_name().replace("\"", ""),
             "label": node.get_name().replace("\"", ""),
-            "ops": node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"),
+            "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
+                          node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation")).replace("[","").replace("]", ""),
         })
 
     for edge in graphs[0].get_edges():
