@@ -42,12 +42,27 @@ const checkerOptions = [
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
 };
-const submit = () => {
-  console.log('submit!')
-};
-const handleNumChange = (value) => {
-  console.log(value)
-};
+
+async function handleSubmit() {
+  console.log(testingOption)
+  fetch('http://localhost:8000/run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(testingOption)
+  }).then(response => {
+    if (response.ok) {
+      return response.json()
+    }
+    throw new Error('Network response was not ok.')
+  }).then(data => {
+    console.log(data)
+  }).catch(err => {
+    console.log('Error:',err)
+  })
+}
+
 </script>
 
 <template>
@@ -65,7 +80,8 @@ const handleNumChange = (value) => {
               <el-input v-model="testingOption.url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
             <el-form-item label="DB Type">
-              <el-select v-model="testingOption.selectedDB" placeholder="" @change="handleSelectionChange" class="fixed-width">
+              <el-select v-model="testingOption.selectedDB" placeholder="" @change="handleSelectionChange"
+                         class="fixed-width">
                 <el-option
                     v-for="option in dbOptions"
                     :key="option.value"
@@ -91,7 +107,6 @@ const handleNumChange = (value) => {
                   :min="10"
                   :max="100"
                   controls-position="right"
-                  @change="handleNumChange"
               />
             </el-form-item>
             <el-form-item label="#Session">
@@ -100,7 +115,6 @@ const handleNumChange = (value) => {
                   :min="20"
                   :max="100"
                   controls-position="right"
-                  @change=""
               />
             </el-form-item>
             <el-form-item label="#Txn/Sess">
@@ -109,7 +123,6 @@ const handleNumChange = (value) => {
                   :min="100"
                   :max="200"
                   controls-position="right"
-                  @change=""
               />
             </el-form-item>
             <el-form-item label="#Op/Txn">
@@ -118,7 +131,6 @@ const handleNumChange = (value) => {
                   :min="5"
                   :max="10"
                   controls-position="right"
-                  @change=""
               />
             </el-form-item>
             <el-form-item label="#Key">
@@ -127,11 +139,11 @@ const handleNumChange = (value) => {
                   :min="1000"
                   :max="2000"
                   controls-position="right"
-                  @change=""
               />
             </el-form-item>
             <el-form-item label="Checker Type">
-              <el-select v-model="testingOption.selectedChecker" placeholder="" @change="handleSelectionChange" class="fixed-width">
+              <el-select v-model="testingOption.selectedChecker" placeholder="" @change="handleSelectionChange"
+                         class="fixed-width">
                 <el-option
                     v-for="option in checkerOptions"
                     :key="option.value"
@@ -141,7 +153,8 @@ const handleNumChange = (value) => {
               </el-select>
             </el-form-item>
             <el-form-item label="DB Isolation Level">
-              <el-select v-model="testingOption.selectedCheckerIsolationLevel" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.selectedCheckerIsolationLevel" placeholder=""
+                         @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in isolationLevelOptions"
@@ -159,7 +172,7 @@ const handleNumChange = (value) => {
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="submit">start</el-button>
+              <el-button type="primary" @click="handleSubmit">start</el-button>
             </el-form-item>
           </el-form>
         </el-col>
