@@ -7,7 +7,7 @@
             class="el-menu-vertical-demo"
             default-active="1"
         >
-          <el-menu-item index="1" @click="this.$router.push('/dashboard')">
+          <el-menu-item index="1" @click="$router.push('/dashboard')">
             <template #title>
               <el-icon>
                 <Setting />
@@ -15,18 +15,18 @@
               <span>Dashboard</span>
             </template>
           </el-menu-item>
-          <el-menu-item index="2" @click="this.$router.push('/bugs')">
+          <el-menu-item index="2" @click="$router.push('/bugs')">
             <template #title>
               <el-icon>
-                <Failed/>
+                <Failed />
               </el-icon>
               <span>Bugs</span>
             </template>
           </el-menu-item>
-          <el-menu-item index="3" @click="this.$router.push('/view')">
+          <el-menu-item index="3" @click="$router.push('/view')">
             <template #title>
               <el-icon>
-                <View/>
+                <View />
               </el-icon>
               <span>View</span>
             </template>

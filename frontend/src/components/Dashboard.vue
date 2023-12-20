@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import {Setting, View} from "@element-plus/icons-vue";
 
 defineProps({
   msg: {
     type: String,
-    required: true
+    required: false
   }
 })
 
@@ -42,6 +41,10 @@ const checkerOptions = [
 ];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
+};
+
+const handleSwitch = (value: boolean) => {
+  console.log('Enabled: ', value);
 };
 
 async function handleSubmit() {
@@ -170,6 +173,7 @@ async function handleSubmit() {
                   v-model="testingOption.profiler_enable"
                   class="ml-2"
                   style="--el-switch-on-color: #13ce66"
+                  @change="handleSwitch"
               />
             </el-form-item>
             <el-form-item>
