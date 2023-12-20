@@ -11,33 +11,34 @@ defineProps({
 import {reactive} from "vue";
 
 const testingOption = reactive({
-  url: '',
-  selectedDB: '',
-  selectedIsolationLevel: '',
-  history: 10,
-  session: 20,
-  txnPerSession: 100,
-  opPerTxn: 5,
-  key: 1000,
-  selectedChecker: '',
-  selectedCheckerIsolationLevel: '',
-  useProfiler: false
+  db_url: '',
+  db_type: '',
+  db_isolation: '',
+  workload_history: 10,
+  workload_session: 20,
+  workload_transaction: 100,
+  workload_operation: 5,
+  workload_key: 1000,
+  checker_type: '',
+  checker_isolation: '',
+  profiler_enable: false
 });
 
 const dbOptions = [
-  {label: 'MySQL', value: 'mysql'},
-  {label: 'PostgreSQL', value: 'postgres'},
-  {label: 'MariaDB', value: 'mariadb'}
+  {label: 'MySQL', value: 'MYSQL'},
+  {label: 'PostgreSQL', value: 'POSTGRES'},
+  {label: 'H2', value: 'H2'}
 ];
 const isolationLevelOptions = [
-  {label: 'Read_Uncommitted', value: 'read_uncommitted'},
-  {label: 'Read_Committed', value: 'read_committed'},
-  {label: 'Repeatable_Read', value: 'repeatable_read'},
-  {label: 'Serializable', value: 'serializable'}
+  {label: 'Read_Uncommitted', value: 'READ_UNCOMMITTED'},
+  {label: 'Read_Committed', value: 'READ_COMMITTED'},
+  {label: 'Repeatable_Read', value: 'REPEATABLE_READ'},
+  {label: 'Serializable', value: 'SERIALIZABLE'},
+  {label: 'Transaction_Snapshot', value: 'TRANSACTION_SNAPSHOT'},
 ];
 const checkerOptions = [
-  {label: 'PolySI', value: 'polysi'},
-  {label: 'C4', value: 'c4'}
+  {label: 'PolySI', value: 'PolySI'},
+  {label: 'C4', value: 'C4'}
 ];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
@@ -77,10 +78,10 @@ async function handleSubmit() {
         <el-col :span="12">
           <el-form label-position="left" label-width="220px">
             <el-form-item label="URL">
-              <el-input v-model="testingOption.url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
+              <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
             <el-form-item label="DB Type">
-              <el-select v-model="testingOption.selectedDB" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.db_type" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in dbOptions"
@@ -91,7 +92,7 @@ async function handleSubmit() {
               </el-select>
             </el-form-item>
             <el-form-item label="DB Isolation Level">
-              <el-select v-model="testingOption.selectedIsolationLevel" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.db_isolation" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in isolationLevelOptions"
@@ -103,7 +104,7 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="#History">
               <el-input-number
-                  v-model="testingOption.history"
+                  v-model="testingOption.workload_history"
                   :min="10"
                   :max="100"
                   controls-position="right"
@@ -111,7 +112,7 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="#Session">
               <el-input-number
-                  v-model="testingOption.session"
+                  v-model="testingOption.workload_session"
                   :min="20"
                   :max="100"
                   controls-position="right"
@@ -119,7 +120,7 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="#Txn/Sess">
               <el-input-number
-                  v-model="testingOption.txnPerSession"
+                  v-model="testingOption.workload_transaction"
                   :min="100"
                   :max="200"
                   controls-position="right"
@@ -127,7 +128,7 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="#Op/Txn">
               <el-input-number
-                  v-model="testingOption.opPerTxn"
+                  v-model="testingOption.workload_operation"
                   :min="5"
                   :max="10"
                   controls-position="right"
@@ -135,14 +136,14 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="#Key">
               <el-input-number
-                  v-model="testingOption.key"
+                  v-model="testingOption.workload_key"
                   :min="1000"
                   :max="2000"
                   controls-position="right"
               />
             </el-form-item>
             <el-form-item label="Checker Type">
-              <el-select v-model="testingOption.selectedChecker" placeholder="" @change="handleSelectionChange"
+              <el-select v-model="testingOption.checker_type" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
                     v-for="option in checkerOptions"
@@ -153,7 +154,7 @@ async function handleSubmit() {
               </el-select>
             </el-form-item>
             <el-form-item label="DB Isolation Level">
-              <el-select v-model="testingOption.selectedCheckerIsolationLevel" placeholder=""
+              <el-select v-model="testingOption.checker_isolation" placeholder=""
                          @change="handleSelectionChange"
                          class="fixed-width">
                 <el-option
@@ -166,7 +167,7 @@ async function handleSubmit() {
             </el-form-item>
             <el-form-item label="Enable Profiler">
               <el-switch
-                  v-model="testingOption.useProfiler"
+                  v-model="testingOption.profiler_enable"
                   class="ml-2"
                   style="--el-switch-on-color: #13ce66"
               />

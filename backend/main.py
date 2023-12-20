@@ -122,7 +122,8 @@ async def run(request: Request):
     # write config.properties
     config = ''
     for key, value in params.items():
-        config += f'{key}={value}\n'
+        option = key.replace('_', '.')
+        config += f'{option}={value}\n'
     with open(config_path, 'w') as file:
         file.write(config)
 
