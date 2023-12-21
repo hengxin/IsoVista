@@ -1,43 +1,34 @@
 <script setup>
 import {onMounted, ref} from "vue"
-import {download, get_bug_list} from "@/api/api.js";
+import {download_run, get_run_list} from "@/api/api.js";
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-defineProps({
-  msg: {
-    type: String,
-    required: false
-  }
-})
 const tableData = ref([])
 
 async function get_bugs() {
-  get_bug_list().then(res => {
+  get_run_list().then(res => {
     console.log(res.data)
     for (let i = 0; i < res.data.length; i++) {
       tableData.value.push({
-        id: res.data[i].bug_id,
+        id: res.data[i].run_id,
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
-        filename: res.data[i].bug_dir,
         checkerType: res.data[i].checker_type,
         checkerIsolation: res.data[i].checker_isolation,
-        date: res.data[i].timestamp
+        histCount: res.data[i].hist_count,
+        bugCount: res.data[i].bug_count,
+        date: res.data[i].timestamp,
       })
     }
     console.log(tableData)
   })
 }
 
-function handleView(row){
-  router.push("/view/" + row.id)
-}
-
 function handleDownload(row) {
   console.log(row.id)
-  download(row.id).then(res => {
+  download_run(row.id).then(res => {
 
     const { data, headers } = res
     const fileName = decodeURIComponent(escape(res.headers['file-name']))
@@ -68,7 +59,7 @@ const formatDate = (timestamp) => {
 <template>
   <el-container class="layout-container-demo" style="height: 100%">
     <el-header style="text-align: left; font-size: 22px">
-      All Bugs
+      All Runs
     </el-header>
 
     <el-main>
@@ -76,8 +67,10 @@ const formatDate = (timestamp) => {
         <el-table :data="tableData"
                   :default-sort="{ prop: 'id', order: 'ascending' }"
                   stripe
-                  >
+        >
           <el-table-column prop="id" label="ID" width="80"/>
+          <el-table-column prop="bugCount" label="Bug Count" width="100"/>
+          <el-table-column prop="histCount" label="Hist Count" width="100"/>
           <el-table-column prop="dbType" label="DB Type" width="150"/>
           <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
           <el-table-column prop="checkerType" label="Checker Type" width="150"/>
@@ -87,15 +80,8 @@ const formatDate = (timestamp) => {
               {{ formatDate(row.date) }}
             </template>
           </el-table-column>
-          <el-table-column label="Operations" width="200">
+          <el-table-column label="Operations" width="100">
             <template #default="scope">
-              <el-button
-                  link
-                  size="small"
-                  type="primary"
-                  @click="handleView(scope.row)"
-              >View</el-button
-              >
               <el-button
                   link
                   size="small"

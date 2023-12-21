@@ -15,20 +15,20 @@
               <span>Dashboard</span>
             </template>
           </el-menu-item>
-          <el-menu-item index="2" @click="$router.push('/bugs')">
+          <el-menu-item index="2" @click="$router.push('/runs')">
+            <template #title>
+              <el-icon>
+                <List />
+              </el-icon>
+              <span>Runs</span>
+            </template>
+          </el-menu-item>
+          <el-menu-item index="3" @click="$router.push('/bugs')">
             <template #title>
               <el-icon>
                 <Failed />
               </el-icon>
               <span>Bugs</span>
-            </template>
-          </el-menu-item>
-          <el-menu-item index="3" @click="$router.push('/view')">
-            <template #title>
-              <el-icon>
-                <View />
-              </el-icon>
-              <span>View</span>
             </template>
           </el-menu-item>
         </el-menu>
@@ -42,7 +42,7 @@
 </template>
 
 <script lang="ts" setup>
-import {House, Failed, View, Setting} from '@element-plus/icons-vue'
+import {House, Failed, View, Setting, List} from '@element-plus/icons-vue'
 
 </script>
 

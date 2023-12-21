@@ -101,9 +101,58 @@ class BugStore:
         return self.bug_map[bug_id]
 
 
+class Run:
+    def __init__(self, run_id, db_type, db_isolation, checker_type, checker_isolation, timestamp, hist_count, bug_count, dir_path):
+        self.run_id = run_id
+        self.db_type = db_type
+        self.db_isolation = db_isolation
+        self.checker_type = checker_type
+        self.checker_isolation = checker_isolation
+        self.timestamp = timestamp
+        self.hist_count = hist_count
+        self.bug_count = bug_count
+        self.dir_path = dir_path
+
+    def zip(self, filename):
+        with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(self.dir_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, os.path.relpath(file_path, self.dir_path))
+
+
+class RunStore:
+    def __init__(self, directory):
+        self.directory = directory
+        self.buggy_run_count = 0
+        self.run_count = 0
+        self.run_map = {}
+
+    def scan(self):
+        run_id = 0
+        for run_dir in os.listdir(self.directory):
+            if not run_dir.startswith("run_"):
+                continue
+            self.run_count += 1
+            run_id += 1
+
+            metadata_path = os.path.join(self.directory, run_dir, "metadata.json")
+            with open(metadata_path) as f:
+                run_meta = json.load(f)
+
+            self.run_map[run_id] = Run(run_id, run_meta["db_type"], run_meta["db_isolation"], run_meta["checker_type"],
+                                       run_meta["checker_isolation"], run_meta["timestamp"],
+                                       run_meta["history_count"], run_meta["bug_count"],
+                                       os.path.join(self.directory, run_dir))
+
+    def get(self, run_id):
+        return self.run_map[run_id]
+
+
 bug_store = BugStore(result_path)
 bug_store.scan()
-
+run_store = RunStore(result_path)
+run_store.scan()
 
 @app.get("/history_count")
 async def get_history_count():
@@ -132,12 +181,17 @@ async def run(request: Request):
 
     # update data
     bug_store.scan()
+    run_store.scan()
     return {}
 
 
 @app.get("/bug_list")
 async def get_bug_list():
     return list(bug_store.bug_map.values())
+
+@app.get("/run_list")
+async def get_run_list():
+    return list(run_store.run_map.values())
 
 
 @app.get("/view/{bug_id}")
@@ -168,4 +222,10 @@ async def view_bug(bug_id: int):
 async def download_bug(bug_id: int):
     zip_file = "download.zip"
     bug_store.get(bug_id).zip(zip_file)
+    return FileResponse(zip_file, filename=zip_file)
+
+@app.get("/download_run/{run_id}")
+async def download_bug(run_id: int):
+    zip_file = "download.zip"
+    run_store.get(run_id).zip(zip_file)
     return FileResponse(zip_file, filename=zip_file)

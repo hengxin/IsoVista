@@ -52,7 +52,7 @@ onMounted(async () => {
 
   const container = document.getElementById('container');
   const width = container.scrollWidth;
-  const height = container.scrollHeight || 500;
+  const height = container.scrollHeight || 800;
 
   const graph = new G6.Graph({
     container: 'container',
@@ -115,6 +115,7 @@ onMounted(async () => {
 </script>
 
 <template>
+<!--  TODO: Download SVG, Tikz(?)-->
   <el-container class="layout-container-demo" style="height: 100%">
     <el-main>
       <div id="container"></div>

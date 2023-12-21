@@ -1,20 +1,12 @@
 <script lang="ts" setup>
-
-defineProps({
-  msg: {
-    type: String,
-    required: false
-  }
-})
-
 import {reactive} from "vue";
 import {ElLoading, ElMessage} from "element-plus";
 import {run} from "@/api/api";
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
-  db_type: '',
-  db_isolation: '',
+  db_type: 'MYSQL',
+  db_isolation: 'SERIALIZABLE',
   db_username: 'dbtest',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
@@ -24,9 +16,9 @@ const testingOption = reactive({
   workload_operation: 5,
   workload_key: 1000,
   workload_readproportion: 0.5,
-  workload_distribution: '',
-  checker_type: '',
-  checker_isolation: '',
+  workload_distribution: 'UNIFORM',
+  checker_type: 'PolySI',
+  checker_isolation: 'SNAPSHOT_ISOLATION',
   profiler_enable: false
 });
 
@@ -95,7 +87,7 @@ async function handleSubmit() {
         </el-col>
         <el-col :span="12">
           <el-form label-position="left" label-width="220px">
-            <el-form-item label="URL">
+            <el-form-item label="DB URL">
               <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
             <el-form-item label="DB Type">
@@ -126,6 +118,7 @@ async function handleSubmit() {
             <el-form-item label="Password">
               <el-input v-model="testingOption.db_password" placeholder="DB password" clearable class="fixed-width"></el-input>
             </el-form-item>
+            <el-divider />
             <el-form-item label="#History">
               <el-input-number
                   v-model="testingOption.workload_history"
@@ -191,6 +184,7 @@ async function handleSubmit() {
                 </el-option>
               </el-select>
             </el-form-item>
+            <el-divider />
             <el-form-item label="Checker Type">
               <el-select v-model="testingOption.checker_type" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
@@ -214,6 +208,7 @@ async function handleSubmit() {
                 </el-option>
               </el-select>
             </el-form-item>
+            <el-divider />
             <el-form-item label="Enable Profiler">
               <el-switch
                   v-model="testingOption.profiler_enable"
