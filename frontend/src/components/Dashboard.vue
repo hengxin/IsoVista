@@ -8,6 +8,8 @@ defineProps({
 })
 
 import {reactive} from "vue";
+import {ElLoading, ElMessage} from "element-plus";
+import {run} from "@/api/api";
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
@@ -65,21 +67,18 @@ const handleSwitch = (value: boolean) => {
 
 async function handleSubmit() {
   console.log(testingOption)
-  fetch('http://localhost:8000/run', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(testingOption)
-  }).then(response => {
-    if (response.ok) {
-      return response.json()
-    }
-    throw new Error('Network response was not ok.')
-  }).then(data => {
-    console.log(data)
-  }).catch(err => {
-    console.log('Error:',err)
+  const loading = ElLoading.service({
+    lock: true,
+    text: 'Loading',
+    background: 'rgba(0, 0, 0, 0.7)',
+  })
+  run(testingOption).then(res => {
+    console.log(res)
+    loading.close()
+    ElMessage({
+      message: 'Run success',
+      type: 'success',
+    })
   })
 }
 
@@ -219,7 +218,6 @@ async function handleSubmit() {
               <el-switch
                   v-model="testingOption.profiler_enable"
                   class="ml-2"
-                  style="--el-switch-on-color: #13ce66"
                   @change="handleSwitch"
               />
             </el-form-item>
