@@ -1,6 +1,9 @@
 <script setup>
-import {SuccessFilled} from "@element-plus/icons-vue"
-import {ref} from "vue"
+import {onMounted, ref} from "vue"
+import {download, get_bug_list} from "@/api/api.js";
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 defineProps({
   msg: {
@@ -11,27 +14,51 @@ defineProps({
 const tableData = ref([])
 
 async function get_bugs() {
-  await fetch('http://localhost:8000/bug_list', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then(response => {
-    if (response.ok) {
-      return response.json()
-    }
-  }).then(data => {
-    for (let i = 0; i < data.length; i++) {
+  get_bug_list().then(res => {
+    console.log(res.data)
+    for (let i = 0; i < res.data.length; i++) {
       tableData.value.push({
-        filename: data[i].bug_dir,
-        isoLevel: data[i].checker_isolation,
-        checker: data[i].checker_type,
-        date: data[i].timestamp
+        id: res.data[i].bug_id,
+        dbType: res.data[i].db_type,
+        dbIsolation: res.data[i].db_isolation,
+        filename: res.data[i].bug_dir,
+        checkerType: res.data[i].checker_type,
+        checkerIsolation: res.data[i].checker_isolation,
+        date: res.data[i].timestamp
       })
     }
     console.log(tableData)
   })
 }
+
+function handleView(row){
+  router.push("/view/" + row.id)
+}
+
+function handleDownload(row) {
+  console.log(row.id)
+  download(row.id).then(res => {
+
+    const { data, headers } = res
+    const fileName = decodeURIComponent(escape(res.headers['file-name']))
+
+    //const blob = new Blob([JSON.stringify(data)], ...)
+    const blob = new Blob([data], {type: headers['content-type']})
+    let dom = document.createElement('a')
+    let url = window.URL.createObjectURL(blob)
+    dom.href = url
+    dom.download = decodeURI(fileName)
+    dom.style.display = 'none'
+    document.body.appendChild(dom)
+    dom.click()
+    dom.parentNode.removeChild(dom)
+    window.URL.revokeObjectURL(url)
+  })
+}
+
+onMounted(async () => {
+  await get_bugs()
+})
 
 const formatDate = (timestamp) => {
   return new Date(timestamp).toLocaleDateString(); // 或者使用其他格式化库
@@ -45,26 +72,39 @@ const formatDate = (timestamp) => {
     </el-header>
 
     <el-main>
-      <el-button type="success" @click="get_bugs">
-        <el-icon>
-          <SuccessFilled />
-        </el-icon>
-        <span>Get</span>
-      </el-button>
       <el-scrollbar>
         <el-table :data="tableData"
-                  :default-sort="{ prop: 'date', order: 'descending' }"
+                  :default-sort="{ prop: 'id', order: 'ascending' }"
                   stripe
                   >
-          <el-table-column type="index" width="80"/>
-          <el-table-column prop="filename" label="File Name" width="400"/>
-          <el-table-column prop="isoLevel" label="Isolation Level" width="220"/>
-          <el-table-column prop="checker" label="Checker" width="200"/>
-          <el-table-column prop="date" label="Date" sortable>
+          <el-table-column prop="id" label="ID" width="80"/>
+          <el-table-column prop="dbType" label="DB Type" width="150"/>
+          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
+          <el-table-column prop="checkerType" label="Checker Type" width="150"/>
+          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
+          <el-table-column prop="date" label="Date">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
             </template>
-          </el-table-column>>
+          </el-table-column>
+          <el-table-column label="Operations" width="200">
+            <template #default="scope">
+              <el-button
+                  link
+                  size="small"
+                  type="primary"
+                  @click="handleView(scope.row)"
+              >View</el-button
+              >
+              <el-button
+                  link
+                  size="small"
+                  type="primary"
+                  @click="handleDownload(scope.row)"
+              >Download</el-button
+              >
+            </template>
+          </el-table-column>
         </el-table>
       </el-scrollbar>
     </el-main>
