@@ -123,9 +123,9 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
                    label-width="220px"
                    class="form-style"
           >
-            <el-form-item>
-              <h3>Database Settings</h3>
-            </el-form-item>
+            <header class="form-header">
+              <h2>Database Settings</h2>
+            </header>
             <el-form-item label="DB URL">
               <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
@@ -168,9 +168,9 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
                    label-width="220px"
                    class="form-style"
           >
-            <el-form-item>
-              <h3>Workload Settings</h3>
-            </el-form-item>
+            <header class="form-header">
+              <h2>Workload Settings</h2>
+            </header>
             <el-form-item label="#History">
               <el-input-number
                   v-model="testingOption.workload_history"
@@ -248,9 +248,9 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
           <el-form  label-position="left"
                     label-width="220px"
                     class="form-style">
-            <el-form-item>
-              <h3>Checker Settings</h3>
-            </el-form-item>
+            <header class="form-header">
+              <h2>Checker Settings</h2>
+            </header>
             <el-form-item label="Checker Type">
               <el-select v-model="testingOption.checker_type" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
@@ -315,13 +315,8 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
 
 <style>
 
-
 .fixed-width {
   width: 600px;
-}
-
-.el-input .el-input__inner {
-  text-align: left
 }
 
 .form-style {
@@ -334,4 +329,8 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
   position: relative;
 }
 
+.form-header h2 {
+  margin-bottom: 20px;
+  text-align: left;
+}
 </style>
