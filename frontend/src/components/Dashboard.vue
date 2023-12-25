@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import {reactive} from "vue";
-import {ElLoading, ElMessage} from "element-plus";
+import {reactive, ref} from "vue";
+import {ElLoading, ElMessage, ElMessageBox} from "element-plus";
+import type {UploadProps, UploadUserFile} from 'element-plus'
 import {run} from "@/api/api";
 
 const testingOption = reactive({
@@ -74,19 +75,57 @@ async function handleSubmit() {
   })
 }
 
+const active = ref(0)
+const next = () => {
+  if (active.value++ > 2) active.value = 0
+}
+const back = () => {
+  if (active.value-- < 0) active.value = 2
+}
+
+const fileList = ref<UploadUserFile[]>([])
+const handleRemove: UploadProps['onRemove'] = (file, uploadFiles) => {
+  console.log(file, uploadFiles)
+}
+
+const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
+  console.log(uploadFile)
+}
+
+const handleExceed: UploadProps['onExceed'] = (files, uploadFiles) => {
+  ElMessage.warning(
+      `The limit is 3, you selected ${files.length} files this time, add up to ${
+          files.length + uploadFiles.length
+      } totally`
+  )
+}
+
+const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
+  return ElMessageBox.confirm(
+      `Cancel the transfer of ${uploadFile.name} ?`
+  ).then(
+      () => true,
+      () => false
+  )
+}
 </script>
 
 <template>
   <el-container class="layout-container-demo">
-    <el-header>
-    </el-header>
+    <el-header></el-header>
 
     <el-main>
       <el-row>
-        <el-col :span="4">
+        <el-col :span="2">
         </el-col>
-        <el-col :span="12">
-          <el-form label-position="left" label-width="220px">
+        <el-col :span="9">
+          <el-form label-position="left"
+                   label-width="220px"
+                   class="form-style"
+          >
+            <el-form-item>
+              <h3>Database Settings</h3>
+            </el-form-item>
             <el-form-item label="DB URL">
               <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable class="fixed-width"></el-input>
             </el-form-item>
@@ -113,17 +152,30 @@ async function handleSubmit() {
               </el-select>
             </el-form-item>
             <el-form-item label="Username">
-              <el-input v-model="testingOption.db_username" placeholder="DB username" clearable class="fixed-width"></el-input>
+              <el-input v-model="testingOption.db_username" placeholder="DB username" clearable
+                        class="fixed-width"></el-input>
             </el-form-item>
             <el-form-item label="Password">
-              <el-input v-model="testingOption.db_password" placeholder="DB password" clearable class="fixed-width"></el-input>
+              <el-input v-model="testingOption.db_password" placeholder="DB password" clearable
+                        class="fixed-width"></el-input>
             </el-form-item>
-            <el-divider />
+          </el-form>
+        </el-col>
+        <el-col :span="2">
+        </el-col>
+        <el-col :span="9">
+          <el-form label-position="left"
+                   label-width="220px"
+                   class="form-style"
+          >
+            <el-form-item>
+              <h3>Workload Settings</h3>
+            </el-form-item>
             <el-form-item label="#History">
               <el-input-number
                   v-model="testingOption.workload_history"
-                  :min="1"
-                  :max="100"
+                  :min="0"
+                  :max="99"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -131,8 +183,8 @@ async function handleSubmit() {
             <el-form-item label="#Session">
               <el-input-number
                   v-model="testingOption.workload_session"
-                  :min="1"
-                  :max="1000"
+                  :min="0"
+                  :max="999"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -140,8 +192,8 @@ async function handleSubmit() {
             <el-form-item label="#Txn/Sess">
               <el-input-number
                   v-model="testingOption.workload_transaction"
-                  :min="1"
-                  :max="1000"
+                  :min="0"
+                  :max="999"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -149,8 +201,8 @@ async function handleSubmit() {
             <el-form-item label="#Op/Txn">
               <el-input-number
                   v-model="testingOption.workload_operation"
-                  :min="1"
-                  :max="1000"
+                  :min="0"
+                  :max="999"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -158,8 +210,8 @@ async function handleSubmit() {
             <el-form-item label="#Key">
               <el-input-number
                   v-model="testingOption.workload_key"
-                  :min="1"
-                  :max="100000000"
+                  :min="0"
+                  :max="99999999"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -167,8 +219,8 @@ async function handleSubmit() {
             <el-form-item label="Read Proportion">
               <el-input-number
                   v-model="testingOption.workload_readproportion"
-                  :min="0"
-                  :max="1"
+                  :min="-1"
+                  :max="0"
                   controls-position="right"
                   class="fixed-width"
               />
@@ -184,7 +236,21 @@ async function handleSubmit() {
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-divider />
+          </el-form>
+        </el-col>
+      </el-row>
+
+      <el-row>
+        <el-col :span="2">
+        </el-col>
+        <el-col :span="9">
+
+          <el-form  label-position="left"
+                    label-width="220px"
+                    class="form-style">
+            <el-form-item>
+              <h3>Checker Settings</h3>
+            </el-form-item>
             <el-form-item label="Checker Type">
               <el-select v-model="testingOption.checker_type" placeholder="" @change="handleSelectionChange"
                          class="fixed-width">
@@ -208,7 +274,7 @@ async function handleSubmit() {
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-divider />
+            <el-divider/>
             <el-form-item label="Enable Profiler">
               <el-switch
                   v-model="testingOption.profiler_enable"
@@ -219,6 +285,27 @@ async function handleSubmit() {
             <el-form-item>
               <el-button type="primary" @click="handleSubmit">start</el-button>
             </el-form-item>
+            <el-divider></el-divider>
+            <el-form-item>
+              <el-upload
+                  v-model:file-list="fileList"
+                  class="upload-demo"
+                  action=""
+                  multiple
+                  :on-preview="handlePreview"
+                  :on-remove="handleRemove"
+                  :before-remove="beforeRemove"
+                  :limit="3"
+                  :on-exceed="handleExceed"
+              >
+                <el-button type="primary">Upload</el-button>
+                <template #tip>
+                  <div class="el-upload__tip">
+                    upload your generated history file here
+                  </div>
+                </template>
+              </el-upload>
+            </el-form-item>
           </el-form>
         </el-col>
       </el-row>
@@ -226,24 +313,25 @@ async function handleSubmit() {
   </el-container>
 </template>
 
-<style scoped>
+<style>
 
-.layout-container-demo .el-main {
-  padding: 0;
-}
-
-.layout-container-demo .toolbar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  right: 20px;
-}
 
 .fixed-width {
   width: 600px;
 }
 
-.el-input .el-input__inner {text-align:left}
+.el-input .el-input__inner {
+  text-align: left
+}
+
+.form-style {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  background-color: rgba(24, 67, 237, 0.1);
+  position: relative;
+}
 
 </style>
