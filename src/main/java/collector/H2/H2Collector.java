@@ -28,7 +28,7 @@ public class H2Collector extends Collector<Long, Long> {
         history.getSessions().values().forEach(session -> {
             Callable<Void> task = () -> {
                 var node = new H2Client(url, username, password);
-                node.execSession(session);
+                node.execSession(session, isolation);
                 return null;
             };
             todo.add(task);

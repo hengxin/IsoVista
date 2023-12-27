@@ -1,6 +1,7 @@
 package collector.H2;
 
 import collector.DBClient;
+import collector.IsolationLevel;
 import history.Session;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +19,12 @@ public class H2Client extends DBClient {
 
     @Override
     @SneakyThrows
-    public void execSession(Session<Long, Long> session) {
+    public void execSession(Session<Long, Long> session, IsolationLevel isolationLevel) {
         var readStmt = connection.prepareStatement("SELECT * FROM dbtest.variables WHERE var=?");
         var writeStmt = connection.prepareStatement("UPDATE dbtest.variables SET val=? WHERE var=?");
 
         connection.setAutoCommit(false);
-        connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        connection.setTransactionIsolation(isolationLevel.getConstant());
 
         for (var transaction : session.getTransactions()) {
             // restart the transaction several times if failed

@@ -31,7 +31,7 @@ public class PostgreSQLCollector extends Collector<Long, Long> {
         history.getSessions().values().forEach(session -> {
             Callable<Void> task = () -> {
                 var node = new PostgreSQLClient(url, username, password);
-                node.execSession(session);
+                node.execSession(session, isolation);
                 return null;
             };
             todo.add(task);

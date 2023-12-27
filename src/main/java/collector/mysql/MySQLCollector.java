@@ -29,7 +29,7 @@ public class MySQLCollector extends Collector<Long, Long> {
         history.getSessions().values().forEach(session -> {
             Callable<Void> task = () -> {
                 var node = new MySQLClient(url, username, password);
-                node.execSession(session);
+                node.execSession(session, isolation);
                 return null;
             };
             todo.add(task);

@@ -21,5 +21,5 @@ public abstract class DBClient {
         this.connection = DriverManager.getConnection(url, username, password);
     }
 
-    public abstract void execSession(Session<Long, Long> session);
+    public abstract void execSession(Session<Long, Long> session, IsolationLevel isolationLevel);
 }

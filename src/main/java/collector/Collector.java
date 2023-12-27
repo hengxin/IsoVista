@@ -14,6 +14,7 @@ public abstract class Collector<KeyType, ValType> {
     protected String password;
     protected Connection connection;
     protected long nKey;
+    protected IsolationLevel isolation;
 
     @SneakyThrows
     public Collector(Properties config) {
@@ -22,6 +23,7 @@ public abstract class Collector<KeyType, ValType> {
         this.password = config.getProperty(Config.DB_PASSWORD);
         this.connection = DriverManager.getConnection(url, username, password);
         this.nKey = Long.parseLong(config.getProperty(Config.WORKLOAD_KEY));
+        this.isolation = IsolationLevel.valueOf(config.getProperty(Config.DB_ISOLATION));
     }
 
     public abstract History<KeyType, ValType> collect(History<KeyType, ValType> history);

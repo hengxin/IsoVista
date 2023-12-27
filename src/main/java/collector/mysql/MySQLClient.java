@@ -1,16 +1,14 @@
 package collector.mysql;
 
 import collector.DBClient;
-import history.History;
+import collector.IsolationLevel;
 import history.Operation;
 import history.Session;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 
 @Slf4j
 public class MySQLClient extends DBClient {
@@ -21,12 +19,12 @@ public class MySQLClient extends DBClient {
 
     @Override
     @SneakyThrows
-    public void execSession(Session<Long, Long> session) {
+    public void execSession(Session<Long, Long> session, IsolationLevel isolationLevel) {
         var readStmt = connection.prepareStatement("SELECT * FROM dbtest.variables WHERE var=?");
         var writeStmt = connection.prepareStatement("UPDATE dbtest.variables SET val=? WHERE var=?");
 
         connection.setAutoCommit(false);
-        connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        connection.setTransactionIsolation(isolationLevel.getConstant());
 
         for (var transaction : session.getTransactions()) {
             // restart the transaction several times if failed
