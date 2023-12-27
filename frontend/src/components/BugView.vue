@@ -9,7 +9,7 @@ const props = defineProps({
   }
 })
 
-const data = {
+let data = {
   nodes: [],
   edges: []
 }
@@ -21,6 +21,7 @@ onMounted(async () => {
     fixToNode: [1, 0],
     // the types of items that allow the tooltip show up
     itemTypes: ['node'],
+    // trigger: 'click',
     // custom the tooltip's content
     getContent: (e) => {
       const outDiv = document.createElement('div');
@@ -41,7 +42,17 @@ onMounted(async () => {
     },
   });
 
-  console.log(props.bug_id)
+  const menu = new G6.Menu({
+    getContent(evt) {
+      console.log(evt.item._cfg.type)
+      return `<bottom style="user-select: none">Delete</bottom>`;
+    },
+    handleMenuClick(target, item) {
+      data.edges = data.edges.filter(e => e.id !== item._cfg.id)
+      data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
+      graph.render();
+    },
+  });
 
   await get_graph(props.bug_id).then(res => {
     console.log(res.data)
@@ -62,7 +73,7 @@ onMounted(async () => {
     fitCenter: true,
     // the edges are linked to the center of source and target ndoes
     linkCenter: false,
-    plugins: [tooltip],
+    plugins: [tooltip, menu],
     defaultNode: {
       type: 'circle',
       size: [40],
