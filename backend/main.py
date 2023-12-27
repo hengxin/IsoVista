@@ -11,8 +11,7 @@ from fastapi.responses import FileResponse
 
 app = FastAPI()
 origins = [
-    "http://localhost",
-    "http://localhost:5173",
+    "*",
 ]
 
 app.add_middleware(
@@ -79,7 +78,7 @@ class BugStore:
         self.bug_map = {}
 
     def scan(self):
-        bug_id = 0
+        bug_list = []
         for run_dir in os.listdir(self.directory):
             metadata_path = os.path.join(self.directory, run_dir, "metadata.json")
             config_path = os.path.join(self.directory, run_dir, "config.properties")
@@ -91,11 +90,15 @@ class BugStore:
             for bug_dir in os.listdir(os.path.join(self.directory, run_dir)):
                 if not bug_dir.startswith("bug_"):
                     continue
-                bug_id += 1
-                self.bug_map[bug_id] = Bug(bug_id, run_meta["db_type"], run_meta["db_isolation"],
+                bug_list.append(Bug(0, run_meta["db_type"], run_meta["db_isolation"],
                                            run_meta["checker_type"], run_meta["checker_isolation"],
                                            run_meta["timestamp"], os.path.join(self.directory, run_dir, bug_dir),
-                                           config_path, metadata_path, log_path)
+                                           config_path, metadata_path, log_path))
+        bug_list.sort(key=lambda bug: bug.timestamp)
+        for index, bug in enumerate(bug_list):
+            bug.bug_id = index + 1
+            self.bug_map[bug.bug_id] = bug
+
 
     def get(self, bug_id):
         return self.bug_map[bug_id]
@@ -129,21 +132,23 @@ class RunStore:
         self.run_map = {}
 
     def scan(self):
-        run_id = 0
+        run_list = []
         for run_dir in os.listdir(self.directory):
             if not run_dir.startswith("run_"):
                 continue
             self.run_count += 1
-            run_id += 1
 
             metadata_path = os.path.join(self.directory, run_dir, "metadata.json")
             with open(metadata_path) as f:
                 run_meta = json.load(f)
-
-            self.run_map[run_id] = Run(run_id, run_meta["db_type"], run_meta["db_isolation"], run_meta["checker_type"],
+            run_list.append(Run(0, run_meta["db_type"], run_meta["db_isolation"], run_meta["checker_type"],
                                        run_meta["checker_isolation"], run_meta["timestamp"],
                                        run_meta["history_count"], run_meta["bug_count"],
-                                       os.path.join(self.directory, run_dir))
+                                       os.path.join(self.directory, run_dir)))
+        run_list.sort(key=lambda run: run.timestamp)
+        for index, run in enumerate(run_list):
+            run.run_id = index + 1
+            self.run_map[run.run_id] = run
 
     def get(self, run_id):
         return self.run_map[run_id]
