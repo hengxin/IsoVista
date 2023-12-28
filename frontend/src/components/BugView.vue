@@ -20,6 +20,17 @@ const handleDownloadPNG = () => {
   g.downloadFullImage('image', 'image/png')
 }
 
+const downloadStringAsFile = (str, fileName) => {
+  var blob = new Blob([str], {type: 'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 const handleDownloadTikz = () => {
   var tikzCode = "\\documentclass[tikz]{standalone}\n";
   tikzCode += "\\begin{document}\n";
@@ -38,14 +49,20 @@ const handleDownloadTikz = () => {
   tikzCode += "\\end{document}\n";
   console.log(tikzCode)
 
-  var blob = new Blob([tikzCode], {type: 'text/plain'});
-  var url = URL.createObjectURL(blob);
-  var link = document.createElement('a');
-  link.href = url;
-  link.download = 'tikz.tex';
+  downloadStringAsFile(tikzCode, "tikz.tex")
+}
 
-  link.click();
-  URL.revokeObjectURL(url);
+const handleDownloadDot = () => {
+  var dotCode = "digraph {\n";
+  data.nodes.forEach(function(node) {
+    dotCode += "  \"" + node.id + "\" [label=\"" + node.label + "\"];\n";
+  });
+  data.edges.forEach(function(edge) {
+    dotCode += "  \"" + edge.source + "\" -> \"" + edge.target + "\" [label=\"" + edge.label + "\"];\n";
+  });
+  dotCode += "}\n";
+
+  downloadStringAsFile(dotCode, "graph.dot")
 }
 
 onMounted(async () => {
@@ -176,6 +193,7 @@ onMounted(async () => {
             <el-dropdown-menu>
               <el-dropdown-item @click="handleDownloadPNG">PNG</el-dropdown-item>
               <el-dropdown-item @click="handleDownloadTikz">Tikz</el-dropdown-item>
+              <el-dropdown-item @click="handleDownloadDot">Dot</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
