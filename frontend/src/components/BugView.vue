@@ -1,5 +1,5 @@
 <script setup>
-import {defineProps, onMounted} from 'vue'
+import {defineProps, onMounted, ref} from 'vue'
 import G6 from '@antv/g6';
 import {get_graph} from "@/api/api"
 const props = defineProps({
@@ -12,6 +12,40 @@ const props = defineProps({
 let data = {
   nodes: [],
   edges: []
+}
+
+let g = ref(G6.Graph);
+const handleDownloadPNG = () => {
+  console.log("download png")
+  g.downloadFullImage('image', 'image/png')
+}
+
+const handleDownloadTikz = () => {
+  var tikzCode = "\\documentclass[tikz]{standalone}\n";
+  tikzCode += "\\begin{document}\n";
+  tikzCode += "\\begin{tikzpicture}\n";
+
+  data.nodes.forEach(function(node) {
+    console.log(node)
+    tikzCode += "\\node[draw] at (" + node.x / 100 + "," + -node.y / 100 + ") (" + node.id.match(/\d+/g) + ") {" + node.label + "};\n";
+  });
+
+  data.edges.forEach(function(edge) {
+    tikzCode += "\\draw[->] (" + edge.source.match(/\d+/g) + ") to node[above] {$" + edge.label + "$} (" + edge.target.match(/\d+/g) + ");\n";
+  });
+
+  tikzCode += "\\end{tikzpicture}\n";
+  tikzCode += "\\end{document}\n";
+  console.log(tikzCode)
+
+  var blob = new Blob([tikzCode], {type: 'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = 'tikz.tex';
+
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 onMounted(async () => {
@@ -48,8 +82,12 @@ onMounted(async () => {
       return `<bottom style="user-select: none">Delete</bottom>`;
     },
     handleMenuClick(target, item) {
-      data.edges = data.edges.filter(e => e.id !== item._cfg.id)
-      data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
+      if (item._cfg.type === 'node') {
+        data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
+        data.edges = data.edges.filter(e => e.source !== item._cfg.id && e.target !== item._cfg.id)
+      } else if (item._cfg.type === 'edge') {
+        data.edges = data.edges.filter(e => e.id !== item._cfg.id)
+      }
       graph.render();
     },
   });
@@ -115,6 +153,7 @@ onMounted(async () => {
   });
   graph.data(data);
   graph.render();
+  g = graph
 
   if (typeof window !== 'undefined')
     window.onresize = () => {
@@ -126,9 +165,21 @@ onMounted(async () => {
 </script>
 
 <template>
-<!--  TODO: Download SVG, Tikz(?)-->
   <el-container class="layout-container-demo" style="height: 100%">
     <el-main>
+      <el-container id="toolbar">
+        <el-dropdown trigger="click">
+          <span class="el-dropdown-link">
+            Download
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="handleDownloadPNG">PNG</el-dropdown-item>
+              <el-dropdown-item @click="handleDownloadTikz">Tikz</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </el-container>
       <div id="container"></div>
     </el-main>
   </el-container>
@@ -149,5 +200,18 @@ onMounted(async () => {
   background-color: rgba(255, 255, 255, 0.8);
   padding: 0px 10px 24px 10px;
   box-shadow: rgb(174, 174, 174) 0px 0px 10px;
+}
+
+#toolbar {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.el-dropdown-link {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  display: flex;
+  align-items: center;
 }
 </style>
