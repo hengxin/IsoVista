@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import {reactive, ref} from "vue"
-import {ElLoading, ElMessage, ElMessageBox} from "element-plus"
+import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
-import {run} from "@/api/api"
+import {run, get_current_log} from "@/api/api"
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
   db_type: 'MYSQL',
-  db_isolation: 'SERIALIZABLE',
+  db_isolation: 'TRANSACTION_SERIALIZATION',
   db_username: 'dbtest',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
@@ -29,11 +29,10 @@ const dbOptions = [
   {label: 'H2', value: 'H2'}
 ];
 const dbIsolationLevelOptions = [
-  {label: 'Read_Uncommitted', value: 'READ_UNCOMMITTED'},
-  {label: 'Read_Committed', value: 'READ_COMMITTED'},
-  {label: 'Repeatable_Read', value: 'REPEATABLE_READ'},
-  {label: 'Serializable', value: 'SERIALIZABLE'},
-  {label: 'Transaction_Snapshot', value: 'TRANSACTION_SNAPSHOT'},
+  {label: 'Read_Uncommitted', value: 'TRANSACTION_READ_UNCOMMITTED'},
+  {label: 'Read_Committed', value: 'TRANSACTION_READ_COMMITTED'},
+  {label: 'Repeatable_Read', value: 'TRANSACTION_REPEATABLE_READ'},
+  {label: 'Serializable', value: 'TRANSACTION_SERIALIZATION'},
 ];
 const distributionOptions = [
   {label: 'Uniform', value: 'uniform'},
@@ -61,18 +60,24 @@ const handleSwitch = (value: boolean) => {
 
 async function handleSubmit() {
   console.log(testingOption)
-  const loading = ElLoading.service({
-    lock: true,
-    text: 'Loading',
-    background: 'rgba(0, 0, 0, 0.7)',
-  })
+  dialogVisible.value = true
+  const intervalRefreshLog = setInterval(() => {
+    get_current_log().then(
+        res => {
+          currentLog.value = res.data
+          // console.log(currentLog.value)
+        }
+    )
+  }, 500);
   run(testingOption).then(res => {
     console.log(res)
-    loading.close()
     ElMessage({
       message: 'Run success',
       type: 'success',
     })
+  }).finally(() => {
+    dialogVisible.value = false
+    clearInterval(intervalRefreshLog)
   })
 }
 
@@ -111,6 +116,7 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
 }
 
 const dialogVisible = ref(false)
+const currentLog = ref('')
 const activeIndex = ref(0)
 const handleIndexChange = (index) => {
   activeIndex.value = index
@@ -345,20 +351,9 @@ const handleIndexChange = (index) => {
           </el-card>
         </el-col>
       </el-row>
-      <el-button type="primary" @click="dialogVisible = true">start</el-button>
-      <el-dialog
-          v-model="dialogVisible"
-          title="Option Overview"
-          width="50%"
-      >
-        <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="dialogVisible = false">Cancel</el-button>
-            <el-button type="primary" @click="dialogVisible = false">
-              Confirm
-            </el-button>
-          </span>
-        </template>
+      <el-button type="primary" @click="handleSubmit();">start</el-button>
+      <el-dialog class="current-log" v-model="dialogVisible" title="Runtime logs">
+        <pre>{{currentLog}}</pre>
       </el-dialog>
     </el-main>
   </el-container>
@@ -418,6 +413,14 @@ const handleIndexChange = (index) => {
 
 .item {
   margin-bottom: 18px;
+}
+
+.current-log {
+  overflow: auto;
+}
+.current-log pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .box-card {

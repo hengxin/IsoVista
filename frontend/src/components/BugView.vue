@@ -129,6 +129,16 @@ onMounted(async () => {
     // the edges are linked to the center of source and target ndoes
     linkCenter: false,
     plugins: [tooltip, menu],
+    layout: {
+      type: 'fruchterman',
+      gravity: 5,
+      speed: 5,
+      // for rendering after each iteration
+      tick: () => {
+        graph.refreshPositions()
+      }
+    },
+    animate: true,
     defaultNode: {
       type: 'circle',
       size: [40],
@@ -171,6 +181,10 @@ onMounted(async () => {
   graph.data(data);
   graph.render();
   g = graph
+
+  graph.on('node:click', e => {
+    console.log(e)
+  })
 
   if (typeof window !== 'undefined')
     window.onresize = () => {

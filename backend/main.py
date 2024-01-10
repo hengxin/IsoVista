@@ -3,9 +3,10 @@ import os
 import re
 import subprocess
 import zipfile
+from typing import Any
 
 import pydot
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -25,7 +26,7 @@ app.add_middleware(
 dbtest_path = "DBTest-1.0-SNAPSHOT-shaded.jar"
 config_path = "config.properties"
 result_path = "result"
-
+current_path = "current"
 
 class Bug:
     """
@@ -170,9 +171,7 @@ async def get_bug_count():
 
 
 @app.post("/run")
-async def run(request: Request):
-    params = await request.json()
-
+def run(params: Any = Body(None)):
     # write config.properties
     config = ''
     for key, value in params.items():
@@ -234,3 +233,15 @@ async def download_bug(run_id: int):
     zip_file = "download.zip"
     run_store.get(run_id).zip(zip_file)
     return FileResponse(zip_file, filename=zip_file)
+
+@app.get("/download_dot/{bug_id}")
+async def download_dot(bug_id: int):
+    return FileResponse(bug_store.get(bug_id).dot_path, filename="conflict.dot")
+
+@app.get("/current_log")
+def current_log():
+    try:
+        with open(os.path.join(current_path, "output.log")) as log:
+            return log.read()
+    except FileNotFoundError:
+        return ""

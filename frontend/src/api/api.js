@@ -51,3 +51,9 @@ const viewUrl = "/view/"
 export function get_graph(bug_id) {
     return request.get(viewUrl + bug_id)
 }
+
+const currentLogUrl = "/current_log"
+
+export function get_current_log() {
+    return request.get(currentLogUrl)
+}
