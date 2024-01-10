@@ -32,11 +32,9 @@ public class SIVerifier<KeyType, ValueType> {
     @Setter
     private static boolean coalesceConstraints = true;
 
-    @Getter
-    @Setter
-    private static boolean dotOutput = false;
-
     private Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>> conflicts;
+
+    private Transaction<KeyType, ValueType> intConflict;
 
     public SIVerifier(History<KeyType, ValueType> history) {
         this.history = history;
@@ -47,9 +45,10 @@ public class SIVerifier<KeyType, ValueType> {
 
         profiler.startTick("ONESHOT_CONS");
         profiler.startTick("SI_VERIFY_INT");
-        boolean satisfy_int = Utils.verifyInternalConsistency(history);
+        var satisfy_int = Utils.verifyInternalConsistency(history);
         profiler.endTick("SI_VERIFY_INT");
-        if (!satisfy_int) {
+        if (satisfy_int != null) {
+            intConflict = satisfy_int;
             return false;
         }
 
@@ -93,6 +92,13 @@ public class SIVerifier<KeyType, ValueType> {
      */
     @SneakyThrows
     public void outputDotFile(String path) {
+        if (intConflict != null) {
+            var dotOutputStr = Utils.intConflictToDot(intConflict);
+            System.out.print(dotOutputStr);
+            Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
+            return;
+        }
+
         if (conflicts == null) {
             return;
         }
@@ -112,13 +118,10 @@ public class SIVerifier<KeyType, ValueType> {
             addEdges.accept(c.getEdges2());
         });
 
-        if (dotOutput) {
-            var dotOutputStr = Utils.conflictsToDot(txns, conflicts.getLeft(), conflicts.getRight());
-            System.out.print(dotOutputStr);
-            Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
-        } else {
-            System.out.print(Utils.conflictsToLegacy(txns, conflicts.getLeft(), conflicts.getRight()));
-        }
+
+        var dotOutputStr = Utils.conflictsToDot(txns, conflicts.getLeft(), conflicts.getRight());
+        System.out.print(dotOutputStr);
+        Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
     }
 
     /*

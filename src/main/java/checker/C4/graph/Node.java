@@ -17,12 +17,12 @@ public abstract class Node<VarType, ValType> {
 
     public abstract boolean canReachByCO(Node<VarType, ValType> other);
 
-    public abstract boolean canReachByVO(Node<VarType, ValType> other);
+    public abstract boolean canReachByCM(Node<VarType, ValType> other);
 
     public abstract void updateCOReachability(Node<VarType, ValType> other);
 
-    public abstract void updateVOReachability(Node<VarType, ValType> other);
+    public abstract void updateCMReachability(Node<VarType, ValType> other);
 
-    public abstract void syncCOVO();
+    public abstract void syncCOCM();
 
 }

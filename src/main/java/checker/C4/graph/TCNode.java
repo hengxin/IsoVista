@@ -5,7 +5,7 @@ import checker.C4.util.TreeClock;
 
 public class TCNode<VarType, ValType> extends Node<VarType, ValType>{
     private final TreeClock clock;
-    private TreeClock clockVO;
+    private TreeClock clockCM;
 
     public TCNode(Graph<VarType, ValType> graph, Transaction<VarType, ValType> transaction, short tid, int dim, Node<VarType, ValType> prev) {
         super(graph, transaction);
@@ -25,11 +25,11 @@ public class TCNode<VarType, ValType> extends Node<VarType, ValType>{
     }
 
     @Override
-    public boolean canReachByVO(Node<VarType, ValType> other) {
+    public boolean canReachByCM(Node<VarType, ValType> other) {
         if (!(other instanceof TCNode)) {
             throw new RuntimeException("Type mismatch");
         }
-        return this.clockVO.isLessThanOrEqual(((TCNode<VarType, ValType>) other).clockVO);
+        return this.clockCM.isLessThanOrEqual(((TCNode<VarType, ValType>) other).clockCM);
     }
 
     @Override
@@ -41,15 +41,15 @@ public class TCNode<VarType, ValType> extends Node<VarType, ValType>{
     }
 
     @Override
-    public void updateVOReachability(Node<VarType, ValType> other) {
+    public void updateCMReachability(Node<VarType, ValType> other) {
         if (!(other instanceof TCNode)) {
             throw new RuntimeException("Type mismatch");
         }
-        this.clockVO.join(((TCNode<VarType, ValType>) other).clockVO);
+        this.clockCM.join(((TCNode<VarType, ValType>) other).clockCM);
     }
 
     @Override
-    public void syncCOVO() {
-        clockVO = new TreeClock(clock);
+    public void syncCOCM() {
+        clockCM = new TreeClock(clock);
     }
 }

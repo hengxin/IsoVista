@@ -30,4 +30,8 @@ public class Graph<VarType, ValType> {
     public List<Node<VarType, ValType>> get(Node<VarType, ValType> node) {
         return adjMap.get(node);
     }
+
+    public List<Edge<VarType>> getEdge(Node<VarType, ValType> src, Node<VarType, ValType> dest) {
+        return edges.get(new Pair<>(src, dest));
+    }
 }

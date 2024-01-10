@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class Utils {
-    static <KeyType, ValueType> boolean verifyInternalConsistency(History<KeyType, ValueType> history) {
+    static <KeyType, ValueType> Transaction<KeyType, ValueType> verifyInternalConsistency(History<KeyType, ValueType> history) {
         var writes = new HashMap<Pair<KeyType, ValueType>, Pair<Operation<KeyType, ValueType>, Integer>>();
         var txnWrites = new HashMap<Pair<Transaction<KeyType, ValueType>, KeyType>, ArrayList<Integer>>();
         var getEvents = ((Function<Operation.Type, Stream<Pair<Integer, Operation<KeyType, ValueType>>>>) type -> history
@@ -48,7 +48,7 @@ class Utils {
 
             if (writeEv == null) {
                 System.err.printf("%s has no corresponding write\n", ev);
-                return false;
+                return ev.getTransaction();
             }
 
             var myWriteIndices = txnWrites.getOrDefault(Pair.of(ev.getTransaction(), ev.getKey()), new ArrayList<>());
@@ -58,17 +58,17 @@ class Utils {
             if (writeEv.getLeft().getTransaction() == ev.getTransaction()) {
                 if (j != writeIndices.size() - 1 && writeIndices.get(j + 1) < i) {
                     System.err.printf("%s not reading from latest write: %s\n", ev, writeEv.getLeft());
-                    return false;
+                    return ev.getTransaction();
                 } else if (writeEv.getRight() > i) {
                     System.err.printf("%s reads from a write after it: %s\n", ev, writeEv.getLeft());
-                    return false;
+                    return ev.getTransaction();
                 }
             } else if (j != writeIndices.size() - 1 || (!myWriteIndices.isEmpty() && myWriteIndices.get(0) < i)) {
                 System.err.printf("%s not reading from latest write: %s\n", ev, writeEv.getLeft());
-                return false;
+                return ev.getTransaction();
             }
         }
-        return true;
+        return null;
     }
 
     /**
@@ -197,6 +197,13 @@ class Utils {
 
         System.err.printf("After: %d edges\n", newGraph.edges().size());
         return newGraph;
+    }
+    static <KeyType, ValueType> String intConflictToDot(Transaction<KeyType, ValueType> txn) {
+        var builder = new StringBuilder();
+        builder.append("digraph {\n");
+        builder.append(String.format("\"%s\" [ops=\"%s\"];\n", txn, txn.getOps()));
+        builder.append("}\n");
+        return builder.toString();
     }
 
     static <KeyType, ValueType> String conflictsToDot(Collection<Transaction<KeyType, ValueType>> transactions,

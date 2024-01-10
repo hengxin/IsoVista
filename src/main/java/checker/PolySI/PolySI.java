@@ -35,7 +35,6 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
         history.addInitSession();
         Pruning.setEnablePruning(!noPruning);
         SIVerifier.setCoalesceConstraints(!noCoalescing);
-        SIVerifier.setDotOutput(dotOutput);
 
         profiler.startTick("ENTIRE_EXPERIMENT");
         var pass = true;
