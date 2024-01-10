@@ -38,7 +38,7 @@ const handleDownloadTikz = () => {
 
   data.nodes.forEach(function(node) {
     console.log(node)
-    tikzCode += "\\node[draw] at (" + node.x / 100 + "," + -node.y / 100 + ") (" + node.id.match(/\d+/g) + ") {" + node.label + "};\n";
+    tikzCode += "\\node[draw] at (" + node.x / 25 + "," + -node.y / 25 + ") (" + node.id.match(/\d+/g) + ") {" + node.label + "};\n";
   });
 
   data.edges.forEach(function(edge) {
@@ -105,8 +105,15 @@ onMounted(async () => {
       } else if (item._cfg.type === 'edge') {
         data.edges = data.edges.filter(e => e.id !== item._cfg.id)
       }
-      graph.render();
+      graph.changeData(data);
     },
+  });
+
+  const toolbar = new G6.ToolBar({
+    position: {
+      x: 230,
+      y: 30
+    }
   });
 
   await get_graph(props.bug_id).then(res => {
@@ -128,7 +135,8 @@ onMounted(async () => {
     fitCenter: true,
     // the edges are linked to the center of source and target ndoes
     linkCenter: false,
-    plugins: [tooltip, menu],
+    plugins: [tooltip, menu, toolbar],
+    enabledStack: true,
     layout: {
       type: 'fruchterman',
       gravity: 5,
@@ -155,7 +163,6 @@ onMounted(async () => {
       },
     },
     defaultEdge: {
-      type: 'quadratic',
       labelCfg: {
         autoRotate: true,
       },
@@ -178,6 +185,8 @@ onMounted(async () => {
       },
     },
   });
+
+  G6.Util.processParallelEdges(data.edges, 20, 'quadratic', 'line', 'loop');
   graph.data(data);
   graph.render();
   g = graph
