@@ -2,6 +2,24 @@
 import {defineProps, onMounted, ref} from 'vue'
 import G6 from '@antv/g6';
 import {get_graph} from "@/api/api"
+import {insertCss} from 'insert-css'
+insertCss(`
+  .g6-component-contextmenu {
+    padding: 0
+  }
+  .g6-component-contextmenu ul {
+    margin: 0;
+    text-align: center;
+  }
+  .g6-component-contextmenu div {
+    padding: 6px 20px;
+    cursor: pointer;
+  }
+  .g6-component-contextmenu div:hover {
+    background: #b4b4b4;
+  }
+`)
+
 const props = defineProps({
   bug_id: {
     type: String,
@@ -95,17 +113,29 @@ onMounted(async () => {
 
   const menu = new G6.Menu({
     getContent(evt) {
-      console.log(evt.item._cfg.type)
-      return `<bottom style="user-select: none">Delete</bottom>`;
+      if (evt.item.getStates().length && evt.item.getStates()[0] === 'highlight') {
+        return `<div>Unmark</div>
+              <div>Delete</div>`;
+      } else {
+        return `<div>Mark</div>
+              <div>Delete</div>`;
+      }
     },
     handleMenuClick(target, item) {
-      if (item._cfg.type === 'node') {
-        data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
-        data.edges = data.edges.filter(e => e.source !== item._cfg.id && e.target !== item._cfg.id)
-      } else if (item._cfg.type === 'edge') {
-        data.edges = data.edges.filter(e => e.id !== item._cfg.id)
+      console.log(target.innerHTML)
+      if (target.innerHTML === "Mark") {
+        graph.setItemState(item, 'highlight', true);
+      } else if (target.innerHTML === "Unmark") {
+        graph.setItemState(item, 'highlight', false);
+      } else if (target.innerHTML === "Delete") {
+        if (item._cfg.type === 'node') {
+          data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
+          data.edges = data.edges.filter(e => e.source !== item._cfg.id && e.target !== item._cfg.id)
+        } else if (item._cfg.type === 'edge') {
+          data.edges = data.edges.filter(e => e.id !== item._cfg.id)
+        }
+        graph.changeData(data);
       }
-      graph.changeData(data);
     },
   });
 
@@ -120,12 +150,15 @@ onMounted(async () => {
     console.log(res.data)
     data.nodes = res.data.nodes
     data.edges = res.data.edges
+    res.data.nodes.forEach(node => {
+      node.label = node.label.replace(/Transaction/g, 'Txn')
+    })
     console.log(data)
   })
 
   const container = document.getElementById('container');
   const width = container.scrollWidth;
-  const height = container.scrollHeight || 800;
+  const height = container.scrollHeight || 1000;
 
   const graph = new G6.Graph({
     container: 'container',
@@ -139,8 +172,8 @@ onMounted(async () => {
     enabledStack: true,
     layout: {
       type: 'fruchterman',
-      gravity: 5,
-      speed: 5,
+      gravity: 3,
+      speed: 10,
       // for rendering after each iteration
       tick: () => {
         graph.refreshPositions()
@@ -149,18 +182,18 @@ onMounted(async () => {
     animate: true,
     defaultNode: {
       type: 'circle',
-      size: [40],
-      color: '#5B8FF9',
-      style: {
-        fill: '#9EC9FF',
-        lineWidth: 3,
-      },
-      labelCfg: {
-        style: {
-          fill: '#000',
-          fontSize: 14,
-        },
-      },
+      size: [65],
+      // color: '#5B8FF9',
+      // style: {
+      //   fill: '#9EC9FF',
+      //   lineWidth: 3,
+      // },
+      // labelCfg: {
+      //   style: {
+      //     fill: '#000',
+      //     fontSize: 14,
+      //   },
+      // },
     },
     defaultEdge: {
       labelCfg: {
@@ -247,6 +280,12 @@ onMounted(async () => {
   position: absolute;
   top: 20px;
   right: 20px;
+}
+
+#container .g6-component-contextmenu {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 0px 10px 24px 10px;
+  box-shadow: rgb(174, 174, 174) 0px 0px 10px;
 }
 
 .el-dropdown-link {

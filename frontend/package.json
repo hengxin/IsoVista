@@ -13,7 +13,8 @@
     "axios": "^1.6.2",
     "element-plus": "^2.4.3",
     "vue": "^3.3.10",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "insert-css": "^2.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.1",
