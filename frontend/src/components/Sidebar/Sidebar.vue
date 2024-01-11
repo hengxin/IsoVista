@@ -8,7 +8,7 @@ import {Failed, List, Setting} from "@element-plus/icons-vue";
   <div class="Sidebar" >
     <el-aside width="200px">
       <el-scrollbar>
-        <h5 class="mb-2">DBTest</h5>
+        <h1 class="logo">IsoVista</h1>
         <el-menu
             class="el-menu-vertical-demo"
             default-active="1"
@@ -48,5 +48,11 @@ import {Failed, List, Setting} from "@element-plus/icons-vue";
 <style scoped>
 .el-menu-vertical-demo {
   height: 100vh;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
 }
 </style>

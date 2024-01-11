@@ -61,8 +61,10 @@ const formatDate = (timestamp) => {
 
 <template>
   <el-container class="layout-container-demo" style="height: 100%">
-    <el-header style="text-align: left; font-size: 22px">
-      All Bugs
+    <el-header>
+      <span class="info">
+        All Bugs
+      </span>
     </el-header>
 
     <el-main>
@@ -108,7 +110,6 @@ const formatDate = (timestamp) => {
 <style scoped>
 .layout-container-demo .el-header {
   position: relative;
-  background-color: var(--el-color-primary-light-7);
   color: var(--el-text-color-primary);
   margin-bottom: 20px;
 }
@@ -123,5 +124,12 @@ const formatDate = (timestamp) => {
   justify-content: center;
   height: 100%;
   right: 20px;
+}
+
+.info {
+  font-size: 18px;
+  display: inline-block;
+  margin-top: 20px;
+  font-weight: bold;
 }
 </style>
