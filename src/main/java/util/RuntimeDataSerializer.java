@@ -41,7 +41,7 @@ public class RuntimeDataSerializer {
 
 
     @SneakyThrows
-    public void outputToPath(int historyCount, int bugCount, Properties config) {
+    public void outputToPath(int historyCount, int bugCount, Properties config, boolean enableProfiler) {
         // move all files in current dir
         var sourceDirectory = Paths.get(Config.DEFAULT_CURRENT_PATH);
         Files.walk(sourceDirectory)
@@ -62,6 +62,7 @@ public class RuntimeDataSerializer {
 
         // serialize metadata
         Map<String, Object> outputMap = new HashMap<>();
+        var profiler = Profiler.getInstance();
         outputMap.put("have_bug", bugCount > 0);
         outputMap.put("timestamp", timestamp);
         outputMap.put("history_count", historyCount);
@@ -70,7 +71,8 @@ public class RuntimeDataSerializer {
         outputMap.put("db_isolation", config.get(Config.DB_ISOLATION));
         outputMap.put("checker_type", config.get(Config.CHECKER_TYPE));
         outputMap.put("checker_isolation", config.get(Config.CHECKER_ISOLATION));
-
+        if (enableProfiler)
+            outputMap.put("run_total_time", profiler.getTotalTime("run_total_time"));
 
         var objectMapper = new ObjectMapper();
         var json = objectMapper.writeValueAsString(outputMap);

@@ -81,6 +81,9 @@ public class Main implements Callable<Integer> {
         var profiler = Profiler.getInstance();
         int nHist = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
         AtomicInteger bugCount = new AtomicInteger();
+        if (enableProfile) {
+            profiler.startTick("run_total_time");
+        }
         Function<Void, Void> runOneShot = f -> {
             for (int i = 1; i <= nHist; i++) {
                 // generate history
@@ -148,6 +151,10 @@ public class Main implements Callable<Integer> {
             runOneShot.apply(null);
         }
 
+        if (enableProfile) {
+            profiler.endTick("run_total_time");
+        }
+
         // collect runtime data
         if (enableProfile) {
             for (var tag : profiler.getTags()) {
@@ -160,7 +167,7 @@ public class Main implements Callable<Integer> {
 
         // output to the specific dir
         var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);
-        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist, bugCount.get(), config);
+        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist, bugCount.get(), config, enableProfile);
     }
 
     @SneakyThrows
