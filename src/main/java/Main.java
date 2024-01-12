@@ -87,7 +87,7 @@ public class Main implements Callable<Integer> {
         Function<Void, Void> runOneShot = f -> {
             for (int i = 1; i <= nHist; i++) {
                 // generate history
-                log.info("Start history generation {} of {}", i, nHist);
+                log.info("Start workload generation {} of {}", i, nHist);
                 var history = new GeneralGenerator(config).generate();
 
                 // collect result

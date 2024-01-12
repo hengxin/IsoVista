@@ -60,24 +60,12 @@ const handleSwitch = (value: boolean) => {
 
 async function handleSubmit() {
   console.log(testingOption)
-  dialogVisible.value = true
-  const intervalRefreshLog = setInterval(() => {
-    get_current_log().then(
-        res => {
-          currentLog.value = res.data
-          // console.log(currentLog.value)
-        }
-    )
-  }, 500);
   run(testingOption).then(res => {
     console.log(res)
     ElMessage({
-      message: 'Run success',
+      message: 'Add to run queue successfully',
       type: 'success',
     })
-  }).finally(() => {
-    dialogVisible.value = false
-    clearInterval(intervalRefreshLog)
   })
 }
 
@@ -115,8 +103,6 @@ const beforeRemove: UploadProps['beforeRemove'] = (uploadFile, uploadFiles) => {
   )
 }
 
-const dialogVisible = ref(false)
-const currentLog = ref('')
 const activeIndex = ref(0)
 const handleIndexChange = (index) => {
   activeIndex.value = index
@@ -352,9 +338,6 @@ const handleIndexChange = (index) => {
         </el-col>
       </el-row>
       <el-button type="primary" @click="handleSubmit();">start</el-button>
-      <el-dialog class="current-log" v-model="dialogVisible" title="Runtime logs">
-        <pre>{{currentLog}}</pre>
-      </el-dialog>
     </el-main>
   </el-container>
 </template>
@@ -413,14 +396,6 @@ const handleIndexChange = (index) => {
 
 .item {
   margin-bottom: 18px;
-}
-
-.current-log {
-  overflow: auto;
-}
-.current-log pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
 }
 
 .box-card {

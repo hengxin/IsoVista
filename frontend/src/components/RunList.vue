@@ -1,15 +1,16 @@
 <script setup>
-import {onMounted, ref} from "vue"
-import {download_run, get_run_list} from "@/api/api.js";
+import {onBeforeUnmount, onMounted, ref, watch, watchEffect} from "vue"
+import {download_run, get_current_log, get_run_list} from "@/api/api.js";
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
 const tableData = ref([])
 
-async function get_bugs() {
+async function get_runs() {
   get_run_list().then(res => {
-    console.log(res.data)
+    // console.log(res.data)
+    tableData.value = []
     for (let i = 0; i < res.data.length; i++) {
       tableData.value.push({
         id: res.data[i].run_id,
@@ -19,10 +20,12 @@ async function get_bugs() {
         checkerIsolation: res.data[i].checker_isolation,
         histCount: res.data[i].hist_count,
         bugCount: res.data[i].bug_count,
+        status: res.data[i].status,
+        percentage: res.data[i].percentage,
         date: res.data[i].timestamp,
       })
     }
-    console.log(tableData)
+    // console.log(tableData)
   })
 }
 
@@ -46,14 +49,43 @@ function handleDownload(row) {
     window.URL.revokeObjectURL(url)
   })
 }
-
+let intervalRefreshList = null;
 onMounted(async () => {
-  await get_bugs()
+  await get_runs()
+  console.log("start refresh list every 3s")
+  intervalRefreshList = setInterval(() => {
+    get_runs()
+  }, 3000)
+})
+
+onBeforeUnmount(() => {
+  console.log("stop refresh list")
+  clearInterval(intervalRefreshList)
 })
 
 const formatDate = (timestamp) => {
   return new Date(timestamp).toLocaleDateString(); // 或者使用其他格式化库
 }
+
+const dialogVisible = ref(false)
+const currentLog = ref('')
+let intervalRefreshLog = null
+watch(dialogVisible, (newVal) => {
+  if (newVal) {
+    console.log("start refresh log every 0.5s")
+    intervalRefreshLog = setInterval(() => {
+      get_current_log().then(
+          res => {
+            currentLog.value = res.data
+          }
+      )
+    }, 500);
+  }
+  if (!newVal) {
+    console.log("stop refresh log")
+    clearInterval(intervalRefreshLog)
+  }
+})
 </script>
 
 <template>
@@ -82,6 +114,20 @@ const formatDate = (timestamp) => {
               {{ formatDate(row.date) }}
             </template>
           </el-table-column>
+          <el-table-column label="Status">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 'Finished' && row.bugCount === 0" type="success">
+                Healthy
+              </el-tag>
+              <el-tag v-else-if="row.status === 'Finished' && row.bugCount > 0" type="danger">
+                Buggy
+              </el-tag>
+              <el-progress v-else-if="row.status === 'Running'" :percentage="row.percentage" @click="dialogVisible = true"></el-progress>
+              <el-tag v-else-if="row.status === 'Pending'" type="warning">
+                Pending
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="Operations" width="100">
             <template #default="scope">
               <el-button
@@ -96,6 +142,9 @@ const formatDate = (timestamp) => {
         </el-table>
       </el-scrollbar>
     </el-main>
+    <el-dialog class="current-log" v-model="dialogVisible" title="Runtime logs">
+      <pre>{{currentLog}}</pre>
+    </el-dialog>
   </el-container>
 </template>
 
@@ -124,4 +173,13 @@ const formatDate = (timestamp) => {
   margin-top: 20px;
   font-weight: bold;
 }
+
+.current-log {
+  overflow: auto;
+}
+.current-log pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 </style>

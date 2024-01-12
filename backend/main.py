@@ -1,7 +1,10 @@
 import json
 import os
+import queue
 import re
 import subprocess
+import threading
+import time
 import zipfile
 from typing import Any
 
@@ -27,6 +30,7 @@ dbtest_path = "DBTest-1.0-SNAPSHOT-shaded.jar"
 config_path = "config.properties"
 result_path = "result"
 current_path = "current"
+
 
 class Bug:
     """
@@ -94,21 +98,21 @@ class BugStore:
                 if not bug_dir.startswith("bug_"):
                     continue
                 bug_list.append(Bug(0, run_meta["db_type"], run_meta["db_isolation"],
-                                           run_meta["checker_type"], run_meta["checker_isolation"],
-                                           run_meta["timestamp"], os.path.join(self.directory, run_dir, bug_dir),
-                                           config_path, metadata_path, log_path))
+                                    run_meta["checker_type"], run_meta["checker_isolation"],
+                                    run_meta["timestamp"], os.path.join(self.directory, run_dir, bug_dir),
+                                    config_path, metadata_path, log_path))
         bug_list.sort(key=lambda bug: bug.timestamp)
         for index, bug in enumerate(bug_list):
             bug.bug_id = index + 1
             self.bug_map[bug.bug_id] = bug
-
 
     def get(self, bug_id):
         return self.bug_map[bug_id]
 
 
 class Run:
-    def __init__(self, run_id, db_type, db_isolation, checker_type, checker_isolation, timestamp, hist_count, bug_count, dir_path):
+    def __init__(self, run_id, db_type, db_isolation, checker_type, checker_isolation, timestamp, hist_count, bug_count,
+                 dir_path, status="Finished", percentage=100):
         self.run_id = run_id
         self.db_type = db_type
         self.db_isolation = db_isolation
@@ -118,6 +122,8 @@ class Run:
         self.hist_count = hist_count
         self.bug_count = bug_count
         self.dir_path = dir_path
+        self.status = status
+        self.percentage = percentage
 
     def zip(self, filename):
         with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -145,9 +151,9 @@ class RunStore:
             with open(metadata_path) as f:
                 run_meta = json.load(f)
             run_list.append(Run(0, run_meta["db_type"], run_meta["db_isolation"], run_meta["checker_type"],
-                                       run_meta["checker_isolation"], run_meta["timestamp"],
-                                       run_meta["history_count"], run_meta["bug_count"],
-                                       os.path.join(self.directory, run_dir)))
+                                run_meta["checker_isolation"], run_meta["timestamp"],
+                                run_meta["history_count"], run_meta["bug_count"],
+                                os.path.join(self.directory, run_dir)))
         run_list.sort(key=lambda run: run.timestamp)
         for index, run in enumerate(run_list):
             run.run_id = index + 1
@@ -162,6 +168,7 @@ bug_store.scan()
 run_store = RunStore(result_path)
 run_store.scan()
 
+
 @app.get("/history_count")
 async def get_history_count():
     return bug_store.hist_count
@@ -172,6 +179,10 @@ async def get_bug_count():
     return bug_store.bug_count
 
 
+current_run = ''
+run_queue = queue.Queue()
+
+
 @app.post("/run")
 def run(params: Any = Body(None)):
     # write config.properties
@@ -179,25 +190,82 @@ def run(params: Any = Body(None)):
     for key, value in params.items():
         option = key.replace('_', '.')
         config += f'{option}={value}\n'
-    with open(config_path, 'w') as file:
-        file.write(config)
+    run_queue.put(config)
 
-    # run
-    subprocess.run(["java", "-jar", dbtest_path, config_path])
-
-    # update data
-    bug_store.scan()
-    run_store.scan()
     return {}
+
+
+def run_worker():
+    global current_run
+    while True:
+        config = run_queue.get()
+        current_run = config
+        print("start running")
+        with open(config_path, 'w') as file:
+            file.write(config)
+        subprocess.run(["java", "-jar", dbtest_path, config_path])
+        bug_store.scan()
+        run_store.scan()
+        current_run = ''
+
+
+# start a background thread to run the queue
+t = threading.Thread(target=run_worker)
+t.daemon = True
+t.start()
+
+
+def config_to_run(config):
+    pattern = r'(db\.type|db\.isolation|checker\.type|checker\.isolation|workload\.history)=(\w+)'
+    matches = re.findall(pattern, config)
+    result = {}
+
+    for match in matches:
+        key = match[0]
+        value = match[1]
+        result[key] = value
+
+    return Run(0, result['db.type'], result['db.isolation'], result['checker.type'], result['checker.isolation'],
+               int(time.time() * 1000), result['workload.history'], 0, '', status='Pending', percentage=0)
+
+
+def get_current_run_percentage():
+    log = current_log()
+    if not log:
+        return 0
+    pattern = r"\d+\s+of\s+\d+"
+    match = re.findall(pattern, log)
+    if not match:
+        return 0
+    match = match[-1]
+    cur = int(match.split(" ")[0])
+    total = int(match.split(" ")[2])
+    return cur / total * 100
+
+
+def current_runs():
+    result = []
+    if current_run:
+        result.append(config_to_run(current_run))
+        result[0].status = 'Running'
+        result[0].percentage = get_current_run_percentage()
+    for config in run_queue.queue:
+        result.append(config_to_run(config))
+    max_run_id = max(run_store.run_map)
+    for item in result:
+        item.run_id = max_run_id + 1
+        max_run_id += 1
+    return result
 
 
 @app.get("/bug_list")
 async def get_bug_list():
     return list(bug_store.bug_map.values())
 
+
 @app.get("/run_list")
 async def get_run_list():
-    return list(run_store.run_map.values())
+    return list(run_store.run_map.values()) + current_runs()
 
 
 @app.get("/view/{bug_id}")
@@ -211,7 +279,9 @@ async def view_bug(bug_id: int):
             "id": node.get_name().replace("\"", ""),
             "label": node.get_name().replace("\"", ""),
             "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
-                          node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation")).replace("[","").replace("]", ""),
+                          node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation")).replace("[",
+                                                                                                             "").replace(
+                "]", ""),
         })
 
     for edge in graphs[0].get_edges():
@@ -230,15 +300,18 @@ async def download_bug(bug_id: int):
     bug_store.get(bug_id).zip(zip_file)
     return FileResponse(zip_file, filename=zip_file)
 
+
 @app.get("/download_run/{run_id}")
 async def download_bug(run_id: int):
     zip_file = "download.zip"
     run_store.get(run_id).zip(zip_file)
     return FileResponse(zip_file, filename=zip_file)
 
+
 @app.get("/download_dot/{bug_id}")
 async def download_dot(bug_id: int):
     return FileResponse(bug_store.get(bug_id).dot_path, filename="conflict.dot")
+
 
 @app.get("/current_log")
 def current_log():
@@ -247,6 +320,7 @@ def current_log():
             return log.read()
     except FileNotFoundError:
         return ""
+
 
 @app.post("/bug/tag")
 async def change_bug_tag(request: Request):
