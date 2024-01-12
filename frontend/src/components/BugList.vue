@@ -1,6 +1,6 @@
 <script setup>
 import {onMounted, ref} from "vue"
-import {download_bug, get_bug_list} from "@/api/api.js";
+import {download_bug, get_bug_list, change_bug_tag} from "@/api/api.js";
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -13,6 +13,8 @@ async function get_bugs() {
     for (let i = 0; i < res.data.length; i++) {
       tableData.value.push({
         id: res.data[i].bug_id,
+        tagName: res.data[i].tag_name,
+        tagType: res.data[i].tag_type,
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
         filename: res.data[i].bug_dir,
@@ -57,6 +59,21 @@ onMounted(async () => {
 const formatDate = (timestamp) => {
   return new Date(timestamp).toLocaleDateString(); // 或者使用其他格式化库
 }
+
+const tagNameType = [
+  { name: "Fixed", type: "success"},
+  { name: "Minor", type: ""},
+  { name: "Normal", type: "warning"},
+  { name: "Critical", type: "danger"}
+]
+
+const handleChangeTag = (row, tagName, tagType) => {
+  console.log(row, tagName, tagType)
+  change_bug_tag(row.id, tagName, tagType).then(res => {
+    row.tagName = tagName
+    row.tagType = tagType
+  })
+}
 </script>
 
 <template>
@@ -81,6 +98,34 @@ const formatDate = (timestamp) => {
           <el-table-column prop="date" label="Date">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Tag" width="120">
+            <template #default="scope">
+              <el-dropdown>
+                <el-tag
+                        v-if="scope.row.tagName"
+                        :type="scope.row.tagType"
+                >{{scope.row.tagName}}
+                </el-tag>
+                <el-button v-else class="button-new-tag" size="small">
+                  + New Tag
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="scope.row.tagName" @click="handleChangeTag(scope.row, '','')">
+                      <el-tag type="info">
+                        None
+                      </el-tag>
+                    </el-dropdown-item>
+                    <el-dropdown-item v-for="tag in tagNameType" :key="tag" @click="handleChangeTag(scope.row, tag.name, tag.type)">
+                      <el-tag :type="tag.type">
+                        {{tag.name}}
+                      </el-tag>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </template>
           </el-table-column>
           <el-table-column label="Operations" width="200">
@@ -127,7 +172,7 @@ const formatDate = (timestamp) => {
 }
 
 .info {
-  font-size: 18px;
+  font-size: 28px;
   display: inline-block;
   margin-top: 20px;
   font-weight: bold;

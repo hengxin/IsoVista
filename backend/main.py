@@ -60,6 +60,8 @@ class Bug:
         self.config_path = config_path
         self.metadata_path = metadata_path
         self.log_path = log_path
+        self.tag_name = ""
+        self.tag_type = ""
 
     def zip(self, filename):
         file_paths = [self.config_path, self.metadata_path, self.log_path]
@@ -245,3 +247,10 @@ def current_log():
             return log.read()
     except FileNotFoundError:
         return ""
+
+@app.post("/bug/tag")
+async def change_bug_tag(request: Request):
+    data = await request.json()
+    bug = bug_store.get(data["bug_id"])
+    bug.tag_name = data["tag_name"]
+    bug.tag_type = data["tag_type"]

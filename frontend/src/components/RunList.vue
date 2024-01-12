@@ -119,7 +119,7 @@ const formatDate = (timestamp) => {
 }
 
 .info {
-  font-size: 18px;
+  font-size: 28px;
   display: inline-block;
   margin-top: 20px;
   font-weight: bold;
