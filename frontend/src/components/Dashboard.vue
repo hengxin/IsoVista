@@ -2,7 +2,7 @@
 import {reactive, ref} from "vue"
 import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
-import {run, get_current_log} from "@/api/api"
+import {run} from "@/api/api"
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
@@ -17,6 +17,7 @@ const testingOption = reactive({
   workload_operation: 5,
   workload_key: 1000,
   workload_readproportion: 0.5,
+  workload_variable: '',
   workload_distribution: 'UNIFORM',
   checker_type: 'PolySI',
   checker_isolation: 'SNAPSHOT_ISOLATION',
@@ -59,6 +60,14 @@ const handleSwitch = (value: boolean) => {
 
 
 async function handleSubmit() {
+  for (const key in testingOption) {
+    if (!testingOption.hasOwnProperty(key) || !key.startsWith("workload_")) {
+      continue;
+    }
+    if (typeof testingOption[key] === "string" && testingOption[key].startsWith("[")) {
+      testingOption.workload_variable = key.replace('workload_', '')
+    }
+  }
   console.log(testingOption)
   run(testingOption).then(res => {
     console.log(res)
@@ -176,56 +185,38 @@ const handleIndexChange = (index) => {
                   <h2>Workload Settings</h2>
                 </header>
                 <el-form-item label="#History">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_history"
-                      :min="0"
-                      :max="99"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
                 <el-form-item label="#Session">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_session"
-                      :min="0"
-                      :max="999"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
                 <el-form-item label="#Txn/Sess">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_transaction"
-                      :min="0"
-                      :max="999"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
                 <el-form-item label="#Op/Txn">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_operation"
-                      :min="0"
-                      :max="999"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
                 <el-form-item label="#Key">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_key"
-                      :min="0"
-                      :max="99999999"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
                 <el-form-item label="Read Proportion">
-                  <el-input-number
+                  <el-input
                       v-model="testingOption.workload_readproportion"
-                      :min="-1"
-                      :max="0"
-                      controls-position="right"
                       class="fixed-width"
                   />
                 </el-form-item>
