@@ -22,4 +22,11 @@ public abstract class DBClient {
     }
 
     public abstract void execSession(Session<Long, Long> session, IsolationLevel isolationLevel);
+
+    @SneakyThrows
+    public void close() {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }

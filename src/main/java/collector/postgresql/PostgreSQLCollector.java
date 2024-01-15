@@ -32,6 +32,7 @@ public class PostgreSQLCollector extends Collector<Long, Long> {
             Callable<Void> task = () -> {
                 var node = new PostgreSQLClient(url, username, password);
                 node.execSession(session, isolation);
+                node.close();
                 return null;
             };
             todo.add(task);

@@ -29,6 +29,7 @@ public class H2Collector extends Collector<Long, Long> {
             Callable<Void> task = () -> {
                 var node = new H2Client(url, username, password);
                 node.execSession(session, isolation);
+                node.close();
                 return null;
             };
             todo.add(task);

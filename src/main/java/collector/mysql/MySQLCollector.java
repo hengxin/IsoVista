@@ -30,6 +30,7 @@ public class MySQLCollector extends Collector<Long, Long> {
             Callable<Void> task = () -> {
                 var node = new MySQLClient(url, username, password);
                 node.execSession(session, isolation);
+                node.close();
                 return null;
             };
             todo.add(task);

@@ -93,7 +93,9 @@ public class Main implements Callable<Integer> {
                 // collect result
                 log.info("Start history collection");
                 try {
-                    history = collector.getDeclaredConstructor(Properties.class).newInstance(config).collect(history);
+                    var collectorInstance = collector.getDeclaredConstructor(Properties.class).newInstance(config);
+                    collectorInstance.collect(history);
+                    collectorInstance.close();
                 } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
                          IllegalAccessException e) {
                     throw new RuntimeException(e);

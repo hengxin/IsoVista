@@ -33,4 +33,11 @@ public abstract class Collector<KeyType, ValType> {
     protected abstract void createVariables(long nKey);
 
     protected abstract void dropDatabase();
+
+    @SneakyThrows
+    public void close() {
+        if (connection != null) {
+            connection.close();
+        }
+    }
 }
