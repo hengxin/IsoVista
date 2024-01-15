@@ -31,7 +31,7 @@ public class GeneralGenerator implements Generator<Long, Long> {
         this.operation = Long.parseLong(config.getProperty(Config.WORKLOAD_OPERATION));
         this.readProportion = Double.parseDouble(config.getProperty(Config.WORKLOAD_READ_PROPORTION));
         this.key = Long.parseLong(config.getProperty(Config.WORKLOAD_KEY));
-        var distribution = config.getProperty(Config.WORKLOAD_DISTRIBUTION);
+        var distribution = config.getProperty(Config.WORKLOAD_DISTRIBUTION).toLowerCase();
         switch (distribution) {
             case "uniform":
                 this.keyDistribution = new UniformIntegerDistribution(1, (int) key);
