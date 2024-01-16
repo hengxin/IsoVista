@@ -3,6 +3,7 @@ import {reactive, ref} from "vue"
 import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
 import {run, get_current_log} from "@/api/api"
+import {InfoFilled} from "@element-plus/icons-vue"
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
@@ -111,7 +112,8 @@ const handleIndexChange = (index) => {
 
 <template>
   <el-container class="layout-container-demo">
-    <el-header></el-header>
+    <el-header>
+    </el-header>
 
     <el-main>
       <el-row :gutter="20">
@@ -119,14 +121,12 @@ const handleIndexChange = (index) => {
           <el-carousel trigger="click"
                        type="card"
                        :autoplay="false"
-                       height="900px"
-                       direction="vertical"
+                       height="520px"
                        arrow="always"
                        @change="handleIndexChange">
-            <el-carousel-item>
+            <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
-                       label-width="200px"
-                       class="el-form-in-carousel"
+                       label-width="150px"
               >
                 <header class="form-header">
                   <h2>Database Settings</h2>
@@ -144,7 +144,19 @@ const handleIndexChange = (index) => {
                         :label="option.label"
                         :value="option.value">
                     </el-option>
-                  </el-select>
+                  </el-select>&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Database Type"
+                      trigger="hover"
+                      content="The database type you want to test. Currently we support MySQL, PostgreSQL and H2."
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="DB Isolation Level">
                   <el-select v-model="testingOption.db_isolation" placeholder="" @change="handleSelectionChange"
@@ -167,10 +179,9 @@ const handleIndexChange = (index) => {
                 </el-form-item>
               </el-form>
             </el-carousel-item>
-            <el-carousel-item>
+            <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
-                       label-width="220px"
-                       class="el-form-in-carousel"
+                       label-width="150px"
               >
                 <header class="form-header">
                   <h2>Workload Settings</h2>
@@ -182,7 +193,19 @@ const handleIndexChange = (index) => {
                       :max="99"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="History Number"
+                      trigger="hover"
+                      content="historical number of transactions"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="#Session">
                   <el-input-number
@@ -191,7 +214,19 @@ const handleIndexChange = (index) => {
                       :max="999"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Session Number"
+                      trigger="hover"
+                      content="number of simulated sessions"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="#Txn/Sess">
                   <el-input-number
@@ -200,7 +235,19 @@ const handleIndexChange = (index) => {
                       :max="999"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Transaction Number"
+                      trigger="hover"
+                      content="number of transactions in each session"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="#Op/Txn">
                   <el-input-number
@@ -209,7 +256,19 @@ const handleIndexChange = (index) => {
                       :max="999"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Operation Number"
+                      trigger="hover"
+                      content="number of operations in each transaction"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="#Key">
                   <el-input-number
@@ -218,7 +277,19 @@ const handleIndexChange = (index) => {
                       :max="99999999"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="The Key"
+                      trigger="hover"
+                      content="number of workload keys"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="Read Proportion">
                   <el-input-number
@@ -227,7 +298,19 @@ const handleIndexChange = (index) => {
                       :max="0"
                       controls-position="right"
                       class="fixed-width"
-                  />
+                  />&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Read/Write Proportion"
+                      trigger="hover"
+                      content="The proportion of read operations in each transaction"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
                 <el-form-item label="Distribution">
                   <el-select v-model="testingOption.workload_distribution" placeholder=""
@@ -239,14 +322,26 @@ const handleIndexChange = (index) => {
                         :label="option.label"
                         :value="option.value">
                     </el-option>
-                  </el-select>
+                  </el-select>&nbsp;&nbsp;
+                  <el-popover
+                      placement="top-start"
+                      title="Distribution Type"
+                      trigger="hover"
+                      content="The distribution type of transaction access keys, supports uniform, zipfan and hotspot"
+                  >
+                    <template #reference>
+                      <el-icon color="blue">
+                        <InfoFilled/>
+                      </el-icon>
+                    </template>
+                  </el-popover>
                 </el-form-item>
               </el-form>
             </el-carousel-item>
-            <el-carousel-item>
+            <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
                        label-width="220px"
-                       class="el-form-in-carousel">
+                       >
                 <header class="form-header">
                   <h2>Checker Settings</h2>
                 </header>
@@ -313,19 +408,21 @@ const handleIndexChange = (index) => {
               <div class="card-header">
                 <span>Database Setting Details</span>
               </div>
-              <p> url: your jdbc url to connect to the database</p>
-              <p> username: the username of the database</p>
-              <p> password: the password of the database</p>
-              <p> isolation level: stub, currently all history are generated under serialization </p>
-              <p> database type: support MYSQL, POSTGRES and H2</p>
             </template>
           </el-card>
           <el-card class="box-card" v-if="activeIndex===1">
             <template #header>
               <div class="card-header">
-                <span>Workload Setting Details</span>
+                <span>Workload Details</span>
               </div>
             </template>
+            <p>If you want to upload your own history file, please make sure the format is correct.</p>
+            <p>opType(key, value, session, txnID) </p>
+            <p>For example:</p>
+            <p>r(4,34,0,0)</p>
+            <p> w(6,1,0,0)</p>
+            <p> r(9,15,0,0)</p>
+            <p> w(8,1,0,0)</p>
           </el-card>
           <el-card class="box-card" v-if="activeIndex===2">
             <template #header>
@@ -345,7 +442,7 @@ const handleIndexChange = (index) => {
 <style scoped>
 
 .fixed-width {
-  width: 600px;
+  width: 90%;
 }
 
 .form-style {
@@ -374,15 +471,7 @@ const handleIndexChange = (index) => {
   align-items: center;
 }
 
-.el-form-in-carousel {
-  max-width: 100%;
-  max-height: 100%;
-  border: 1px solid transparent;
-  border-radius: 15px;
-  padding-left: 20px;
-  padding-right: 20px;
-  background-color: rgb(236, 236, 236);
-}
+
 
 .card-header {
   display: flex;
@@ -399,6 +488,16 @@ const handleIndexChange = (index) => {
 }
 
 .box-card {
+}
+
+.el-carousel-item-demo {
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  background-color: rgb(236, 236, 236);
 }
 
 </style>
