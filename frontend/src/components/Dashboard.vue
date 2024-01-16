@@ -124,7 +124,7 @@ const handleIndexChange = (index) => {
           <el-carousel trigger="click"
                        type="card"
                        :autoplay="false"
-                       height="520px"
+                       height="500px"
                        arrow="always"
                        @change="handleIndexChange">
             <el-carousel-item class="el-carousel-item-demo">
@@ -148,18 +148,12 @@ const handleIndexChange = (index) => {
                         :value="option.value">
                     </el-option>
                   </el-select>&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Database Type"
-                      trigger="hover"
-                      content="The database type you want to test. Currently we support MySQL, PostgreSQL and H2."
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> The database type you want to test. Currently we support MySQL, PostgreSQL and H2. </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="DB Isolation Level">
                   <el-select v-model="testingOption.db_isolation" placeholder="" @change="handleSelectionChange"
@@ -194,108 +188,72 @@ const handleIndexChange = (index) => {
                       v-model="testingOption.workload_history"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="History Number"
-                      trigger="hover"
-                      content="historical number of transactions"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> historical number of transactions  </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Session">
                   <el-input
                       v-model="testingOption.workload_session"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Session Number"
-                      trigger="hover"
-                      content="number of simulated sessions"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> number of simulated sessions  </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Txn/Sess">
                   <el-input
                       v-model="testingOption.workload_transaction"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Transaction Number"
-                      trigger="hover"
-                      content="number of transactions in each session"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                  <template #content>number of transactions in each session</template>
+                  <el-icon color="blue">
+                    <InfoFilled/>
+                  </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Op/Txn">
                   <el-input
                       v-model="testingOption.workload_operation"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Operation Number"
-                      trigger="hover"
-                      content="number of operations in each transaction"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                  <template #content> number of operations in each transaction </template>
+                  <el-icon color="blue">
+                    <InfoFilled/>
+                  </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Key">
                   <el-input
                       v-model="testingOption.workload_key"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="The Key"
-                      trigger="hover"
-                      content="number of workload keys"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> number of workload keys </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="Read Proportion">
                   <el-input
                       v-model="testingOption.workload_readproportion"
                       class="fixed-width"
                   />&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Read/Write Proportion"
-                      trigger="hover"
-                      content="The proportion of read operations in each transaction"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> The proportion of read operations in each transaction </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="Distribution">
                   <el-select v-model="testingOption.workload_distribution" placeholder=""
@@ -308,18 +266,12 @@ const handleIndexChange = (index) => {
                         :value="option.value">
                     </el-option>
                   </el-select>&nbsp;&nbsp;
-                  <el-popover
-                      placement="top-start"
-                      title="Distribution Type"
-                      trigger="hover"
-                      content="The distribution type of transaction access keys, supports uniform, zipfan and hotspot"
-                  >
-                    <template #reference>
-                      <el-icon color="blue">
-                        <InfoFilled/>
-                      </el-icon>
-                    </template>
-                  </el-popover>
+                  <el-tooltip placement="top">
+                    <template #content> The distribution type of transaction access keys. We support uniform, zipfan and hotspot</template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
               </el-form>
             </el-carousel-item>
@@ -467,8 +419,8 @@ const handleIndexChange = (index) => {
 .el-carousel-item-demo {
   border: 1px solid transparent;
   border-radius: 15px;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 10px;
+  padding-right: 5px;
   background-color: rgb(236, 236, 236);
 }
 
