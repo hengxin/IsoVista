@@ -13,6 +13,7 @@ import picocli.CommandLine.Parameters;
 import util.ConfigParser;
 import util.Profiler;
 import util.RuntimeDataSerializer;
+import util.RuntimeInfoRecorder;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Slf4j
@@ -47,6 +49,8 @@ public class Main implements Callable<Integer> {
 
     @SneakyThrows
     public void run(Properties config) {
+        RuntimeInfoRecorder.start();
+
         var collectorReflections = new Reflections("collector");
         Set<Class<? extends Collector>> collectorSubClasses = collectorReflections.getSubTypesOf(Collector.class);
         Map<String, Class<? extends Collector>> collectors = new HashMap<>();
@@ -80,14 +84,15 @@ public class Main implements Callable<Integer> {
         var enableProfile = Boolean.parseBoolean(config.getProperty(Config.PROFILER_ENABLE));
         var profiler = Profiler.getInstance();
         int nHist = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
+        int nBatch = 1;
         AtomicInteger bugCount = new AtomicInteger();
         if (enableProfile) {
             profiler.startTick("run_total_time");
         }
-        Function<Void, Void> runOneShot = f -> {
+        BiFunction<Integer, Integer, Void> runOneShot = (Integer currentBatch, Integer totalBatch) -> {
             for (int i = 1; i <= nHist; i++) {
                 // generate history
-                log.info("Start workload generation {} of {}", i, nHist);
+                log.info("Start workload generation {} of {}", i + nHist * currentBatch, nHist * totalBatch);
                 var history = new GeneralGenerator(config).generate();
 
                 // collect result
@@ -115,7 +120,7 @@ public class Main implements Callable<Integer> {
                         System.gc();
                     }
                     if (!result) {
-                        log.info("FIND BUG");
+                        log.info("FIND BUG!");
                         // serialize history and output dotfile
                         var bugDir = Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_%d", bugCount.getAndIncrement()));
                         try {
@@ -125,6 +130,8 @@ public class Main implements Callable<Integer> {
                         }
                         new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
                         checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
+                    } else {
+                        log.info("NO BUG");
                     }
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                          NoSuchMethodException e) {
@@ -140,17 +147,19 @@ public class Main implements Callable<Integer> {
             variable = "workload." + variable;
             var valueListString = config.getProperty(variable);
             var valueList = ConfigParser.parseListString(valueListString);
-            for (var value : valueList) {
+            nBatch = valueList.length;
+            for (int i = 0; i < valueList.length; i++) {
+                var value = valueList[i];
                 config.setProperty(variable, value);
                 log.info("Run one shot {} = {}", variable, value);
-                runOneShot.apply(null);
+                runOneShot.apply(i, nBatch);
                 var avgTime = profiler.getAvgTime(checker.getName());
                 var maxMemory = profiler.getMemory(checker.getName());
                 Profiler.appendToCSV(value, avgTime, maxMemory);
                 profiler.removeTag(checker.getName());
             }
         } else {
-            runOneShot.apply(null);
+            runOneShot.apply(0, nBatch);
         }
 
         if (enableProfile) {
@@ -167,9 +176,11 @@ public class Main implements Callable<Integer> {
             }
         }
 
+        RuntimeInfoRecorder.stop();
+
         // output to the specific dir
         var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);
-        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist, bugCount.get(), config, enableProfile);
+        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist * nBatch, bugCount.get(), config, enableProfile);
     }
 
     @SneakyThrows

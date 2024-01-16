@@ -8,6 +8,7 @@ import time
 import zipfile
 from typing import Any
 
+import pandas as pd
 import pydot
 from fastapi import FastAPI, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -124,6 +125,16 @@ class Run:
         self.dir_path = dir_path
         self.status = status
         self.percentage = percentage
+        profile_path = os.path.join(dir_path, "profile.csv")
+        if os.path.exists(profile_path):
+            self.profile_path = profile_path
+        else:
+            self.profile_path = None
+        runtime_info_path = os.path.join(dir_path, "runtime_info.csv")
+        if os.path.exists(runtime_info_path):
+            self.runtime_info_path = runtime_info_path
+        else:
+            self.runtime_info_path = None
 
     def zip(self, filename):
         with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -184,7 +195,7 @@ run_queue = queue.Queue()
 
 
 @app.post("/run")
-def run(params: Any = Body(None)):
+def run_task(params: Any = Body(None)):
     # write config.properties
     config = ''
     for key, value in params.items():
@@ -328,3 +339,30 @@ async def change_bug_tag(request: Request):
     bug = bug_store.get(data["bug_id"])
     bug.tag_name = data["tag_name"]
     bug.tag_type = data["tag_type"]
+
+
+@app.get("/run_profile/{run_id}")
+async def get_profile(run_id: int):
+    run = run_store.get(run_id)
+    if run.profile_path is None:
+        return None
+    df = pd.read_csv(run.profile_path)
+    return {
+        "name": df.iloc[:, 0].name,
+        "x_axis": df.iloc[:, 0].to_list(),
+        "time": df.iloc[:, 1].to_list(),
+        "memory": df.iloc[:, 2].to_list(),
+    }
+
+
+@app.get("/runtime_info/{run_id}")
+async def get_runtime_info(run_id: int):
+    run = run_store.get(run_id)
+    if run.runtime_info_path is None:
+        return None
+    df = pd.read_csv(run.runtime_info_path)
+    return {
+        "x_axis": df.iloc[:, 0].to_list(),
+        "cpu": df.iloc[:, 1].to_list(),
+        "memory": df.iloc[:, 2].to_list(),
+    }
