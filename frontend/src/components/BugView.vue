@@ -171,13 +171,9 @@ onMounted(async () => {
     plugins: [tooltip, menu, toolbar],
     enabledStack: true,
     layout: {
-      type: 'fruchterman',
-      gravity: 3,
-      speed: 10,
-      // for rendering after each iteration
-      tick: () => {
-        graph.refreshPositions()
-      }
+      type: 'forceAtlas2',
+      preventOverlap: true,
+      kr: 400,
     },
     animate: true,
     defaultNode: {
