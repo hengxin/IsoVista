@@ -34,7 +34,7 @@ public class Profiler {
     private static final String memoryUnit = "KB";
 
     static {
-        new Thread(() -> {
+        var t = new Thread(() -> {
             while (true) {
                 updateMemory();
                 try {
@@ -43,6 +43,8 @@ public class Profiler {
                 }
             }
         });
+        t.setDaemon(true);
+        t.start();
     }
 
     private static void updateMemory() {

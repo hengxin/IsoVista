@@ -10,7 +10,6 @@ import {Failed, List, Setting} from "@element-plus/icons-vue";
       <el-scrollbar>
         <h1 class="logo">IsoVista</h1>
         <el-menu
-            class="el-menu-vertical-demo"
             default-active="1"
         >
           <el-menu-item index="1" @click="$router.push('/dashboard')">
@@ -46,8 +45,8 @@ import {Failed, List, Setting} from "@element-plus/icons-vue";
 </template>
 
 <style scoped>
-.el-menu-vertical-demo {
-  height: 100vh;
+.Sidebar {
+  height: 100%;
 }
 
 .logo {

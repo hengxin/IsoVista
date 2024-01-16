@@ -21,12 +21,16 @@ async function get_runs() {
         histCount: res.data[i].hist_count,
         bugCount: res.data[i].bug_count,
         status: res.data[i].status,
-        percentage: res.data[i].percentage,
+        percentage: Math.round(res.data[i].percentage),
         date: res.data[i].timestamp,
       })
     }
     // console.log(tableData)
   })
+}
+
+function handleView(row) {
+  router.push("/run_view/" + row.id)
 }
 
 function handleDownload(row) {
@@ -114,7 +118,7 @@ watch(dialogVisible, (newVal) => {
               {{ formatDate(row.date) }}
             </template>
           </el-table-column>
-          <el-table-column label="Status">
+          <el-table-column label="Status" width="150">
             <template #default="{ row }">
               <el-tag v-if="row.status === 'Finished' && row.bugCount === 0" type="success">
                 Healthy
@@ -128,8 +132,15 @@ watch(dialogVisible, (newVal) => {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="Operations" width="100">
+          <el-table-column label="Operations" width="200">
             <template #default="scope">
+              <el-button
+                  link
+                  size="small"
+                  type="primary"
+                  @click="handleView(scope.row)"
+              >View</el-button
+              >
               <el-button
                   link
                   size="small"

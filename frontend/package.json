@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@antv/g6": "^4.8.24",
+    "@antv/vis-predict-engine": "^0.1.1",
     "axios": "^1.6.2",
+    "echarts": "^5.4.3",
     "element-plus": "^2.4.3",
+    "insert-css": "^2.0.0",
     "vue": "^3.3.10",
-    "vue-router": "^4.2.5",
-    "insert-css": "^2.0.0"
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.1",
