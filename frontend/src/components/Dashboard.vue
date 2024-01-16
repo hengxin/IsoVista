@@ -126,7 +126,7 @@ const handleIndexChange = (index) => {
                        @change="handleIndexChange">
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
-                       label-width="150px"
+                       label-width="33%"
               >
                 <header class="form-header">
                   <h2>Database Settings</h2>
@@ -181,7 +181,7 @@ const handleIndexChange = (index) => {
             </el-carousel-item>
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
-                       label-width="150px"
+                       label-width="33%"
               >
                 <header class="form-header">
                   <h2>Workload Settings</h2>
@@ -340,7 +340,7 @@ const handleIndexChange = (index) => {
             </el-carousel-item>
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
-                       label-width="220px"
+                       label-width="35%"
                        >
                 <header class="form-header">
                   <h2>Checker Settings</h2>
@@ -491,8 +491,6 @@ const handleIndexChange = (index) => {
 }
 
 .el-carousel-item-demo {
-  max-width: 100%;
-  max-height: 100%;
   border: 1px solid transparent;
   border-radius: 15px;
   padding-left: 20px;
