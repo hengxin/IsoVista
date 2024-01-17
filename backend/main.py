@@ -40,7 +40,6 @@ class Bug:
         bug_id (int): The ID of the bug.
         db_type (str): The type of the database.
         db_isolation (str): The isolation level of the database.
-        checker_type (str): The type of the checker.
         checker_isolation (str): The isolation level of the checker.
         timestamp (int): The timestamp of the bug.
         bug_dir (str): The directory of the bug.
@@ -51,12 +50,11 @@ class Bug:
         None
     """
 
-    def __init__(self, bug_id, db_type, db_isolation, checker_type, checker_isolation, timestamp, bug_dir, config_path,
+    def __init__(self, bug_id, db_type, db_isolation, checker_isolation, timestamp, bug_dir, config_path,
                  metadata_path, log_path):
         self.bug_id = bug_id
         self.db_type = db_type
         self.db_isolation = db_isolation
-        self.checker_type = checker_type
         self.checker_isolation = checker_isolation
         self.timestamp = timestamp
         self.bug_dir = bug_dir
@@ -99,8 +97,8 @@ class BugStore:
                 if not bug_dir.startswith("bug_"):
                     continue
                 bug_list.append(Bug(0, run_meta["db_type"], run_meta["db_isolation"],
-                                    run_meta["checker_type"], run_meta["checker_isolation"],
-                                    run_meta["timestamp"], os.path.join(self.directory, run_dir, bug_dir),
+                                    run_meta["checker_isolation"], run_meta["timestamp"],
+                                    os.path.join(self.directory, run_dir, bug_dir),
                                     config_path, metadata_path, log_path))
         bug_list.sort(key=lambda bug: bug.timestamp)
         for index, bug in enumerate(bug_list):
@@ -112,12 +110,11 @@ class BugStore:
 
 
 class Run:
-    def __init__(self, run_id, db_type, db_isolation, checker_type, checker_isolation, timestamp, hist_count, bug_count,
+    def __init__(self, run_id, db_type, db_isolation, checker_isolation, timestamp, hist_count, bug_count,
                  dir_path, status="Finished", percentage=100):
         self.run_id = run_id
         self.db_type = db_type
         self.db_isolation = db_isolation
-        self.checker_type = checker_type
         self.checker_isolation = checker_isolation
         self.timestamp = timestamp
         self.hist_count = hist_count
@@ -161,7 +158,7 @@ class RunStore:
             metadata_path = os.path.join(self.directory, run_dir, "metadata.json")
             with open(metadata_path) as f:
                 run_meta = json.load(f)
-            run_list.append(Run(0, run_meta["db_type"], run_meta["db_isolation"], run_meta["checker_type"],
+            run_list.append(Run(0, run_meta["db_type"], run_meta["db_isolation"],
                                 run_meta["checker_isolation"], run_meta["timestamp"],
                                 run_meta["history_count"], run_meta["bug_count"],
                                 os.path.join(self.directory, run_dir)))
@@ -228,7 +225,7 @@ t.start()
 
 
 def config_to_run(config):
-    pattern = r'(db\.type|db\.isolation|checker\.type|checker\.isolation|workload\.history)=(\w+)'
+    pattern = r'(db\.type|db\.isolation|checker\.isolation|workload\.history)=(\w+)'
     matches = re.findall(pattern, config)
     result = {}
 
@@ -237,7 +234,7 @@ def config_to_run(config):
         value = match[1]
         result[key] = value
 
-    return Run(0, result['db.type'], result['db.isolation'], result['checker.type'], result['checker.isolation'],
+    return Run(0, result['db.type'], result['db.isolation'], result['checker.isolation'],
                int(time.time() * 1000), result['workload.history'], 0, '', status='Pending', percentage=0)
 
 

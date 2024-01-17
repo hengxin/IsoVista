@@ -69,7 +69,6 @@ public class RuntimeDataSerializer {
         outputMap.put("bug_count", bugCount);
         outputMap.put("db_type", config.get(Config.DB_TYPE));
         outputMap.put("db_isolation", config.get(Config.DB_ISOLATION));
-        outputMap.put("checker_type", config.get(Config.CHECKER_TYPE));
         outputMap.put("checker_isolation", config.get(Config.CHECKER_ISOLATION));
         if (enableProfiler)
             outputMap.put("run_total_time", profiler.getTotalTime("run_total_time"));

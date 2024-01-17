@@ -16,7 +16,6 @@ async function get_runs() {
         id: res.data[i].run_id,
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
-        checkerType: res.data[i].checker_type,
         checkerIsolation: res.data[i].checker_isolation,
         histCount: res.data[i].hist_count,
         bugCount: res.data[i].bug_count,
@@ -111,7 +110,6 @@ watch(dialogVisible, (newVal) => {
           <el-table-column prop="histCount" label="Hist Count" width="100"/>
           <el-table-column prop="dbType" label="DB Type" width="150"/>
           <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
-          <el-table-column prop="checkerType" label="Checker Type" width="150"/>
           <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
           <el-table-column prop="date" label="Date">
             <template #default="{ row }">

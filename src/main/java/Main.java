@@ -75,9 +75,10 @@ public class Main implements Callable<Integer> {
             return;
         }
 
-        var checker = checkers.get(config.getProperty(Config.CHECKER_TYPE).toLowerCase());
+        var checkerName = ConfigParser.IsolationToCheckerName(config.getProperty(Config.CHECKER_ISOLATION)).toLowerCase();
+        var checker = checkers.get(checkerName);
         if (checker == null) {
-            log.error("Can not find checker {}", config.getProperty(Config.CHECKER_TYPE));
+            log.error("Can not find checker {}", checkerName);
             return;
         }
 

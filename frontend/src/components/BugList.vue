@@ -18,7 +18,6 @@ async function get_bugs() {
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
         filename: res.data[i].bug_dir,
-        checkerType: res.data[i].checker_type,
         checkerIsolation: res.data[i].checker_isolation,
         date: res.data[i].timestamp
       })
@@ -93,7 +92,6 @@ const handleChangeTag = (row, tagName, tagType) => {
           <el-table-column prop="id" label="ID" width="80"/>
           <el-table-column prop="dbType" label="DB Type" width="150"/>
           <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
-          <el-table-column prop="checkerType" label="Checker Type" width="150"/>
           <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
           <el-table-column prop="date" label="Date">
             <template #default="{ row }">

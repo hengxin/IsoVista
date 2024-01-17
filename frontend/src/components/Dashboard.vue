@@ -12,15 +12,14 @@ const testingOption = reactive({
   db_username: 'dbtest',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
-  workload_history: 10,
-  workload_session: 20,
+  workload_history: 1,
+  workload_session: '[5,10,20,30]',
   workload_transaction: 100,
   workload_operation: 5,
   workload_key: 1000,
   workload_readproportion: 0.5,
   workload_variable: '',
   workload_distribution: 'UNIFORM',
-  checker_type: 'PolySI',
   checker_isolation: 'SNAPSHOT_ISOLATION',
   profiler_enable: true
 });
@@ -40,10 +39,6 @@ const distributionOptions = [
   {label: 'Uniform', value: 'uniform'},
   {label: 'Zipf', value: 'zipf'},
   {label: 'Hotspot', value: 'hotspot'},
-];
-const checkerOptions = [
-  {label: 'PolySI', value: 'PolySI'},
-  {label: 'C4', value: 'C4'}
 ];
 const checkerIsolationLevelOptions = [
   {label: 'Read_Committed', value: 'READ_COMMITTED'},
@@ -335,17 +330,6 @@ const handleIndexChange = (index) => {
                 <header class="form-header">
                   <h2>Checker Settings</h2>
                 </header>
-                <el-form-item label="Checker Type">
-                  <el-select v-model="testingOption.checker_type" placeholder="" @change="handleSelectionChange"
-                             class="fixed-width">
-                    <el-option
-                        v-for="option in checkerOptions"
-                        :key="option.value"
-                        :label="option.label"
-                        :value="option.value">
-                    </el-option>
-                  </el-select>
-                </el-form-item>
                 <el-form-item label="Checker Isolation Level">
                   <el-select v-model="testingOption.checker_isolation" placeholder=""
                              @change="handleSelectionChange"

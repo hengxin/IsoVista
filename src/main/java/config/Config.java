@@ -23,7 +23,6 @@ public class Config {
     public static final String WORKLOAD_VARIABLE = "workload.variable";
 
     // checker configs
-    public static final String CHECKER_TYPE = "checker.type";
     public static final String CHECKER_ISOLATION = "checker.isolation";
 
     // profiler configs
