@@ -244,8 +244,8 @@ onMounted(async () => {
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="handleDownloadPNG">PNG</el-dropdown-item>
-              <el-dropdown-item @click="handleDownloadTikz">Tikz</el-dropdown-item>
-              <el-dropdown-item @click="handleDownloadDot">Dot</el-dropdown-item>
+              <el-dropdown-item @click="handleDownloadTikz">TikZ</el-dropdown-item>
+              <el-dropdown-item @click="handleDownloadDot">DOT</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
