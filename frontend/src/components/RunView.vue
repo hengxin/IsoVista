@@ -1,7 +1,14 @@
 <script setup>
 import * as echarts from 'echarts';
-import {defineProps, onMounted} from "vue";
-import {get_run_profile, get_runtime_info} from "@/api/api.js";
+import {defineProps, onMounted, onUnmounted, ref, watch} from "vue";
+import {
+  get_current_log,
+  get_current_profile,
+  get_current_run_id,
+  get_current_runtime_info,
+  get_run_profile,
+  get_runtime_info
+} from "@/api/api.js";
 
 const props = defineProps({
   run_id: {
@@ -10,14 +17,16 @@ const props = defineProps({
   }
 })
 
-let profileData = null
+let profileTimeChart;
+let profileMemoryChart;
+let runTimeCPUChart;
+let runTimeMemoryChart;
+
+let profileData = {}
 
 const createProfileCharts = () => {
-  if (profileData == null) {
-    return
-  }
   const profileTimeChartDom = document.getElementById('profile-time');
-  const profileTimeChart = echarts.init(profileTimeChartDom);
+  profileTimeChart = echarts.init(profileTimeChartDom);
   let profileTimeOption;
 
   profileTimeOption = {
@@ -31,7 +40,7 @@ const createProfileCharts = () => {
       trigger: 'axis'
     },
     xAxis: {
-      name: profileData.name,
+      name: 'name' in profileData ? profileData.name : '',
       type: 'category',
       boundaryGap: false,
       data: profileData.x_axis,
@@ -50,7 +59,7 @@ const createProfileCharts = () => {
   profileTimeOption && profileTimeChart.setOption(profileTimeOption);
 
   const profileMemoryChartDom = document.getElementById('profile-memory');
-  const profileMemoryChart = echarts.init(profileMemoryChartDom);
+  profileMemoryChart = echarts.init(profileMemoryChartDom);
   let profileMemoryOption;
 
   profileMemoryOption = {
@@ -83,13 +92,10 @@ const createProfileCharts = () => {
   profileMemoryOption && profileMemoryChart.setOption(profileMemoryOption);
 }
 
-let runtimeInfoData = null
+let runtimeInfoData = {};
 const createRuntimeInfoCharts = () => {
-  if (runtimeInfoData == null) {
-    return
-  }
   const runtimeCPUChartDom = document.getElementById('runtime-cpu');
-  const runTimeCPUChart = echarts.init(runtimeCPUChartDom);
+  runTimeCPUChart = echarts.init(runtimeCPUChartDom);
   let runtimeCPUCOption;
 
   runtimeCPUCOption = {
@@ -121,7 +127,7 @@ const createRuntimeInfoCharts = () => {
   runtimeCPUCOption && runTimeCPUChart.setOption(runtimeCPUCOption);
 
   const runtimeMemoryChartDom = document.getElementById('runtime-memory');
-  const runTimeMemoryChart = echarts.init(runtimeMemoryChartDom);
+  runTimeMemoryChart = echarts.init(runtimeMemoryChartDom);
   let runtimeMemoryCOption;
 
   runtimeMemoryCOption = {
@@ -153,42 +159,133 @@ const createRuntimeInfoCharts = () => {
   runtimeMemoryCOption && runTimeMemoryChart.setOption(runtimeMemoryCOption);
 }
 
-onMounted(async () => {
-  await get_run_profile(props.run_id).then((res) => {
-    console.log(res.data)
-    if (!res.data) {
-      console.log("no profile data")
-      return
-    }
-    profileData = res.data
-    for (let i = 0; i < profileData.x_axis.length; i++) {
-      profileData.time[i] = (profileData.time[i] / 1000).toFixed(2)
-      profileData.memory[i] = (profileData.memory[i] / 1024).toFixed(2)
-    }
-    console.log(profileData)
+let shouldRefresh = ref(false);
+let currentRunId;
+let refreshInterval;
+
+const updateShouldRefresh = async () => {
+  await get_current_run_id().then((res) => {
+    console.log("current run_id: " + res.data)
+    currentRunId = res.data
+    shouldRefresh.value = (currentRunId !== null && currentRunId.toString() === props.run_id.toString())
+    console.log("set shouldRefresh to " + shouldRefresh.value)
   })
+}
 
+const handleGetRuntimeInfoRes = (res)=> {
+  runtimeInfoData = res.data
+  runtimeInfoData.cpuUsage = []
+  runtimeInfoData.memoryUsage = []
+  for (let i = 0; i < runtimeInfoData.x_axis.length; i++) {
+    runtimeInfoData.cpuUsage.push([runtimeInfoData.x_axis[i], runtimeInfoData.cpu[i]])
+    runtimeInfoData.memoryUsage.push([runtimeInfoData.x_axis[i], (runtimeInfoData.memory[i] / 1024 / 1024).toFixed(2)])
+  }
+  console.log(runtimeInfoData)
+}
 
+const handleGetProfileRes = (res)=> {
+  profileData = res.data
+  for (let i = 0; i < profileData.x_axis.length; i++) {
+    profileData.time[i] = (profileData.time[i] / 1000).toFixed(2)
+    profileData.memory[i] = (profileData.memory[i] / 1024).toFixed(2)
+  }
+  console.log(profileData)
+}
+
+const getData = async () => {
   await get_runtime_info(props.run_id).then((res) => {
     if (!res.data) {
       console.log("no runtime info data")
       return
     }
-    runtimeInfoData = res.data
-    runtimeInfoData.cpuUsage = []
-    runtimeInfoData.memoryUsage = []
-    for (let i = 0; i < runtimeInfoData.x_axis.length; i++) {
-      runtimeInfoData.cpuUsage.push([runtimeInfoData.x_axis[i], runtimeInfoData.cpu[i]])
-      runtimeInfoData.memoryUsage.push([runtimeInfoData.x_axis[i], (runtimeInfoData.memory[i] / 1024 / 1024).toFixed(2)])
-    }
-    console.log(runtimeInfoData)
+    handleGetRuntimeInfoRes(res)
   })
+  await get_run_profile(props.run_id).then((res) => {
+    if (!res.data) {
+      console.log("no profile data")
+      return
+    }
+    handleGetProfileRes(res)
+  })
+}
+
+const setProfileData = ()=> {
+  profileTimeChart.setOption({
+    series: {
+      data: profileData.time
+    },
+    xAxis: {
+      data: profileData.x_axis,
+    },
+  })
+  profileMemoryChart.setOption({
+    series: {
+      data: profileData.memory
+    },
+    xAxis: {
+      data: profileData.x_axis,
+    },
+  })
+}
+
+const setRuntimeData = ()=> {
+  runTimeCPUChart.setOption({
+    series: {
+      data: runtimeInfoData.cpuUsage,
+    }
+  })
+  runTimeMemoryChart.setOption({
+    series: {
+      data: runtimeInfoData.memoryUsage
+    }
+  })
+}
+
+onMounted(async () => {
+  await updateShouldRefresh()
+
+  if (!shouldRefresh.value) {
+    await getData()
+  } else {
+    console.log("should refresh")
+    refreshInterval = setInterval(() => {
+      get_current_runtime_info().then((res) => {
+        if (!res.data) {
+          console.log("no runtime info data")
+          return
+        }
+        handleGetRuntimeInfoRes(res)
+        setRuntimeData()
+      })
+      get_current_profile().then((res) => {
+        if (!res.data) {
+          console.log("no profile data")
+          return
+        }
+        handleGetProfileRes(res)
+        setProfileData()
+      })
+      updateShouldRefresh()
+    }, 1000)
+  }
 
   createProfileCharts()
   createRuntimeInfoCharts()
-
 })
 
+onUnmounted(() => {
+  clearInterval(refreshInterval)
+})
+
+watch(shouldRefresh, async (newVal) => {
+  if (!newVal) {
+    console.log("stop refresh runtime info and profile")
+    clearInterval(refreshInterval)
+    await getData()
+    setRuntimeData()
+    setProfileData()
+  }
+})
 
 </script>
 

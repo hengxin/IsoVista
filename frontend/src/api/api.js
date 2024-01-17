@@ -79,3 +79,21 @@ const runtimeInfoUrl = "/runtime_info/"
 export function get_runtime_info(run_id) {
     return request.get(runtimeInfoUrl + run_id)
 }
+
+const currentRunIdUrl = "/current_run_id"
+
+export function get_current_run_id() {
+    return request.get(currentRunIdUrl)
+}
+
+const currentRunInfoUrl = "/current_runtime_info"
+
+export function get_current_runtime_info() {
+    return request.get(currentRunInfoUrl)
+}
+
+const currentProfileUrl = "/current_profile"
+
+export function get_current_profile() {
+    return request.get(currentProfileUrl)
+}

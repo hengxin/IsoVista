@@ -100,12 +100,11 @@ public class Profiler {
         if (startTime.containsKey(tag)) {
             long cur_time = System.currentTimeMillis();
             long duration = cur_time - startTime.get(tag);
-            long cur_memory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
             // update the counter, total_time and used memory
             totalTime.put(tag, (totalTime.get(tag) + duration));
             counter.put(tag, (counter.get(tag) + 1));
-            memory.put(tag, cur_memory);
+            memory.put(tag, getMaxMemory());
 
             // rm the tick
             startTime.remove(tag);

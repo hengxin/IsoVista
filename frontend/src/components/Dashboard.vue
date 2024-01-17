@@ -22,7 +22,7 @@ const testingOption = reactive({
   workload_distribution: 'UNIFORM',
   checker_type: 'PolySI',
   checker_isolation: 'SNAPSHOT_ISOLATION',
-  profiler_enable: false
+  profiler_enable: true
 });
 
 const dbOptions = [

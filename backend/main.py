@@ -171,8 +171,9 @@ class RunStore:
             self.run_map[run.run_id] = run
 
     def get(self, run_id):
-        return self.run_map[run_id]
-
+        if run_id in self.run_map:
+            return self.run_map[run_id]
+        return None
 
 bug_store = BugStore(result_path)
 bug_store.scan()
@@ -344,7 +345,7 @@ async def change_bug_tag(request: Request):
 @app.get("/run_profile/{run_id}")
 async def get_profile(run_id: int):
     run = run_store.get(run_id)
-    if run.profile_path is None:
+    if run is None or run.profile_path is None:
         return None
     df = pd.read_csv(run.profile_path)
     return {
@@ -358,7 +359,7 @@ async def get_profile(run_id: int):
 @app.get("/runtime_info/{run_id}")
 async def get_runtime_info(run_id: int):
     run = run_store.get(run_id)
-    if run.runtime_info_path is None:
+    if run is None or run.runtime_info_path is None:
         return None
     df = pd.read_csv(run.runtime_info_path)
     return {
@@ -366,3 +367,38 @@ async def get_runtime_info(run_id: int):
         "cpu": df.iloc[:, 1].to_list(),
         "memory": df.iloc[:, 2].to_list(),
     }
+
+@app.get("/current_run_id")
+async def get_current_run_id():
+    if current_run:
+        return max(run_store.run_map) + 1
+    else:
+        return None
+
+@app.get("/current_runtime_info")
+async def get_current_runtime_info():
+    try:
+        with open(os.path.join(current_path, "runtime_info.csv")) as runtime_info:
+            df = pd.read_csv(runtime_info)
+            return {
+                "x_axis": df.iloc[:, 0].to_list(),
+                "cpu": df.iloc[:, 1].to_list(),
+                "memory": df.iloc[:, 2].to_list(),
+            }
+    except FileNotFoundError:
+        return ""
+
+
+@app.get("/current_profile")
+async def get_current_profile():
+    try:
+        with open(os.path.join(current_path, "profile.csv")) as runtime_info:
+            df = pd.read_csv(runtime_info)
+            return {
+                "name": df.iloc[:, 0].name,
+                "x_axis": df.iloc[:, 0].to_list(),
+                "time": df.iloc[:, 1].to_list(),
+                "memory": df.iloc[:, 2].to_list(),
+            }
+    except FileNotFoundError:
+        return ""
