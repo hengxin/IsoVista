@@ -43,6 +43,7 @@ public class PostgreSQLClient extends DBClient {
                         }
                     }
                     transaction.setSuccess(true);
+                    break;
                 } catch (SQLException e) {
                     connection.rollback();
                 }

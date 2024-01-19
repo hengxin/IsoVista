@@ -10,9 +10,9 @@ import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.commons.math3.distribution.ZipfDistribution;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,7 +49,7 @@ public class GeneralGenerator implements Generator<Long, Long> {
     @Override
     public History<Long, Long> generate() {
         var history = new History<Long, Long>();
-        var counts = new ConcurrentHashMap<Long, Long>();
+        var counts = new HashMap<Long, Long>();
         ExecutorService executor = Executors.newFixedThreadPool((int) this.session);
         var todo = new ArrayList<Callable<Void>>();
         for (var iSession = 0; iSession < this.session; iSession++) {
@@ -71,8 +71,10 @@ public class GeneralGenerator implements Generator<Long, Long> {
                         long var = keyDistribution.sample();
                         long val = 0L;
                         if (type == Operation.Type.WRITE) {
-                            val = counts.getOrDefault(var, 1L);
-                            counts.put(var, val + 1);
+                            synchronized (counts) {
+                                val = counts.getOrDefault(var, 1L);
+                                counts.put(var, val + 1);
+                            }
                         }
                         synchronized (history) {
                             history.addOperation(history.getTransaction(txnId), type, var, val);

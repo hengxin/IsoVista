@@ -44,6 +44,7 @@ public class H2Client extends DBClient {
                         }
                     }
                     transaction.setSuccess(true);
+                    break;
                 } catch (SQLException e) {
                     connection.rollback();
                 }

@@ -44,6 +44,7 @@ public class MySQLClient extends DBClient {
                         }
                     }
                     transaction.setSuccess(true);
+                    break;
                 } catch (SQLException e) {
                     connection.rollback();
                 }
