@@ -31,12 +31,14 @@ public class MySQLCollector extends Collector<Long, Long> {
                 var node = new MySQLClient(url, username, password);
                 node.execSession(session, isolation);
                 node.close();
+                session.getTransactions().removeIf((txn) -> !txn.isSuccess());
                 return null;
             };
             todo.add(task);
         });
         executor.invokeAll(todo);
         dropDatabase();
+        history.getTransactions().entrySet().removeIf((entry) -> !entry.getValue().isSuccess());
         return history;
     }
 

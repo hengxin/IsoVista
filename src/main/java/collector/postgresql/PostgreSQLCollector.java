@@ -4,14 +4,13 @@ import collector.Collector;
 import history.History;
 import lombok.SneakyThrows;
 
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import java.sql.ResultSet;
 
 public class PostgreSQLCollector extends Collector<Long, Long> {
     public static final String NAME = "POSTGRES";
@@ -33,12 +32,14 @@ public class PostgreSQLCollector extends Collector<Long, Long> {
                 var node = new PostgreSQLClient(url, username, password);
                 node.execSession(session, isolation);
                 node.close();
+                session.getTransactions().removeIf((txn) -> !txn.isSuccess());
                 return null;
             };
             todo.add(task);
         });
         executor.invokeAll(todo);
         dropDatabase();
+        history.getTransactions().entrySet().removeIf((entry) -> !entry.getValue().isSuccess());
         return history;
     }
 

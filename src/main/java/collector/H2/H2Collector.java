@@ -30,12 +30,14 @@ public class H2Collector extends Collector<Long, Long> {
                 var node = new H2Client(url, username, password);
                 node.execSession(session, isolation);
                 node.close();
+                session.getTransactions().removeIf((txn) -> !txn.isSuccess());
                 return null;
             };
             todo.add(task);
         });
         executor.invokeAll(todo);
         dropDatabase();
+        history.getTransactions().entrySet().removeIf((entry) -> !entry.getValue().isSuccess());
         return history;
     }
 
