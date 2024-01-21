@@ -1,5 +1,6 @@
 package history;
 
+import history.loader.ElleHistoryLoader;
 import javafx.util.Pair;
 import lombok.Data;
 
@@ -74,6 +75,15 @@ public class History<KeyType, ValType> {
         for (var i : keySet) {
             // FIXME: Set init value to "" when ValType is String
             addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) (Object)0L);
+        }
+        initTransaction.setSuccess(true);
+    }
+
+    public void addInitSessionElle() {
+        Session<KeyType, ValType> initSession = addSession(-1);
+        Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, -1);
+        for (var i : keySet) {
+            addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) new ElleHistoryLoader.ElleValue(null, null));
         }
         initTransaction.setSuccess(true);
     }

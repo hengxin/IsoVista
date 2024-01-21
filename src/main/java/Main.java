@@ -2,6 +2,8 @@ import checker.Checker;
 import collector.Collector;
 import config.Config;
 import generator.general.GeneralGenerator;
+import history.History;
+import util.HistoryLoaderFactory;
 import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +12,7 @@ import org.reflections.Reflections;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-import util.ConfigParser;
-import util.Profiler;
-import util.RuntimeDataSerializer;
-import util.RuntimeInfoRecorder;
+import util.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,8 +25,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 @Slf4j
 @Command(name = "DBTest", mixinStandardHelpOptions = true, version = "DBTest 0.1", description = "Test database isolation level.")
@@ -84,27 +81,38 @@ public class Main implements Callable<Integer> {
 
         var enableProfile = Boolean.parseBoolean(config.getProperty(Config.PROFILER_ENABLE));
         var profiler = Profiler.getInstance();
-        int nHist = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
+        var skipGeneration = Boolean.parseBoolean(config.getProperty(Config.WORKLOAD_SKIP_GENERATION));
+        int historyNum = 1;
+        if (!skipGeneration) {
+            historyNum = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
+        }
         int nBatch = 1;
         AtomicInteger bugCount = new AtomicInteger();
         if (enableProfile) {
             profiler.startTick("run_total_time");
         }
-        BiFunction<Integer, Integer, Void> runOneShot = (Integer currentBatch, Integer totalBatch) -> {
+        TriFunction<Integer, Integer, Integer, Void> runOneShot = (Integer currentBatch, Integer totalBatch, Integer nHist) -> {
             for (int i = 1; i <= nHist; i++) {
-                // generate history
-                log.info("Start workload generation {} of {}", i + nHist * currentBatch, nHist * totalBatch);
-                var history = new GeneralGenerator(config).generate();
+                History history = null;
+                if (!skipGeneration) {
+                    // generate history
+                    log.info("Start workload generation {} of {}", i + nHist * currentBatch, nHist * totalBatch);
+                    history = new GeneralGenerator(config).generate();
 
-                // collect result
-                log.info("Start history collection");
-                try {
-                    var collectorInstance = collector.getDeclaredConstructor(Properties.class).newInstance(config);
-                    history = collectorInstance.collect(history);
-                    collectorInstance.close();
-                } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
-                         IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                    // collect result
+                    log.info("Start history collection");
+                    try {
+                        var collectorInstance = collector.getDeclaredConstructor(Properties.class).newInstance(config);
+                        history = collectorInstance.collect(history);
+                        collectorInstance.close();
+                    } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
+                             IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    var historyPath = config.getProperty(Config.HISTORY_PATH).toLowerCase();
+                    var historyType = config.getProperty(Config.HISTORY_TYPE).toLowerCase();
+                    history = HistoryLoaderFactory.getHistoryLoader(historyType).loadHistory(historyPath);
                 }
 
                 // verify history
@@ -114,6 +122,7 @@ public class Main implements Callable<Integer> {
                 }
                 boolean result;
                 try {
+                    // TODO: ww edge in elle history?
                     var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
                     result = checkerInstance.verify(history);
                     if (enableProfile) {
@@ -129,7 +138,9 @@ public class Main implements Callable<Integer> {
                         } catch (IOException e) {
 
                         }
-                        new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                        if (!skipGeneration) {
+                            new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                        }
                         checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
                     } else {
                         log.info("NO BUG");
@@ -153,14 +164,14 @@ public class Main implements Callable<Integer> {
                 var value = valueList[i];
                 config.setProperty(variable, value);
                 log.info("Run one shot {} = {}", variable, value);
-                runOneShot.apply(i, nBatch);
+                runOneShot.apply(i, nBatch, historyNum);
                 var avgTime = profiler.getAvgTime(checker.getName());
                 var maxMemory = profiler.getMemory(checker.getName());
                 Profiler.appendToCSV(value, avgTime, maxMemory);
                 profiler.removeTag(checker.getName());
             }
         } else {
-            runOneShot.apply(0, nBatch);
+            runOneShot.apply(0, nBatch, historyNum);
         }
 
         if (enableProfile) {
@@ -181,7 +192,7 @@ public class Main implements Callable<Integer> {
 
         // output to the specific dir
         var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);
-        RuntimeDataSerializer.getInstance(outputPath).outputToPath(nHist * nBatch, bugCount.get(), config, enableProfile);
+        RuntimeDataSerializer.getInstance(outputPath).outputToPath(historyNum * nBatch, bugCount.get(), config, enableProfile);
     }
 
     @SneakyThrows

@@ -8,7 +8,6 @@ import config.Config;
 import history.History;
 import util.Profiler;
 
-import java.nio.file.Paths;
 import java.util.Properties;
 
 public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
@@ -25,14 +24,21 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
     public static final String NAME = "PolySI";
     public static IsolationLevel ISOLATION_LEVEL;
 
+    private final Properties config;
+
     public PolySI(Properties config) {
+        this.config = config;
         ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
         assert ISOLATION_LEVEL == IsolationLevel.SNAPSHOT_ISOLATION;
     }
 
     @Override
     public boolean verify(History<VarType, ValType> history) {
-        history.addInitSession();
+        if (config.getProperty(Config.HISTORY_TYPE).equals("elle")) {
+            history.addInitSessionElle();
+        } else {
+            history.addInitSession();
+        }
         Pruning.setEnablePruning(!noPruning);
         SIVerifier.setCoalesceConstraints(!noCoalescing);
 

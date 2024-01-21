@@ -21,6 +21,11 @@ public class Config {
     public static final String WORKLOAD_KEY = "workload.key";
     public static final String WORKLOAD_DISTRIBUTION = "workload.distribution";
     public static final String WORKLOAD_VARIABLE = "workload.variable";
+    public static final String WORKLOAD_SKIP_GENERATION = "workload.skipgeneration";
+
+    // user history configs
+    public static final String HISTORY_PATH = "history.path";
+    public static final String HISTORY_TYPE = "history.type";
 
     // checker configs
     public static final String CHECKER_ISOLATION = "checker.isolation";
