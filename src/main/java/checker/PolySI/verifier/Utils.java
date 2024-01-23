@@ -233,18 +233,18 @@ class Utils {
                     String.format("\"%s\" -> \"%s\" [label=\"%s\"];\n", pair.source(), pair.target(), label));
         }
 
-        int colorStep = 0x1000000 / (constraints.size() + 1);
-        int color = 0;
-        for (var c : constraints) {
-            color += colorStep;
-            for (var e : c.getEdges1()) {
-                builder.append(String.format("\"%s\" -> \"%s\" [style=dotted,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
-            }
-
-            for (var e : c.getEdges2()) {
-                builder.append(String.format("\"%s\" -> \"%s\" [style=dashed,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
-            }
-        }
+//        int colorStep = 0x1000000 / (constraints.size() + 1);
+//        int color = 0;
+//        for (var c : constraints) {
+//            color += colorStep;
+//            for (var e : c.getEdges1()) {
+//                builder.append(String.format("\"%s\" -> \"%s\" [style=dotted,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
+//            }
+//
+//            for (var e : c.getEdges2()) {
+//                builder.append(String.format("\"%s\" -> \"%s\" [style=dashed,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
+//            }
+//        }
 
         builder.append("}\n");
         return builder.toString();
