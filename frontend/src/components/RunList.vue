@@ -108,15 +108,15 @@ watch(dialogVisible, (newVal) => {
           <el-table-column prop="id" label="ID" width="80"/>
           <el-table-column prop="bugCount" label="Bug Count" width="100"/>
           <el-table-column prop="histCount" label="Hist Count" width="100"/>
-          <el-table-column prop="dbType" label="DB Type" width="150"/>
-          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
-          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
+          <el-table-column prop="dbType" label="DB Type" width="120"/>
+          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="270"/>
+          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="200"/>
           <el-table-column prop="date" label="Date">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
             </template>
           </el-table-column>
-          <el-table-column label="Status" width="150">
+          <el-table-column label="Status" width="130">
             <template #default="{ row }">
               <el-tag v-if="row.status === 'Finished' && row.bugCount === 0" type="success">
                 Healthy

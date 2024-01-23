@@ -44,10 +44,22 @@ const createProfileCharts = () => {
       type: 'category',
       boundaryGap: false,
       data: profileData.x_axis,
+      axisLabel: {
+        fontSize: 17,
+      },
+      nameTextStyle: {
+        "fontSize": 18
+      }
     },
     yAxis: {
       name: 'Time(s)',
-      type: 'value'
+      type: 'value',
+      axisLabel: {
+        fontSize: 18
+      },
+      nameTextStyle: {
+        "fontSize": 20
+      }
     },
     series: [
       {
@@ -77,10 +89,22 @@ const createProfileCharts = () => {
       type: 'category',
       boundaryGap: false,
       data: profileData.x_axis,
+      axisLabel: {
+        fontSize: 17,
+      },
+      nameTextStyle: {
+        "fontSize": 18
+      }
     },
     yAxis: {
       name: 'Memory(MB)',
-      type: 'value'
+      type: 'value',
+      axisLabel: {
+        fontSize: 18
+      },
+      nameTextStyle: {
+        "fontSize": 20
+      }
     },
     series: [
       {
@@ -109,11 +133,21 @@ const createRuntimeInfoCharts = () => {
     },
     xAxis: {
       type: 'time',
+      axisLabel: {
+        formatter: '{HH}:{mm}:{ss}',
+        fontSize: 17,
+      },
     },
     yAxis: {
       name: 'CPU(%)',
       type: 'value',
-      max: 100
+      max: 100,
+      axisLabel: {
+        fontSize: 18
+      },
+      nameTextStyle: {
+        "fontSize": 20
+      }
     },
     series: [
       {
@@ -125,6 +159,8 @@ const createRuntimeInfoCharts = () => {
     ]
   };
   runtimeCPUCOption && runTimeCPUChart.setOption(runtimeCPUCOption);
+
+  console.log(runTimeCPUChart)
 
   const runtimeMemoryChartDom = document.getElementById('runtime-memory');
   runTimeMemoryChart = echarts.init(runtimeMemoryChartDom);
@@ -142,10 +178,20 @@ const createRuntimeInfoCharts = () => {
     xAxis: {
       // name: runtimeInfoData.name,
       type: 'time',
+      axisLabel: {
+        formatter: '{HH}:{mm}:{ss}',
+        fontSize: 17,
+      },
     },
     yAxis: {
       name: 'Memory(MB)',
       type: 'value',
+      axisLabel: {
+        fontSize: 18
+      },
+      nameTextStyle: {
+        "fontSize": 20
+      }
     },
     series: [
       {
