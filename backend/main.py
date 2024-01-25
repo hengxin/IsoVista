@@ -11,8 +11,9 @@ from typing import Any
 import pandas as pd
 import pydot
 from fastapi import FastAPI, Request, Body
+from fastapi import File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 app = FastAPI()
 origins = [
@@ -212,7 +213,7 @@ def run_worker():
         print("start running")
         with open(config_path, 'w') as file:
             file.write(config)
-        subprocess.run(["java", "-jar", dbtest_path, config_path])
+        subprocess.run(["java",  "-jar", dbtest_path, config_path])
         bug_store.scan()
         run_store.scan()
         current_run = ''
@@ -399,3 +400,14 @@ async def get_current_profile():
             }
     except FileNotFoundError:
         return ""
+
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        out_file_path = "user_history.txt"
+        with open(out_file_path, "wb") as out_file:
+            content = await file.read() 
+            out_file.write(content) 
+        return JSONResponse(status_code=200, content={"message": "Upload succeeded!"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": "Upload failed!", "details": str(e)})

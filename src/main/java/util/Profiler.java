@@ -85,7 +85,7 @@ public class Profiler {
             totalTime.put(tag, 0L);
         }
 
-        // if we haven't stop this tick, stop it!!!
+        // if we haven't stopped this tick, stop it!!!
         if (!startTime.containsKey(tag)) {
             endTick(tag);
         }

@@ -20,6 +20,9 @@ const testingOption = reactive({
   workload_readproportion: 0.5,
   workload_variable: '',
   workload_distribution: 'UNIFORM',
+  workload_skipgeneration: false,
+  history_path: '',
+  history_type: 'text',
   checker_isolation: 'SNAPSHOT_ISOLATION',
   profiler_enable: true
 });
@@ -74,17 +77,20 @@ async function handleSubmit() {
   })
 }
 
-const active = ref(0)
-const next = () => {
-  if (active.value++ > 2) active.value = 0
-}
-const back = () => {
-  if (active.value-- < 0) active.value = 2
-}
-
 const fileList = ref<UploadUserFile[]>([])
-const handleRemove: UploadProps['onRemove'] = (file, uploadFiles) => {
-  console.log(file, uploadFiles)
+const uploadUserHistory = ref('false')
+const handleFileChange = () => {
+  if (fileList.value.length > 0) {
+    testingOption.workload_skipgeneration = true
+    testingOption.history_path = 'user_history.txt'
+  } else {
+    testingOption.workload_skipgeneration = false
+  }
+  console.log(testingOption.workload_skipgeneration);
+}
+const handleRemove: UploadProps['onRemove'] = () => {
+  testingOption.workload_skipgeneration = false
+  console.log(testingOption.workload_skipgeneration)
 }
 
 const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
@@ -308,13 +314,13 @@ const handleIndexChange = (index) => {
                   <el-upload
                       v-model:file-list="fileList"
                       class="upload-demo"
-                      action=""
+                      action="http://localhost:8000/upload/"
                       multiple
                       :on-preview="handlePreview"
                       :on-remove="handleRemove"
                       :before-remove="beforeRemove"
-                      :limit="3"
                       :on-exceed="handleExceed"
+                      @change="handleFileChange"
                   >
                     <el-button type="primary">Upload</el-button>
                     <template #tip>
@@ -360,7 +366,8 @@ const handleIndexChange = (index) => {
           </el-card>
         </el-col>
       </el-row>
-      <el-button type="primary" @click="handleSubmit();">start</el-button>
+      <el-button type="success" @click="handleSubmit();">start</el-button>
+      <el-button type="primary" @click="handleSubmit();">reset</el-button>
     </el-main>
   </el-container>
 </template>
@@ -391,12 +398,6 @@ const handleIndexChange = (index) => {
   width: 100%;
   margin-bottom: 20px;
 }
-
-.el-carousel__container {
-  display: flex;
-  align-items: center;
-}
-
 
 
 .card-header {
