@@ -1,2 +1,4 @@
 fastapi~=0.105.0
 pydot~=1.4.2
+pandas~=2.0.3
+python-multipart~=0.0.6
