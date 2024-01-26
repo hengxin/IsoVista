@@ -22,7 +22,7 @@ WORKDIR /app
 SHELL ["/bin/bash", "-c"]
 
 RUN apt update
-RUN apt install -y python3 python3-pip curl
+RUN apt install -y python3 python3-pip curl openjdk-11-jdk
 
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -U -r ./requirements.txt
