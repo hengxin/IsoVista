@@ -15,7 +15,7 @@ COPY src/main/resources/lib* /lib/x86_64-linux-gnu/
 RUN ln -s /lib/x86_64-linux-gnu/libmonosat.so /lib/x86_64-linux-gnu/liblibmonosat.so
 
 RUN apt update
-RUN apt install -y python3 python3-pip curl openjdk-11-jdk
+RUN apt install -y python3 python3-pip curl openjdk-11-jdk libgmp-dev libboost-log-dev
 
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -U -r ./requirements.txt
