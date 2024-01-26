@@ -2,8 +2,10 @@
 import {reactive, ref} from "vue"
 import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
-import {run, get_current_log} from "@/api/api"
+import {run} from "@/api/api"
 import {InfoFilled} from "@element-plus/icons-vue"
+
+const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://localhost:3306',
@@ -314,7 +316,7 @@ const handleIndexChange = (index) => {
                   <el-upload
                       v-model:file-list="fileList"
                       class="upload-demo"
-                      action="http://localhost:8000/upload/"
+                      :action="backendUrl + 'upload'"
                       multiple
                       :on-preview="handlePreview"
                       :on-remove="handleRemove"
