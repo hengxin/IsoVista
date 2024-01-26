@@ -52,6 +52,10 @@ const checkerIsolationLevelOptions = [
   {label: 'Snapshot_Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
 ];
+const historyTypeOptions = [
+  {label: 'Text', value: 'text'},
+  {label: 'Elle', value: 'elle'},
+];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
 };
@@ -141,7 +145,8 @@ const handleIndexChange = (index) => {
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
-                      You can try jdbc:mysql://172.17.0.1:3306 for MYSQL, jdbc:postgresql://172.0.0.1:15432 for PostgreSQL and jdbc:h2:mem:testdb for H2.
+                      You can try jdbc:mysql://172.17.0.1:3306 for MYSQL, jdbc:postgresql://172.0.0.1:15432 for
+                      PostgreSQL and jdbc:h2:mem:testdb for H2.
                       This URL SHOULD be consistent with the DB Type option.
                     </template>
                     <el-icon color="blue">
@@ -160,7 +165,9 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The database type you want to test. This option SHOULD be consistent with the JDBC URL. </template>
+                    <template #content> The database type you want to test. This option SHOULD be consistent with the
+                      JDBC URL.
+                    </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -177,7 +184,8 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The isolation level of transactions running according to the SQL-92 standard. </template>
+                    <template #content> The isolation level of transactions running according to the SQL-92 standard.
+                    </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -208,7 +216,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> Number of histories in the workload. </template>
+                    <template #content> Number of histories in the workload.</template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -220,7 +228,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> Number of simulated sessions. </template>
+                    <template #content> Number of simulated sessions.</template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -232,10 +240,10 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                  <template #content>Number of transactions in each session.</template>
-                  <el-icon color="blue">
-                    <InfoFilled/>
-                  </el-icon>
+                    <template #content>Number of transactions in each session.</template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
                   </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Op/Txn" v-if="!testingOption.workload_skipgeneration">
@@ -244,10 +252,10 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                  <template #content> Number of operations in each transaction. </template>
-                  <el-icon color="blue">
-                    <InfoFilled/>
-                  </el-icon>
+                    <template #content> Number of operations in each transaction.</template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
                   </el-tooltip>
                 </el-form-item>
                 <el-form-item label="#Key" v-if="!testingOption.workload_skipgeneration">
@@ -256,7 +264,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> Number of the keys in the workload. </template>
+                    <template #content> Number of the keys in the workload.</template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -268,7 +276,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The proportion of read operations in the workload. </template>
+                    <template #content> The proportion of read operations in the workload.</template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -286,31 +294,44 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The distribution type of transaction access keys. </template>
+                    <template #content> The distribution type of transaction access keys.</template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                  <el-upload
-                      v-model:file-list="fileList"
-                      class="upload-demo"
-                      :action="backendUrl + 'upload'"
-                      multiple
-                      :on-preview="handlePreview"
-                      :on-remove="handleRemove"
-                      :before-remove="beforeRemove"
-                      :on-exceed="handleExceed"
-                      @change="handleFileChange"
-                      v-if="testingOption.workload_skipgeneration"
+                <el-form-item label="History Type" v-if="testingOption.workload_skipgeneration">
+                  <el-select v-model="testingOption.history_type" placeholder=""
+                             @change="handleSelectionChange"
+                             class="fixed-width"
                   >
-                    <el-button type="primary">Upload</el-button>
-                    <template #tip>
-                      <div class="el-upload__tip">
-                        upload your generated history file here
-                      </div>
-                    </template>
-                  </el-upload>
+                    <el-option
+                        v-for="option in historyTypeOptions"
+                        :key="option.value"
+                        :label="option.label"
+                        :value="option.value">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+                <el-upload
+                    v-model:file-list="fileList"
+                    class="upload-demo"
+                    :action="backendUrl + 'upload'"
+                    multiple
+                    :on-preview="handlePreview"
+                    :on-remove="handleRemove"
+                    :before-remove="beforeRemove"
+                    :on-exceed="handleExceed"
+                    @change="handleFileChange"
+                    v-if="testingOption.workload_skipgeneration"
+                >
+                  <el-button type="primary">Upload</el-button>
+                  <template #tip>
+                    <div class="el-upload__tip">
+                      upload your generated history file here
+                    </div>
+                  </template>
+                </el-upload>
               </el-form>
             </el-carousel-item>
             <el-carousel-item class="el-carousel-item-demo">
