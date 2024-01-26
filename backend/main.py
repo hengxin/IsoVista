@@ -79,6 +79,8 @@ class Bug:
 
 class BugStore:
     def __init__(self, directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         self.directory = directory
         self.bug_count = 0
         self.hist_count = 0
@@ -144,6 +146,8 @@ class Run:
 
 class RunStore:
     def __init__(self, directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         self.directory = directory
         self.buggy_run_count = 0
         self.run_count = 0
@@ -261,7 +265,9 @@ def current_runs():
         result[0].percentage = get_current_run_percentage()
     for config in run_queue.queue:
         result.append(config_to_run(config))
-    max_run_id = max(run_store.run_map)
+    max_run_id = 0
+    if run_store.run_map:
+        max_run_id = max(run_store.run_map)
     for item in result:
         item.run_id = max_run_id + 1
         max_run_id += 1
@@ -282,6 +288,7 @@ async def get_run_list():
 async def view_bug(bug_id: int):
     bug = bug_store.get(bug_id)
     graphs = pydot.graph_from_dot_file(bug.dot_path)
+    graphs[0].del_node('"\\n"')
     nodes = []
     edges = []
     for node in graphs[0].get_nodes():
@@ -289,9 +296,8 @@ async def view_bug(bug_id: int):
             "id": node.get_name().replace("\"", ""),
             "label": node.get_name().replace("\"", ""),
             "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
-                          node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation")).replace("[",
-                                                                                                             "").replace(
-                "]", ""),
+                          node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"))
+            .replace("[", "").replace("]", ""),
         })
 
     for edge in graphs[0].get_edges():
@@ -369,7 +375,10 @@ async def get_runtime_info(run_id: int):
 @app.get("/current_run_id")
 async def get_current_run_id():
     if current_run:
-        return max(run_store.run_map) + 1
+        if run_store.run_map:
+            return max(run_store.run_map) + 1
+        else:
+            return 1
     else:
         return None
 
