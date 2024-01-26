@@ -143,9 +143,19 @@ const handleIndexChange = (index) => {
                 <header class="form-header">
                   <h2>Database Settings</h2>
                 </header>
-                <el-form-item label="DB URL">
+                <el-form-item label="JDBC URL">
                   <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable
                             class="fixed-width"></el-input>
+                  &nbsp;&nbsp;
+                  <el-tooltip placement="top">
+                    <template #content>
+                      You can try jdbc:mysql://172.17.0.1:3306 for MYSQL, jdbc:postgresql://172.0.0.1:15432 for PostgreSQL and jdbc:h2:mem:testdb for H2.
+                      This URL SHOULD be consistent with the DB Type option.
+                    </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="DB Type">
                   <el-select v-model="testingOption.db_type" placeholder="" @change="handleSelectionChange"
@@ -158,7 +168,7 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The database type you want to test. Currently we support MySQL, PostgreSQL and H2. </template>
+                    <template #content> The database type you want to test. This option SHOULD be consistent with the JDBC URL. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -173,7 +183,13 @@ const handleIndexChange = (index) => {
                         :label="option.label"
                         :value="option.value">
                     </el-option>
-                  </el-select>
+                  </el-select>&nbsp;&nbsp;
+                  <el-tooltip placement="top">
+                    <template #content> The isolation level of transactions running according to the SQL-92 standard. </template>
+                    <el-icon color="blue">
+                      <InfoFilled/>
+                    </el-icon>
+                  </el-tooltip>
                 </el-form-item>
                 <el-form-item label="Username">
                   <el-input v-model="testingOption.db_username" placeholder="DB username" clearable
@@ -198,7 +214,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> historical number of transactions  </template>
+                    <template #content> Number of histories in the workload. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -210,7 +226,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> number of simulated sessions  </template>
+                    <template #content> Number of simulated sessions. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -222,7 +238,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                  <template #content>number of transactions in each session</template>
+                  <template #content>Number of transactions in each session.</template>
                   <el-icon color="blue">
                     <InfoFilled/>
                   </el-icon>
@@ -234,7 +250,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                  <template #content> number of operations in each transaction </template>
+                  <template #content> Number of operations in each transaction. </template>
                   <el-icon color="blue">
                     <InfoFilled/>
                   </el-icon>
@@ -246,7 +262,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> number of workload keys </template>
+                    <template #content> Number of the keys in the workload. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -258,7 +274,7 @@ const handleIndexChange = (index) => {
                       class="fixed-width"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The proportion of read operations in each transaction </template>
+                    <template #content> The proportion of read operations in the workload. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
@@ -276,7 +292,7 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The distribution type of transaction access keys. We support uniform, zipfan and hotspot</template>
+                    <template #content> The distribution type of transaction access keys. </template>
                     <el-icon color="blue">
                       <InfoFilled/>
                     </el-icon>
