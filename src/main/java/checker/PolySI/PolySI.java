@@ -34,7 +34,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
     @Override
     public boolean verify(History<VarType, ValType> history) {
-        if (config.contains(Config.HISTORY_TYPE) && config.getProperty(Config.HISTORY_TYPE).equals("elle")) {
+        if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
             history.addInitSessionElle();
         } else {
             history.addInitSession();

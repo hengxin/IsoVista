@@ -10,11 +10,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.Comparator;
 
-public class ElleTextHistorySerializer implements HistorySerializer<Long, ElleHistoryLoader.ElleValue> {
+public class ElleTextHistorySerializer implements HistorySerializer<Integer, ElleHistoryLoader.ElleValue> {
 
     @Override
     @SneakyThrows
-    public void serializeHistory(History<Long, ElleHistoryLoader.ElleValue> history, String path) {
+    public void serializeHistory(History<Integer, ElleHistoryLoader.ElleValue> history, String path) {
         // serialize an elle history to text
         var out = new BufferedWriter(new FileWriter(path));
         var txns = history.getFlatTransactions();
@@ -22,8 +22,8 @@ public class ElleTextHistorySerializer implements HistorySerializer<Long, ElleHi
         for (var txn : txns) {
             for (var op : txn.getOps()) {
                 String opType = op.getType() == Operation.Type.READ ? "r" : "w";
-                long key = op.getKey();
-                long value = op.getValue().getLastElement();
+                int key = op.getKey();
+                long value = op.getValue().getLastElement() == null ? 0 : op.getValue().getLastElement();
                 long session = txn.getSession().getId();
                 long txnId = txn.getId();
 

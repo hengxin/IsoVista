@@ -37,5 +37,5 @@ public class Config {
     // default configs
     public static final String DEFAULT_OUTPUT_PATH = "./result";
     public static final String DEFAULT_CURRENT_PATH = "./current";
-
+    public static final String DEFAULT_HISTORY_TYPE = "text";
 }
