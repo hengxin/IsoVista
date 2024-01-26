@@ -21,6 +21,10 @@ FROM ubuntu:22.04
 WORKDIR /app
 SHELL ["/bin/bash", "-c"]
 
+# copy shared libraries
+COPY src/main/resources/lib* /lib/x86_64-linux-gnu/
+RUN ln -s /lib/x86_64-linux-gnu/libmonosat.so /lib/x86_64-linux-gnu/liblibmonosat.so
+
 RUN apt update
 RUN apt install -y python3 python3-pip curl openjdk-11-jdk
 
