@@ -8,10 +8,10 @@ import {InfoFilled} from "@element-plus/icons-vue"
 const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 
 const testingOption = reactive({
-  db_url: 'jdbc:mysql://localhost:3306',
+  db_url: 'jdbc:mysql://172.17.0.1:3306',
   db_type: 'MYSQL',
   db_isolation: 'TRANSACTION_SERIALIZATION',
-  db_username: 'dbtest',
+  db_username: 'root',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
   workload_history: 1,
@@ -50,6 +50,7 @@ const checkerIsolationLevelOptions = [
   {label: 'Read_Atomicity', value: 'READ_ATOMICITY'},
   {label: 'Causal_Consistency', value: 'CAUSAL_CONSISTENCY'},
   {label: 'Snapshot_Isolation', value: 'SNAPSHOT_ISOLATION'},
+  {label: 'Serializable', value: 'SERIALIZABLE'},
 ];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
