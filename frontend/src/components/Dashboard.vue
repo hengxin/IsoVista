@@ -23,7 +23,7 @@ const testingOption = reactive({
   workload_variable: '',
   workload_distribution: 'UNIFORM',
   workload_skipgeneration: false,
-  history_path: '',
+  history_path: 'user_history.txt',
   history_type: 'text',
   checker_isolation: 'SNAPSHOT_ISOLATION',
   profiler_enable: true
@@ -81,19 +81,11 @@ async function handleSubmit() {
 }
 
 const fileList = ref<UploadUserFile[]>([])
-const uploadUserHistory = ref('false')
 const handleFileChange = () => {
-  if (fileList.value.length > 0) {
-    testingOption.workload_skipgeneration = true
-    testingOption.history_path = 'user_history.txt'
-  } else {
-    testingOption.workload_skipgeneration = false
-  }
   console.log(testingOption.workload_skipgeneration);
 }
 const handleRemove: UploadProps['onRemove'] = () => {
   testingOption.workload_skipgeneration = false
-  console.log(testingOption.workload_skipgeneration)
 }
 
 const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
@@ -208,7 +200,9 @@ const handleIndexChange = (index) => {
                 <header class="form-header">
                   <h2>Workload Settings</h2>
                 </header>
-                <el-form-item label="#History">
+                <el-switch v-model="testingOption.workload_skipgeneration"
+                           inactive-text="Skip Generation"/>
+                <el-form-item label="#History" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_history"
                       class="fixed-width"
@@ -220,7 +214,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Session">
+                <el-form-item label="#Session" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_session"
                       class="fixed-width"
@@ -232,7 +226,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Txn/Sess">
+                <el-form-item label="#Txn/Sess" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_transaction"
                       class="fixed-width"
@@ -244,7 +238,7 @@ const handleIndexChange = (index) => {
                   </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Op/Txn">
+                <el-form-item label="#Op/Txn" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_operation"
                       class="fixed-width"
@@ -256,7 +250,7 @@ const handleIndexChange = (index) => {
                   </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Key">
+                <el-form-item label="#Key" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_key"
                       class="fixed-width"
@@ -268,7 +262,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="Read Proportion">
+                <el-form-item label="Read Proportion" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_readproportion"
                       class="fixed-width"
@@ -280,7 +274,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="Distribution">
+                <el-form-item label="Distribution" v-if="!testingOption.workload_skipgeneration">
                   <el-select v-model="testingOption.workload_distribution" placeholder=""
                              @change="handleSelectionChange"
                              class="fixed-width">
@@ -298,12 +292,31 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
+                  <el-upload
+                      v-model:file-list="fileList"
+                      class="upload-demo"
+                      :action="backendUrl + 'upload'"
+                      multiple
+                      :on-preview="handlePreview"
+                      :on-remove="handleRemove"
+                      :before-remove="beforeRemove"
+                      :on-exceed="handleExceed"
+                      @change="handleFileChange"
+                      v-if="testingOption.workload_skipgeneration"
+                  >
+                    <el-button type="primary">Upload</el-button>
+                    <template #tip>
+                      <div class="el-upload__tip">
+                        upload your generated history file here
+                      </div>
+                    </template>
+                  </el-upload>
               </el-form>
             </el-carousel-item>
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
                        label-width="35%"
-                       >
+              >
                 <header class="form-header">
                   <h2>Checker Settings</h2>
                 </header>
@@ -328,26 +341,6 @@ const handleIndexChange = (index) => {
                   />
                 </el-form-item>
                 <el-form-item>
-                </el-form-item>
-                <el-form-item>
-                  <el-upload
-                      v-model:file-list="fileList"
-                      class="upload-demo"
-                      :action="backendUrl + 'upload'"
-                      multiple
-                      :on-preview="handlePreview"
-                      :on-remove="handleRemove"
-                      :before-remove="beforeRemove"
-                      :on-exceed="handleExceed"
-                      @change="handleFileChange"
-                  >
-                    <el-button type="primary">Upload</el-button>
-                    <template #tip>
-                      <div class="el-upload__tip">
-                        upload your generated history file here
-                      </div>
-                    </template>
-                  </el-upload>
                 </el-form-item>
               </el-form>
             </el-carousel-item>
