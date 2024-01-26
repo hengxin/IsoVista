@@ -1,14 +1,3 @@
-FROM ubuntu:22.04 AS build_monosat
-
-WORKDIR /monosat
-RUN apt update
-RUN apt install -y git g++ openjdk-11-jdk cmake libgmp-dev zlib1g-dev
-RUN git clone https://github.com/sambayless/monosat.git .
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-RUN cmake -DJAVA=ON -DBUILD_STATIC=OFF .
-RUN make
-
-
 FROM maven:3.8.4-openjdk-11-slim AS build_jar
 
 WORKDIR /jar
@@ -31,7 +20,6 @@ RUN apt install -y python3 python3-pip curl openjdk-11-jdk
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -U -r ./requirements.txt
 RUN pip install "uvicorn[standard]"
-COPY --from=build_monosat /monosat/libmonosat.so ./
 COPY --from=build_jar /jar/target/*.jar ./
 COPY backend .
 
