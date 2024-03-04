@@ -298,16 +298,19 @@ async def view_bug(bug_id: int):
             "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
                           node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"))
             .replace("[", "").replace("]", ""),
+            "relate_to": node.get("relate_to").replace("\"", "").split(",")
         })
 
     for edge in graphs[0].get_edges():
         edges.append({
+            "id": edge.get("id").replace("\"", ""),
             "source": edge.get_source().replace("\"", ""),
             "target": edge.get_destination().replace("\"", ""),
             "label": edge.get("label").replace("\\n", " ").replace("\"", ""),
+            "relate_to": edge.get("relate_to").replace("\"", "").split(", ")
         })
 
-    return {"nodes": nodes, "edges": edges}
+    return {"name": graphs[0].get_name(), "nodes": nodes, "edges": edges}
 
 
 @app.get("/download/{bug_id}")
@@ -420,3 +423,7 @@ async def upload_file(file: UploadFile = File(...)):
         return JSONResponse(status_code=200, content={"message": "Upload succeeded!"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Upload failed!", "details": str(e)})
+
+@app.post("/stop/")
+async def stop_run():
+    pass
