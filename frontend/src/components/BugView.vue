@@ -1,8 +1,9 @@
 <script setup>
 import {defineProps, onMounted, ref} from 'vue'
-import G6 from '@antv/g6';
+import G6, {Algorithm} from '@antv/g6';
 import {get_graph} from "@/api/api"
 import {insertCss} from 'insert-css'
+
 insertCss(`
   .g6-component-contextmenu {
     padding: 0
@@ -33,6 +34,12 @@ let data = {
 }
 
 let g = ref(G6.Graph);
+let bugName = ref("")
+let removedNodes = new Map()
+let removedEdges = new Map()
+
+const {detectDirectedCycle} = Algorithm;
+
 const handleDownloadPNG = () => {
   console.log("download png")
   g.downloadFullImage('image', 'image/png')
@@ -113,28 +120,60 @@ onMounted(async () => {
 
   const menu = new G6.Menu({
     getContent(evt) {
-      if (evt.item.getStates().length && evt.item.getStates()[0] === 'highlight') {
-        return `<div>Unmark</div>
-              <div>Delete</div>`;
+      let content = '';
+      console.log(evt.item.getModel())
+      if (evt.item.getStates().length && evt.item.getStates()[0] === 'marked') {
+        content += '<div>Unmark</div>';
       } else {
-        return `<div>Mark</div>
-              <div>Delete</div>`;
+        content += '<div>Mark</div>';
       }
+      content += '<div>Delete</div>';
+      if (evt.item._cfg.type === 'edge' && (evt.item.getModel().label.includes("CM")
+          || evt.item.getModel().label.includes("WW") || evt.item.getModel().label.includes("RW"))) {
+        if(evt.item.getModel().expanded) {
+          content += '<div>Collapse</div>';
+        } else {
+          content += '<div>Expand</div>';
+        }
+      }
+      return content;
     },
     handleMenuClick(target, item) {
       console.log(target.innerHTML)
       if (target.innerHTML === "Mark") {
-        graph.setItemState(item, 'highlight', true);
+        graph.setItemState(item, 'marked', true);
       } else if (target.innerHTML === "Unmark") {
-        graph.setItemState(item, 'highlight', false);
+        graph.setItemState(item, 'marked', false);
       } else if (target.innerHTML === "Delete") {
-        if (item._cfg.type === 'node') {
-          data.nodes = data.nodes.filter(n => n.id !== item._cfg.id)
-          data.edges = data.edges.filter(e => e.source !== item._cfg.id && e.target !== item._cfg.id)
-        } else if (item._cfg.type === 'edge') {
-          data.edges = data.edges.filter(e => e.id !== item._cfg.id)
-        }
-        graph.changeData(data);
+        graph.removeItem(item)
+      } else if (target.innerHTML === "Collapse") {
+        item.getModel().expanded = false
+        removedNodes[item] = JSON.parse(JSON.stringify(graph.getNodes().filter((node) => {
+          return node.getModel().relate_to.includes(item.getModel().id)
+        }).map((node) => {
+          return node.getModel()
+        })))
+        removedEdges[item] = JSON.parse(JSON.stringify(graph.getEdges().filter((edge) => {
+          return edge.getModel().relate_to.includes(item.getModel().id)
+        }).map((edge) => {
+          return edge.getModel()
+        })))
+
+        graph.getNodes()
+            .filter((node) => {return node.getModel().relate_to.includes(item.getModel().id)})
+            .forEach((node) => graph.removeItem(node))
+        graph.getEdges()
+            .filter((edge) => {return edge.getModel().relate_to.includes(item.getModel().id)})
+            .forEach((edge) => graph.removeItem(edge))
+      } else if (target.innerHTML === "Expand") {
+        console.log(removedNodes[item])
+        item.getModel().expanded = true
+        removedNodes[item].forEach((node) => {
+          graph.addItem("node", node)
+        })
+        removedEdges[item].forEach((edge) => {
+          graph.addItem("edge", edge)
+        })
       }
     },
   });
@@ -142,18 +181,36 @@ onMounted(async () => {
   const toolbar = new G6.ToolBar({
     position: {
       x: 230,
-      y: 30
+      y: 80
     }
   });
 
   await get_graph(props.bug_id).then(res => {
     console.log(res.data)
+    bugName.value = res.data.name
     data.nodes = res.data.nodes
     data.edges = res.data.edges
     res.data.nodes.forEach(node => {
       node.label = node.label.replace(/Transaction/g, 'Txn')
     })
-    console.log(data)
+    res.data.edges.forEach(edge => {
+      edge.expanded = false
+      edge.style = {}
+      if (edge.label.includes("WR")) {
+        edge.style.stroke = "#5F95FF"
+      } else if (edge.label.includes("SO")) {
+        edge.style.stroke = "#61DDAA"
+      } else if (edge.label.includes("WW")) {
+        edge.style.stroke = "#F6903D"
+        edge.expanded = true
+      } else if (edge.label.includes("RW")) {
+        edge.style.stroke = "#F6BD16"
+        edge.expanded = true
+      } else if (edge.label.includes("CM")) {
+        edge.style.stroke = "#F08BB4"
+        edge.expanded = true
+      }
+    })
   })
 
   const container = document.getElementById('container');
@@ -166,8 +223,8 @@ onMounted(async () => {
     height,
     // translate the graph to align the canvas's center, support by v3.5.1
     fitCenter: true,
-    // the edges are linked to the center of source and target ndoes
-    linkCenter: false,
+    // the edges are linked to the center of source and target nodes
+    linkCenter: true,
     plugins: [tooltip, menu, toolbar],
     enabledStack: true,
     layout: {
@@ -178,39 +235,31 @@ onMounted(async () => {
     animate: true,
     defaultNode: {
       type: 'circle',
-      size: [65],
-      // color: '#5B8FF9',
-      // style: {
-      //   fill: '#9EC9FF',
-      //   lineWidth: 3,
-      // },
-      // labelCfg: {
-      //   style: {
-      //     fill: '#000',
-      //     fontSize: 14,
-      //   },
-      // },
+      size: [66],
     },
     defaultEdge: {
       labelCfg: {
         autoRotate: true,
       },
       style: {
-        stroke: 'gray',
-        endArrow: true,
-      }
+        endArrow: {
+          path: G6.Arrow.vee(10, 10, 34),
+          d: 34,
+        }
+      },
     },
     modes: {
       default: ['drag-canvas', 'drag-node'],
     },
     nodeStateStyles: {
-      // style configurations for hover state
-      hover: {
-        fillOpacity: 0.8,
+      marked: {
+        lineWidth: 3,
+        fill: '#d6dff5',
       },
-      // style configurations for selected state
-      selected: {
-        lineWidth: 5,
+    },
+    edgeStateStyles: {
+      marked: {
+        lineWidth: 3,
       },
     },
   });
@@ -224,7 +273,26 @@ onMounted(async () => {
     console.log(e)
   })
 
-  if (typeof window !== 'undefined')
+// highlight cycle
+let cycle = detectDirectedCycle(data);
+let cycleNodeList = []
+let cycleEdgeList = []
+for (let key in cycle) {
+  cycleNodeList.push(key)
+}
+for (let i = 0; i < cycleNodeList.length - 1; i++) {
+  cycleEdgeList.push({source: cycleNodeList[i], target: cycleNodeList[i + 1]})
+}
+cycleEdgeList.push({source: cycleNodeList[cycleNodeList.length - 1], target: cycleNodeList[0]})
+console.log(cycleNodeList)
+g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
+  node.setState('marked', true)
+})
+g.getEdges().filter(edge => console.log(edge.getSource().getID()) || cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
+  edge.setState('marked', true)
+})
+
+if (typeof window !== 'undefined')
     window.onresize = () => {
       if (!graph || graph.get('destroyed')) return;
       if (!container || !container.scrollWidth || !container.scrollHeight) return;
@@ -235,6 +303,10 @@ onMounted(async () => {
 
 <template>
   <el-container class="layout-container-demo" style="height: 100%">
+    <el-header>
+      <h2>{{ bugName }}
+      </h2>
+    </el-header>
     <el-main>
       <el-container id="toolbar">
         <el-dropdown trigger="click">
@@ -258,8 +330,9 @@ onMounted(async () => {
 <style scoped>
 .layout-container-demo .el-header {
   position: relative;
-  background-color: var(--el-color-primary-light-7);
-  color: var(--el-text-color-primary);
+  text-align: center;
+  //background-color: var(--el-color-primary-light-7);
+  //color: var(--el-text-color-primary);
 }
 
 .layout-container-demo .el-main {
@@ -289,5 +362,6 @@ onMounted(async () => {
   color: var(--el-color-primary);
   display: flex;
   align-items: center;
+  margin-top: 70px;
 }
 </style>
