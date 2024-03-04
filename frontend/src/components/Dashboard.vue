@@ -2,10 +2,13 @@
 import {reactive, ref} from "vue"
 import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
-import {run} from "@/api/api"
+import {run, get_current_run_id} from "@/api/api"
 import {InfoFilled} from "@element-plus/icons-vue"
+import {useRouter} from "vue-router";
 
 const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
+
+const router = useRouter();
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://172.17.0.1:3306',
@@ -80,6 +83,10 @@ async function handleSubmit() {
     ElMessage({
       message: 'Add to run queue successfully',
       type: 'success',
+    })
+    get_current_run_id().then(res => {
+      console.log(res.data)
+      router.push({path: `/run_view/${res.data}`})
     })
   })
 }
@@ -399,8 +406,7 @@ const handleIndexChange = (index) => {
           </el-card>
         </el-col>
       </el-row>
-      <el-button type="success" @click="handleSubmit();">start</el-button>
-      <el-button type="primary" @click="handleSubmit();">reset</el-button>
+      <el-button type="success" @click="handleSubmit()">start</el-button>
     </el-main>
   </el-container>
 </template>
