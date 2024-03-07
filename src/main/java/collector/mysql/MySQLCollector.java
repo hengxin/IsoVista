@@ -14,6 +14,14 @@ import java.util.concurrent.Executors;
 public class MySQLCollector extends Collector<Long, Long> {
     public static final String NAME = "MYSQL";
 
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @SneakyThrows
     public MySQLCollector(Properties config) {
         super(config);

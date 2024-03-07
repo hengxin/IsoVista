@@ -13,6 +13,14 @@ import java.util.concurrent.Executors;
 public class H2Collector extends Collector<Long, Long> {
     public static final String NAME = "H2";
 
+    static {
+        try {
+            Class.forName("org.h2.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @SneakyThrows
     public H2Collector(Properties config) {
         super(config);

@@ -14,6 +14,14 @@ import java.util.concurrent.Executors;
 public class PostgreSQLCollector extends Collector<Long, Long> {
     public static final String NAME = "POSTGRES";
 
+    static {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @SneakyThrows
     public PostgreSQLCollector(Properties config) {
         super(config);
