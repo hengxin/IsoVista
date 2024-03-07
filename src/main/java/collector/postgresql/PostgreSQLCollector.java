@@ -4,7 +4,6 @@ import collector.Collector;
 import history.History;
 import lombok.SneakyThrows;
 
-import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -48,10 +47,7 @@ public class PostgreSQLCollector extends Collector<Long, Long> {
     protected void createTable() {
         var statement = connection.createStatement();
         // create database if not exists
-        ResultSet rs = statement.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'dbtest'");
-        if (!rs.next()) {
-            statement.executeUpdate("CREATE SCHEMA dbtest ");
-        }
+        statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS dbtest");
         statement.executeUpdate("DROP TABLE IF EXISTS dbtest.variables");
         statement.executeUpdate("CREATE TABLE IF NOT EXISTS dbtest.variables (var BIGINT PRIMARY KEY, val BIGINT NOT NULL)");
     }
