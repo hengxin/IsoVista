@@ -4,7 +4,7 @@
 http-server dist &
 
 # Start the backend process
-uvicorn main:app --host 0.0.0.0 --port 8000 &
+python3 main.py &
 
 wait -n
 
