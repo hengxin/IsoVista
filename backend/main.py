@@ -1,4 +1,7 @@
+import asyncio
+import glob
 import json
+import multiprocessing
 import os
 import queue
 import re
@@ -10,6 +13,7 @@ from typing import Any
 
 import pandas as pd
 import pydot
+import uvicorn
 from fastapi import FastAPI, Request, Body
 from fastapi import File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -89,6 +93,8 @@ class BugStore:
     def scan(self):
         bug_list = []
         for run_dir in os.listdir(self.directory):
+            if not run_dir.startswith("run_"):
+                continue
             metadata_path = os.path.join(self.directory, run_dir, "metadata.json")
             config_path = os.path.join(self.directory, run_dir, "config.properties")
             log_path = os.path.join(self.directory, run_dir, "output.log")
@@ -125,9 +131,9 @@ class Run:
         self.dir_path = dir_path
         self.status = status
         self.percentage = percentage
-        profile_path = os.path.join(dir_path, "profile.csv")
-        if os.path.exists(profile_path):
-            self.profile_path = profile_path
+        profile_path_list = glob.glob(os.path.join(dir_path, "*-profile.csv"))
+        if len(profile_path_list) > 0:
+            self.profile_path_list = profile_path_list
         else:
             self.profile_path = None
         runtime_info_path = os.path.join(dir_path, "runtime_info.csv")
@@ -177,6 +183,7 @@ class RunStore:
             return self.run_map[run_id]
         return None
 
+
 bug_store = BugStore(result_path)
 bug_store.scan()
 run_store = RunStore(result_path)
@@ -217,7 +224,7 @@ def run_worker():
         print("start running")
         with open(config_path, 'w') as file:
             file.write(config)
-        subprocess.run(["java",  "-jar", dbtest_path, config_path])
+        subprocess.run(["java", "-jar", dbtest_path, config_path])
         bug_store.scan()
         run_store.scan()
         current_run = ''
@@ -352,15 +359,23 @@ async def change_bug_tag(request: Request):
 @app.get("/run_profile/{run_id}")
 async def get_profile(run_id: int):
     run = run_store.get(run_id)
-    if run is None or run.profile_path is None:
+    if run is None or run.profile_path_list is None:
         return None
-    df = pd.read_csv(run.profile_path)
-    return {
-        "name": df.iloc[:, 0].name,
-        "x_axis": df.iloc[:, 0].to_list(),
-        "time": df.iloc[:, 1].to_list(),
-        "memory": df.iloc[:, 2].to_list(),
-    }
+    result = {}
+    series = []
+    for run_profile_path in run.profile_path_list:
+        df = pd.read_csv(run_profile_path)
+        result = {
+            "name": df.iloc[:, 0].name,
+            "x_axis": df.iloc[:, 0].to_list(),
+            "series": series
+        }
+        series.append({
+            "checker": os.path.basename(run_profile_path).split("-")[1],
+            "time": df.iloc[:, 1].to_list(),
+            "memory": df.iloc[:, 2].to_list(),
+        })
+    return result
 
 
 @app.get("/runtime_info/{run_id}")
@@ -375,6 +390,7 @@ async def get_runtime_info(run_id: int):
         "memory": df.iloc[:, 2].to_list(),
     }
 
+
 @app.get("/current_run_id")
 async def get_current_run_id():
     if current_run:
@@ -384,6 +400,7 @@ async def get_current_run_id():
             return 1
     else:
         return None
+
 
 @app.get("/current_runtime_info")
 async def get_current_runtime_info():
@@ -402,28 +419,50 @@ async def get_current_runtime_info():
 @app.get("/current_profile")
 async def get_current_profile():
     try:
-        with open(os.path.join(current_path, "profile.csv")) as runtime_info:
-            df = pd.read_csv(runtime_info)
-            return {
-                "name": df.iloc[:, 0].name,
-                "x_axis": df.iloc[:, 0].to_list(),
-                "time": df.iloc[:, 1].to_list(),
-                "memory": df.iloc[:, 2].to_list(),
-            }
+        result = {}
+        series = []
+        for csv_file in glob.glob(os.path.join(current_path, "*-profile.csv")):
+            with open(csv_file) as profile_data:
+                df = pd.read_csv(profile_data)
+                result = {
+                    "name": df.iloc[:, 0].name,
+                    "x_axis": df.iloc[:, 0].to_list(),
+                    "series": series
+                }
+                series.append({
+                    "checker": os.path.basename(csv_file).split("-")[1],
+                    "time": df.iloc[:, 1].to_list(),
+                    "memory": df.iloc[:, 2].to_list(),
+                })
+        return result
     except FileNotFoundError:
         return ""
+
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     try:
         out_file_path = "user_history.txt"
         with open(out_file_path, "wb") as out_file:
-            content = await file.read() 
-            out_file.write(content) 
+            content = await file.read()
+            out_file.write(content)
         return JSONResponse(status_code=200, content={"message": "Upload succeeded!"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Upload failed!", "details": str(e)})
 
-@app.post("/stop/")
+
+@app.put("/stop/")
 async def stop_run():
+    # global p
+    # p.terminate()
+    # p = multiprocessing.Process(target=run_worker)
+    # p.daemon = True
+    # p.start()
     pass
+
+if __name__ == "__main__":
+    # multiprocessing.freeze_support()
+    # p = multiprocessing.Process(target=run_worker)
+    # p.daemon = True
+    # p.start()
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
