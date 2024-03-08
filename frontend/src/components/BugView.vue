@@ -148,25 +148,29 @@ onMounted(async () => {
         graph.removeItem(item)
       } else if (target.innerHTML === "Collapse") {
         item.getModel().expanded = false
-        removedNodes[item] = JSON.parse(JSON.stringify(graph.getNodes().filter((node) => {
-          return node.getModel().relate_to.includes(item.getModel().id)
-        }).map((node) => {
-          return node.getModel()
-        })))
-        removedEdges[item] = JSON.parse(JSON.stringify(graph.getEdges().filter((edge) => {
-          return edge.getModel().relate_to.includes(item.getModel().id)
-        }).map((edge) => {
-          return edge.getModel()
-        })))
-
-        graph.getNodes()
-            .filter((node) => {return node.getModel().relate_to.includes(item.getModel().id)})
-            .forEach((node) => graph.removeItem(node))
+        removedNodes[item] = []
+        removedEdges[item] = []
+        // remove edge should before remove node, since removing nodes can automatically remove edges
         graph.getEdges()
-            .filter((edge) => {return edge.getModel().relate_to.includes(item.getModel().id)})
-            .forEach((edge) => graph.removeItem(edge))
+            .filter((edge) => {
+              return edge.getModel().relate_to.includes(item.getModel().id)
+                  && !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())
+            })
+            .forEach((edge) => {
+              removedEdges[item].push(JSON.parse(JSON.stringify(edge.getModel())))
+              graph.removeItem(edge)
+            })
+        graph.getNodes()
+            .filter((node) => {
+              return node.getModel().relate_to.includes(item.getModel().id) && !cycleNodeList.includes(node.getID())
+            })
+            .forEach((node) => {
+              removedNodes[item].push(JSON.parse(JSON.stringify(node.getModel())))
+              graph.removeItem(node)
+            })
       } else if (target.innerHTML === "Expand") {
         console.log(removedNodes[item])
+        console.log(removedEdges[item])
         item.getModel().expanded = true
         removedNodes[item].forEach((node) => {
           graph.addItem("node", node)
