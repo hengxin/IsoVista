@@ -215,7 +215,7 @@ onMounted(async () => {
 
   const container = document.getElementById('container');
   const width = container.scrollWidth;
-  const height = container.scrollHeight || 1000;
+  const height = container.scrollHeight || 1100;
 
   const graph = new G6.Graph({
     container: 'container',
@@ -228,11 +228,11 @@ onMounted(async () => {
     plugins: [tooltip, menu, toolbar],
     enabledStack: true,
     layout: {
-      type: 'forceAtlas2',
+      type: 'force2',
       preventOverlap: true,
-      kr: 400,
+      linkDistance: 125,
+      animate: false,
     },
-    animate: true,
     defaultNode: {
       type: 'circle',
       size: [66],
@@ -281,14 +281,14 @@ for (let key in cycle) {
   cycleNodeList.push(key)
 }
 for (let i = 0; i < cycleNodeList.length - 1; i++) {
-  cycleEdgeList.push({source: cycleNodeList[i], target: cycleNodeList[i + 1]})
+  cycleEdgeList.push({target: cycleNodeList[i], source: cycleNodeList[i + 1]})
 }
-cycleEdgeList.push({source: cycleNodeList[cycleNodeList.length - 1], target: cycleNodeList[0]})
+cycleEdgeList.push({target: cycleNodeList[cycleNodeList.length - 1], source: cycleNodeList[0]})
 console.log(cycleNodeList)
 g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
   node.setState('marked', true)
 })
-// console.log(g.getEdges())
+console.log(cycleEdgeList)
 g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
   console.log(edge)
   edge.setState('marked', true)
