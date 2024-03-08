@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -41,6 +43,8 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     protected final Map<Pair<Node<VarType, ValType>, Node<VarType, ValType>>, List<Pair<Operation<VarType, ValType>, Operation<VarType, ValType>>>> WRNodesToOp = new HashMap<>();
     protected final Map<Operation<VarType, ValType>, Node<VarType, ValType>> op2node = new HashMap<>();
     protected final Set<Operation<VarType, ValType>> internalWrites = new HashSet<>();
+    // triple <t1, t2, t3>
+    protected final Map<Pair<Node<VarType, ValType>, Node<VarType, ValType>>, Node<VarType, ValType>> CMCauses = new HashMap<>();
 
     protected Object ZERO = 0L;
     protected static final Map<IsolationLevel, Set<TAP>> PROHIBITED_TAPS = new HashMap<>();
@@ -326,11 +330,12 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 var t2 = edge.getValue();
                 writeNodes.get(variable).forEach((t) -> {
                     if (!t.equals(t1) && !(t.equals(t2)) && t.canReachByCO(t2)) {
-                        // build ao edge
-                        if (t.canReachByCO(t1)) {
-                            return;
-                        }
+                        // build cm edge
+//                        if (t.canReachByCO(t1)) {
+//                            return;
+//                        }
                         graph.addEdge(t, t1, new Edge<>(Edge.Type.CM, null));
+                        CMCauses.put(new Pair<>(t, t1), t2);
                         pendingNodes.add(t);
                     }
                 });
@@ -382,7 +387,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                             }
                         }
                         if (!findSubTAP) {
-                            // find COConflictAO
+                            // find COConflictCM
                             findTAP(TAP.COConflictCM, varX, t1, t2, t3);
                         }
                     }
@@ -404,16 +409,16 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                             for (var WRYOpPair : WRYOpPairList) {
                                 var readY = WRYOpPair.getValue();
                                 if (readY.getId() < WROpPair.getValue().getId()) {
-                                    // find NonMonoReadAO
+                                    // find NonMonoReadCM
                                     findTAP(TAP.NonMonoReadCM, varX, t1, t2, t3);
                                 } else {
-                                    // find FracturedReadAO
+                                    // find FracturedReadCM
                                     findTAP(TAP.FracturedReadCM, varX, t1, t2, t3);
                                 }
                             }
                         }
                         if (!findSubTAP) {
-                            // find ConflictAO
+                            // find ConflictCM
                             findTAP(TAP.ConflictCM, varX, t1, t2, t3);
                         }
                     }
@@ -487,13 +492,58 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
             // do nothing
         } else if (nodes.length == 1) {
             var builder = new StringBuilder();
-            builder.append("digraph {\n");
+            builder.append("digraph ");
+            builder.append(tap);
+            builder.append(" {\n");
             builder.append(String.format("\"%s\" [ops=\"%s\"];\n", nodes[0].getTransaction(), nodes[0].getTransaction().getOps()));
             builder.append("}\n");
             bugGraphs.add(builder.toString());
         } else {
-            Set<Node<VarType, ValType>> nodeSet = new HashSet<>(Arrays.asList(nodes));
-            Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>> edgeSet = new HashSet<>();
+            Map<Node<VarType, ValType>, Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>>> nodeMap = new HashMap<>();
+            Map<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>, Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>>> edgeMap = new HashMap<>();
+
+            Function<Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>>, String> CMListToString = (CMList) -> {
+                if (CMList == null || CMList.isEmpty()) {
+                    return "";
+                }
+                var builder = new StringBuilder();
+                for (var cm : CMList) {
+                    builder.append(String.format("%s -> %s, ", cm.getLeft().getTransaction(), cm.getMiddle().getTransaction()));
+                }
+                builder.delete(builder.length() - 2, builder.length());
+                return builder.toString();
+            };
+
+            BiFunction<Pair<List<Node<VarType, ValType>>, List<Edge<VarType>>>, Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>, Void> addNodesAndEdges = (path, cm) -> {
+                for (int i = 0; i < path.getKey().size(); ++i) {
+                    nodeMap.compute(path.getKey().get(i), (k, v) -> {
+                        if (v == null) {
+                            v = new HashSet<>();
+                        }
+                        if (cm != null && !cm.getLeft().equals(k) && !cm.getMiddle().equals(k)) {
+                            v.add(cm);
+                        }
+                        return v;
+                    });
+                    if (i >= path.getKey().size() - 1) {
+                        continue;
+                    }
+                    edgeMap.compute(Triple.of(path.getKey().get(i), path.getKey().get(i + 1), path.getValue().get(i)), (k, v) -> {
+                        if (v == null) {
+                            v = new HashSet<>();
+                        }
+                        if (cm != null && !cm.equals(k)) {
+                            v.add(cm);
+                        }
+                        return v;
+                    });
+                }
+                return null;
+            };
+
+            var CMEdge = Triple.of(nodes[1], nodes[0], new Edge<VarType>(Edge.Type.CM, null));
+            edgeMap.put(CMEdge, null);
+            edgeMap.put(Triple.of(nodes[0], nodes[2], new Edge<>(Edge.Type.WR, varX)), Set.of(CMEdge));
 
             Pair<List<Node<VarType, ValType>>, List<Edge<VarType>>> pathFromT1ToT2 = null;
             if (tap.equals(TAP.NonMonoReadCO) || tap.equals(TAP.FracturedReadCO) || tap.equals(TAP.COConflictCM)) {
@@ -501,10 +551,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
             } else if (tap.equals(TAP.NonMonoReadCM) || tap.equals(TAP.FracturedReadCM) || tap.equals(TAP.ConflictCM)) {
                 pathFromT1ToT2 = path(nodes[0], nodes[1], Set.of(Edge.Type.SO, Edge.Type.WR, Edge.Type.CM));
             }
-            for (int i = 0; i < pathFromT1ToT2.getKey().size() - 1; ++i) {
-                nodeSet.add(pathFromT1ToT2.getKey().get(i));
-                edgeSet.add(Triple.of(pathFromT1ToT2.getKey().get(i), pathFromT1ToT2.getKey().get(i + 1), pathFromT1ToT2.getValue().get(i)));
-            }
+            addNodesAndEdges.apply(pathFromT1ToT2, null);
 
             Pair<List<Node<VarType, ValType>>, List<Edge<VarType>>> pathFromT2ToT3;
             if (tap.equals(TAP.NonMonoReadCO) || tap.equals(TAP.NonMonoReadCM)) {
@@ -512,21 +559,41 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
             } else {
                 pathFromT2ToT3 = path(nodes[1], nodes[2], Set.of(Edge.Type.SO, Edge.Type.WR));
             }
-            for (int i = 0; i < pathFromT2ToT3.getKey().size() - 1; ++i) {
-                nodeSet.add(pathFromT2ToT3.getKey().get(i));
-                edgeSet.add(Triple.of(pathFromT2ToT3.getKey().get(i), pathFromT2ToT3.getKey().get(i + 1), pathFromT2ToT3.getValue().get(i)));
-            }
+            addNodesAndEdges.apply(pathFromT2ToT3, CMEdge);
 
-            edgeSet.add(Triple.of(nodes[1], nodes[0], new Edge<>(Edge.Type.CM, null)));
-            edgeSet.add(Triple.of(nodes[0], nodes[2], new Edge<>(Edge.Type.WR, varX)));
+            var CMList = edgeMap.keySet().stream()
+                    .filter(tri -> tri.getRight().getType().equals(Edge.Type.CM))
+                    .collect(Collectors.toList());
+            while (!CMList.isEmpty()) {
+                var cm = CMList.remove(0);
+                if (cm.equals(CMEdge)) {
+                    continue;
+                }
+
+                var t1 = cm.getMiddle();
+                var t2 = cm.getLeft();
+                var t3 = CMCauses.get(new Pair<>(t2, t1));
+
+                var WRPath = path(t1, t3, Set.of(Edge.Type.WR));
+                var COPath = path(t2, t3, Set.of(Edge.Type.SO, Edge.Type.WR));
+                addNodesAndEdges.apply(WRPath, cm);
+                addNodesAndEdges.apply(COPath, cm);
+            }
 
             var builder = new StringBuilder();
-            builder.append("digraph {\n");
-            for (var n : nodeSet) {
-                builder.append(String.format("\"%s\" [ops=\"%s\"];\n", n.getTransaction(), n.getTransaction().getOps()));
+            builder.append("digraph ");
+            builder.append(tap);
+            builder.append(" {\n");
+            for (var e : nodeMap.entrySet()) {
+                builder.append(String.format("\"%s\" [id=\"%s\" ops=\"%s\" relate_to=\"%s\"];\n",
+                        e.getKey().getTransaction(), e.getKey().getTransaction(), e.getKey().getTransaction().getOps(),
+                        CMListToString.apply(e.getValue())));
             }
-            for (var e : edgeSet) {
-                builder.append(String.format("\"%s\" -> \"%s\" [label=\"%s\"];\n", e.getLeft().getTransaction(), e.getMiddle().getTransaction(), e.getRight()));
+            for (var e : edgeMap.entrySet()) {
+                builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\"];\n",
+                        e.getKey().getLeft().getTransaction(), e.getKey().getMiddle().getTransaction(),
+                        e.getKey().getLeft().getTransaction(), e.getKey().getMiddle().getTransaction(),
+                        e.getKey().getRight(), CMListToString.apply(e.getValue())));
             }
             builder.append("}\n");
             bugGraphs.add(builder.toString());
