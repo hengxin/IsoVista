@@ -8,7 +8,9 @@ public class ConfigParser {
         if (!input.startsWith("[") || !input.endsWith("]")) {
             throw new RuntimeException("List string format error");
         }
-        return input.substring(1, input.length() - 1).split(",");
+        input = input.replace("[", "").replace("]", "")
+                .replace(" ", "").replace("'", "");
+        return input.split(",");
     }
 
     static Map<String, String> IsolationCheckerMap = new HashMap<>();
@@ -22,6 +24,6 @@ public class ConfigParser {
     }
 
     public static String IsolationToCheckerName(String isolation) {
-        return IsolationCheckerMap.get(isolation);
+        return IsolationCheckerMap.get(isolation.toUpperCase());
     }
 }

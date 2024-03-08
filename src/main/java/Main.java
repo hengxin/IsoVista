@@ -1,8 +1,10 @@
 import checker.Checker;
+import checker.IsolationLevel;
 import collector.Collector;
 import config.Config;
 import generator.general.GeneralGenerator;
 import history.History;
+import org.apache.commons.lang3.tuple.Pair;
 import util.HistoryLoaderFactory;
 import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
@@ -19,10 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,13 +71,28 @@ public class Main implements Callable<Integer> {
             return;
         }
 
-        var checkerName = ConfigParser.IsolationToCheckerName(config.getProperty(Config.CHECKER_ISOLATION)).toLowerCase();
-        var checker = checkers.get(checkerName);
-        if (checker == null) {
-            log.error("Can not find checker {}", checkerName);
-            return;
+        var isolationStr = config.getProperty(Config.CHECKER_ISOLATION);
+        List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsoList = new ArrayList<>();
+        if (isolationStr.startsWith("[")) {
+            var isolationList = ConfigParser.parseListString(isolationStr);
+            for (var isolation : isolationList) {
+                var checkerName = ConfigParser.IsolationToCheckerName(isolation);
+                if (checkerName == null) {
+                    log.error("Can not find checker of {}", isolation);
+                    return;
+                }
+                checkerIsoList.add(Pair.of(checkers.get(checkerName.toLowerCase()), IsolationLevel.valueOf(isolation.toUpperCase())));
+            }
+        } else {
+            var checkerName = ConfigParser.IsolationToCheckerName(isolationStr);
+            if (checkerName == null) {
+                log.error("Can not find checker of {}", isolationStr);
+                return;
+            }
+            checkerIsoList.add(Pair.of(checkers.get(checkerName.toLowerCase()), IsolationLevel.valueOf(isolationStr.toUpperCase())));
         }
 
+        // TODO: remove ENABLE_PROFILER
         var enableProfile = Boolean.parseBoolean(config.getProperty(Config.PROFILER_ENABLE));
         var profiler = Profiler.getInstance();
         var skipGeneration = Boolean.parseBoolean(config.getProperty(Config.WORKLOAD_SKIP_GENERATION));
@@ -116,38 +130,43 @@ public class Main implements Callable<Integer> {
                 }
 
                 // verify history
-                log.info("Start history verification");
-                if (enableProfile) {
-                    profiler.startTick(checker.getName());
-                }
-                boolean result;
-                try {
-                    // TODO: ww edge in elle history?
-                    var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
-                    result = checkerInstance.verify(history);
+                for (var checkerAndIsolation : checkerIsoList) {
+                    var checker = checkerAndIsolation.getLeft();
+                    var isolation = checkerAndIsolation.getRight();
+                    config.setProperty(Config.CHECKER_ISOLATION, isolation.toString());
+                    log.info("Start history verification using checker {}", checker.getName() + "-" + isolation);
                     if (enableProfile) {
-                        profiler.endTick(checker.getName());
-                        System.gc();
+                        profiler.startTick(checker.getName() + "-" + isolation);
                     }
-                    if (!result) {
-                        log.info("FIND BUG!");
-                        // serialize history and output dotfile
-                        var bugDir = Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_%d", bugCount.getAndIncrement()));
-                        try {
-                            Files.createDirectory(bugDir);
-                        } catch (IOException e) {
+                    boolean result;
+                    try {
+                        // TODO: ww edge in elle history?
+                        var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
+                        result = checkerInstance.verify(history);
+                        if (enableProfile) {
+                            profiler.endTick(checker.getName() + "-" + isolation);
+                            System.gc();
+                        }
+                        if (!result) {
+                            log.info("FIND BUG!");
+                            // serialize history and output dotfile
+                            var bugDir = Paths.get(Config.DEFAULT_CURRENT_PATH, String.format("bug_%d", bugCount.getAndIncrement()));
+                            try {
+                                Files.createDirectory(bugDir);
+                            } catch (IOException e) {
 
+                            }
+                            if (!skipGeneration) {
+                                new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                            }
+                            checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
+                        } else {
+                            log.info("NO BUG");
                         }
-                        if (!skipGeneration) {
-                            new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
-                        }
-                        checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
-                    } else {
-                        log.info("NO BUG");
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                             NoSuchMethodException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                         NoSuchMethodException e) {
-                    throw new RuntimeException(e);
                 }
             }
             return null;
@@ -155,7 +174,7 @@ public class Main implements Callable<Integer> {
 
         var variable = config.getProperty(Config.WORKLOAD_VARIABLE);
         if (variable != null && !variable.isBlank()) {
-            Profiler.createCSV(variable);
+            Profiler.createCSV(variable, checkerIsoList);
             variable = "workload." + variable;
             var valueListString = config.getProperty(variable);
             var valueList = ConfigParser.parseListString(valueListString);
@@ -165,10 +184,13 @@ public class Main implements Callable<Integer> {
                 config.setProperty(variable, value);
                 log.info("Run one shot {} = {}", variable, value);
                 runOneShot.apply(i, nBatch, historyNum);
-                var avgTime = profiler.getAvgTime(checker.getName());
-                var maxMemory = profiler.getMemory(checker.getName());
-                Profiler.appendToCSV(value, avgTime, maxMemory);
-                profiler.removeTag(checker.getName());
+                for (var pair : checkerIsoList) {
+                    var checkerIsolation = pair.getLeft().getName() + "-" + pair.getRight();
+                    var avgTime = profiler.getAvgTime(checkerIsolation);
+                    var maxMemory = profiler.getMemory(checkerIsolation);
+                    Profiler.appendToCSV(value, avgTime, maxMemory, pair);
+                    profiler.removeTag(checkerIsolation);
+                }
             }
         } else {
             runOneShot.apply(0, nBatch, historyNum);

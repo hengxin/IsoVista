@@ -1,5 +1,7 @@
 package util;
 
+import checker.Checker;
+import checker.IsolationLevel;
 import config.Config;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +31,6 @@ public class Profiler {
     private final HashMap<String, Long> memory = new HashMap<>();
 
     private static final AtomicLong MaxMemory = new AtomicLong();
-    private static final String ExportCSVPath = Paths.get(Config.DEFAULT_CURRENT_PATH, "profile.csv").toString();
     private static final String timeUnit = "ms";
     private static final String memoryUnit = "KB";
 
@@ -105,6 +106,7 @@ public class Profiler {
             totalTime.put(tag, (totalTime.get(tag) + duration));
             counter.put(tag, (counter.get(tag) + 1));
             memory.put(tag, getMaxMemory());
+            MaxMemory.set(0);
 
             // rm the tick
             startTime.remove(tag);
@@ -180,17 +182,21 @@ public class Profiler {
     }
 
     @SneakyThrows
-    public static void createCSV(String variable) {
-        File file = new File(ExportCSVPath);
-        FileWriter csvWriter = new FileWriter(file, true);
-        csvWriter.write(String.format("%s,time(%s),memory(%s)\n", variable, timeUnit, memoryUnit));
-        csvWriter.close();
+    public static void createCSV(String variable, List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsolationList) {
+        for (var pair : checkerIsolationList) {
+            String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
+            File file = new File(csvPath);
+            FileWriter csvWriter = new FileWriter(file, true);
+            csvWriter.write(String.format("%s,time(%s),memory(%s)\n", variable, timeUnit, memoryUnit));
+            csvWriter.close();
+        }
     }
 
     @SneakyThrows
-    public static void appendToCSV(String value, long time, long memory) {
+    public static void appendToCSV(String value, long time, long memory, Pair<Class<? extends Checker>, IsolationLevel> pair) {
         // append a line to a csv file
-        File file = new File(ExportCSVPath);
+        String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
+        File file = new File(csvPath);
         FileWriter csvWriter = new FileWriter(file, true);
         csvWriter.write(String.format("%s,%s,%s\n", value, formatTime(time, timeUnit), formatMemory(memory, memoryUnit)));
         csvWriter.close();
