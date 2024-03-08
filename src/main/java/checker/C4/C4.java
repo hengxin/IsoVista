@@ -7,6 +7,7 @@ import checker.C4.graph.TCNode;
 import checker.C4.taps.TAP;
 import checker.Checker;
 import checker.IsolationLevel;
+import com.google.common.collect.Sets;
 import config.Config;
 import history.History;
 import history.Operation;
@@ -543,21 +544,21 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
 
             var CMEdge = Triple.of(nodes[1], nodes[0], new Edge<VarType>(Edge.Type.CM, null));
             edgeMap.put(CMEdge, null);
-            edgeMap.put(Triple.of(nodes[0], nodes[2], new Edge<>(Edge.Type.WR, varX)), Set.of(CMEdge));
+            edgeMap.put(Triple.of(nodes[0], nodes[2], new Edge<>(Edge.Type.WR, varX)), Sets.newHashSet(CMEdge));
 
             Pair<List<Node<VarType, ValType>>, List<Edge<VarType>>> pathFromT1ToT2 = null;
             if (tap.equals(TAP.NonMonoReadCO) || tap.equals(TAP.FracturedReadCO) || tap.equals(TAP.COConflictCM)) {
-                pathFromT1ToT2 = path(nodes[0], nodes[1], Set.of(Edge.Type.SO, Edge.Type.WR));
+                pathFromT1ToT2 = path(nodes[0], nodes[1], Sets.newHashSet(Edge.Type.SO, Edge.Type.WR));
             } else if (tap.equals(TAP.NonMonoReadCM) || tap.equals(TAP.FracturedReadCM) || tap.equals(TAP.ConflictCM)) {
-                pathFromT1ToT2 = path(nodes[0], nodes[1], Set.of(Edge.Type.SO, Edge.Type.WR, Edge.Type.CM));
+                pathFromT1ToT2 = path(nodes[0], nodes[1], Sets.newHashSet(Edge.Type.SO, Edge.Type.WR, Edge.Type.CM));
             }
             addNodesAndEdges.apply(pathFromT1ToT2, null);
 
             Pair<List<Node<VarType, ValType>>, List<Edge<VarType>>> pathFromT2ToT3;
             if (tap.equals(TAP.NonMonoReadCO) || tap.equals(TAP.NonMonoReadCM)) {
-                pathFromT2ToT3 = path(nodes[1], nodes[2], Set.of(Edge.Type.WR));
+                pathFromT2ToT3 = path(nodes[1], nodes[2], Sets.newHashSet(Edge.Type.WR));
             } else {
-                pathFromT2ToT3 = path(nodes[1], nodes[2], Set.of(Edge.Type.SO, Edge.Type.WR));
+                pathFromT2ToT3 = path(nodes[1], nodes[2], Sets.newHashSet(Edge.Type.SO, Edge.Type.WR));
             }
             addNodesAndEdges.apply(pathFromT2ToT3, CMEdge);
 
@@ -574,8 +575,8 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 var t2 = cm.getLeft();
                 var t3 = CMCauses.get(new Pair<>(t2, t1));
 
-                var WRPath = path(t1, t3, Set.of(Edge.Type.WR));
-                var COPath = path(t2, t3, Set.of(Edge.Type.SO, Edge.Type.WR));
+                var WRPath = path(t1, t3, Sets.newHashSet(Edge.Type.WR));
+                var COPath = path(t2, t3, Sets.newHashSet(Edge.Type.SO, Edge.Type.WR));
                 addNodesAndEdges.apply(WRPath, cm);
                 addNodesAndEdges.apply(COPath, cm);
             }
