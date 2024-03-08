@@ -11,7 +11,7 @@ const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 const router = useRouter();
 
 const testingOption = reactive({
-  db_url: 'jdbc:mysql://172.17.0.1:3306',
+  db_url: 'jdbc:mysql://127.0.0.1:3306',
   db_type: 'MYSQL',
   db_isolation: 'TRANSACTION_SERIALIZATION',
   db_username: 'root',
@@ -28,7 +28,7 @@ const testingOption = reactive({
   workload_skipgeneration: false,
   history_path: 'user_history.txt',
   history_type: 'text',
-  checker_isolation: 'SNAPSHOT_ISOLATION',
+  checker_isolation: ['SNAPSHOT_ISOLATION'],
   profiler_enable: true
 });
 
@@ -350,6 +350,7 @@ const handleIndexChange = (index) => {
                 </header>
                 <el-form-item label="Checker Isolation Level">
                   <el-select v-model="testingOption.checker_isolation" placeholder=""
+                             multiple
                              @change="handleSelectionChange"
                              class="fixed-width">
                     <el-option

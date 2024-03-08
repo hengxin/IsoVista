@@ -1,6 +1,6 @@
 <script setup>
 import {onBeforeUnmount, onMounted, ref, watch, watchEffect} from "vue"
-import {download_run, get_current_log, get_run_list} from "@/api/api.js";
+import {download_run, get_current_log, get_run_list, stop_run} from "@/api/api.js";
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -52,6 +52,28 @@ function handleDownload(row) {
     window.URL.revokeObjectURL(url)
   })
 }
+
+function handleStop(row) {
+  console.log(row.id)
+  download_run(row.id).then(res => {
+
+    const { data, headers } = res
+    const fileName = decodeURIComponent(escape(res.headers['file-name']))
+
+    //const blob = new Blob([JSON.stringify(data)], ...)
+    const blob = new Blob([data], {type: headers['content-type']})
+    let dom = document.createElement('a')
+    let url = window.URL.createObjectURL(blob)
+    dom.href = url
+    dom.download = decodeURI(fileName)
+    dom.style.display = 'none'
+    document.body.appendChild(dom)
+    dom.click()
+    dom.parentNode.removeChild(dom)
+    window.URL.revokeObjectURL(url)
+  })
+}
+
 let intervalRefreshList = null;
 onMounted(async () => {
   await get_runs()
@@ -132,20 +154,30 @@ watch(dialogVisible, (newVal) => {
           </el-table-column>
           <el-table-column label="Operations" width="200">
             <template #default="scope">
-              <el-button
-                  link
-                  size="small"
-                  type="primary"
-                  @click="handleView(scope.row)"
-              >View</el-button
-              >
-              <el-button
-                  link
-                  size="small"
-                  type="primary"
-                  @click="handleDownload(scope.row)"
-              >Download</el-button
-              >
+              <div style="display: flex;align-items: center">
+                <el-button
+                    link
+                    size="small"
+                    type="primary"
+                    @click="handleView(scope.row)"
+                >View</el-button
+                >
+                <!--              <el-button-->
+                <!--                  link-->
+                <!--                  size="small"-->
+                <!--                  type="primary"-->
+                <!--                  @click="handleDownload(scope.row)"-->
+                <!--              >Download</el-button-->
+                <!--              >-->
+                <el-button
+                    v-if="scope.row.status === 'Running'"
+                    link
+                    size="small"
+                    type="primary"
+                    @click="handleStop(scope.row)"
+                >Stop</el-button
+                >
+              </div>
             </template>
           </el-table-column>
         </el-table>

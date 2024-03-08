@@ -97,3 +97,9 @@ const currentProfileUrl = "/current_profile"
 export function get_current_profile() {
     return request.get(currentProfileUrl)
 }
+
+const stopRunUrl = "/stop"
+
+export function stop_run() {
+    return request.put(stopRunUrl)
+}

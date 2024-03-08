@@ -39,6 +39,9 @@ const createProfileCharts = () => {
     tooltip: {
       trigger: 'axis'
     },
+    legend: {
+      data: profileData.legend
+    },
     xAxis: {
       name: 'name' in profileData ? profileData.name : '',
       type: 'category',
@@ -61,12 +64,7 @@ const createProfileCharts = () => {
         "fontSize": 20
       }
     },
-    series: [
-      {
-        data: profileData.time,
-        type: 'line'
-      }
-    ]
+    series: profileData.timeSeries
   };
   profileTimeOption && profileTimeChart.setOption(profileTimeOption);
 
@@ -83,6 +81,9 @@ const createProfileCharts = () => {
     },
     tooltip: {
       trigger: 'axis'
+    },
+    legend: {
+      data: profileData.legend
     },
     xAxis: {
       name: profileData.name,
@@ -106,12 +107,7 @@ const createProfileCharts = () => {
         "fontSize": 20
       }
     },
-    series: [
-      {
-        data: profileData.memory,
-        type: 'line'
-      }
-    ]
+    series: profileData.memorySeries
   };
   profileMemoryOption && profileMemoryChart.setOption(profileMemoryOption);
 }
@@ -230,10 +226,29 @@ const handleGetRuntimeInfoRes = (res)=> {
 }
 
 const handleGetProfileRes = (res)=> {
+  console.log(res.data)
+  for (let data of res.data.series) {
+    for (let i = 0; i < res.data.x_axis.length; i++) {
+      data.time[i] = (data.time[i] / 1000).toFixed(2)
+      data.memory[i] = (data.memory[i] / 1024).toFixed(2)
+    }
+  }
   profileData = res.data
-  for (let i = 0; i < profileData.x_axis.length; i++) {
-    profileData.time[i] = (profileData.time[i] / 1000).toFixed(2)
-    profileData.memory[i] = (profileData.memory[i] / 1024).toFixed(2)
+  profileData.timeSeries = []
+  profileData.memorySeries = []
+  profileData.legend = []
+  for (let series of profileData.series) {
+    profileData.timeSeries.push({
+      name: series.checker,
+      data: series.time,
+      type: 'line'
+    })
+    profileData.memorySeries.push({
+      name: series.checker,
+      data: series.memory,
+      type: 'line'
+    })
+    profileData.legend.push(series.checker)
   }
   console.log(profileData)
 }
@@ -244,6 +259,7 @@ const getData = async () => {
       console.log("no runtime info data")
       return
     }
+    console.log(res.data)
     handleGetRuntimeInfoRes(res)
   })
   await get_run_profile(props.run_id).then((res) => {
@@ -257,19 +273,21 @@ const getData = async () => {
 
 const setProfileData = ()=> {
   profileTimeChart.setOption({
-    series: {
-      data: profileData.time
-    },
+    series: profileData.timeSeries,
     xAxis: {
       data: profileData.x_axis,
+    },
+    legend: {
+      data: profileData.legend
     },
   })
   profileMemoryChart.setOption({
-    series: {
-      data: profileData.memory
-    },
+    series: profileData.memorySeries,
     xAxis: {
       data: profileData.x_axis,
+    },
+    legend: {
+      data: profileData.legend
     },
   })
 }

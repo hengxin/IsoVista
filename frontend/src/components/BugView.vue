@@ -288,7 +288,9 @@ console.log(cycleNodeList)
 g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
   node.setState('marked', true)
 })
-g.getEdges().filter(edge => console.log(edge.getSource().getID()) || cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
+// console.log(g.getEdges())
+g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
+  console.log(edge)
   edge.setState('marked', true)
 })
 
