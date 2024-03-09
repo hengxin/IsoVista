@@ -26,6 +26,11 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("UnstableApiUsage")
 class SISolver<KeyType, ValueType> {
+    enum ClauseType {
+        ACYCLIC,
+        REACHABLE
+    }
+
     private final Solver solver = new Solver();
 
     // The literals of the known graph
@@ -81,9 +86,10 @@ class SISolver<KeyType, ValueType> {
      * WR, SO edges, because those edges always exist. 2. For each constraint, a
      * literal that asserts exactly one set of edges exist in the graph.
      */
-    SISolver(History<KeyType, ValueType> history,
+    private void init(History<KeyType, ValueType> history,
             KnownGraph<KeyType, ValueType> precedenceGraph,
-            Collection<SIConstraint<KeyType, ValueType>> constraints) {
+            Collection<SIConstraint<KeyType, ValueType>> constraints, ClauseType clauseType,
+            Transaction<KeyType, ValueType> from, Transaction<KeyType, ValueType> to) {
         var profiler = Profiler.getInstance();
 
         profiler.startTick("SI_SOLVER_GEN");
@@ -142,10 +148,27 @@ class SISolver<KeyType, ValueType> {
 
         knownEdges.forEach(addToMonoSAT);
         unknownEdges.forEach(addToMonoSAT);
-        solver.assertTrue(monoGraph.acyclic());
+        if (clauseType == ClauseType.ACYCLIC) {
+            solver.assertTrue(monoGraph.acyclic());
+        } else if (clauseType == ClauseType.REACHABLE) {
+            solver.assertFalse(monoGraph.reaches(nodeMap.get(from), nodeMap.get(to)));
+        }
 
         profiler.endTick("SI_SOLVER_GEN_MONO_GRAPH");
         profiler.endTick("SI_SOLVER_GEN");
+    }
+
+    SISolver(History<KeyType, ValueType> history,
+              KnownGraph<KeyType, ValueType> precedenceGraph,
+              Collection<SIConstraint<KeyType, ValueType>> constraints) {
+        init(history, precedenceGraph, constraints, ClauseType.ACYCLIC, null, null);
+    }
+
+    SISolver(History<KeyType, ValueType> history,
+             KnownGraph<KeyType, ValueType> precedenceGraph,
+             Collection<SIConstraint<KeyType, ValueType>> constraints,
+             Transaction<KeyType, ValueType> from, Transaction<KeyType, ValueType> to) {
+        init(history, precedenceGraph, constraints, ClauseType.REACHABLE, from, to);
     }
 
     private MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> createKnownGraph(

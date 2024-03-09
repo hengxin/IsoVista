@@ -4,6 +4,7 @@ package checker.PolySI.verifier;
 import checker.PolySI.graph.Edge;
 import checker.PolySI.graph.EdgeType;
 import checker.PolySI.graph.KnownGraph;
+import checker.PolySI.util.Recursive;
 import checker.PolySI.util.TriConsumer;
 import com.google.common.graph.EndpointPair;
 import history.Operation;
@@ -16,13 +17,17 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import org.checkerframework.checker.units.qual.K;
 import util.Profiler;
+import util.TriFunction;
 
 @SuppressWarnings("UnstableApiUsage")
 public class SIVerifier<KeyType, ValueType> {
@@ -103,23 +108,178 @@ public class SIVerifier<KeyType, ValueType> {
             return;
         }
 
+        var graphBeforePruning = new KnownGraph<>(history);
+        var constraintsBeforePruning = generateConstraints(history, graphBeforePruning);
+
+        // result graph
         var txns = new HashSet<Transaction<KeyType, ValueType>>();
+        var edges = new HashSet<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>();
+        var txnRelateToMap = new HashMap<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>>();
+        var edgeRelateToMap = new HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>>();
 
-        conflicts.getLeft().forEach(e -> {
-            txns.add(e.getLeft().source());
-            txns.add(e.getLeft().target());
-        });
-        conflicts.getRight().forEach(c -> {
-            var addEdges = ((Consumer<Collection<SIEdge<KeyType, ValueType>>>) s -> s.forEach(e -> {
-                txns.add(e.getFrom());
-                txns.add(e.getTo());
-            }));
-            addEdges.accept(c.getEdges1());
-            addEdges.accept(c.getEdges2());
-        });
+        var visited = new HashSet<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>>();
+        // map an edge to its opposite edge. e.g. an edge in c.either, map it to c.or
+        var oppositeEdgesMap = new HashMap<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>, Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>>>();
+        // map an edge to its constraint
+        var edgeConstraintMap = new HashMap<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>, SIConstraint<KeyType, ValueType>>();
 
+        Function<SIEdge<KeyType, ValueType>, Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>> SIEdgeToPair = e -> Pair.of(EndpointPair.ordered(e.getFrom(), e.getTo()), new Edge<>(e.getType(), e.getKey()));
+        Function<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>, SIEdge<KeyType, ValueType>> PairToSIEdge = e -> new SIEdge<>(e.getLeft().source(), e.getLeft().target(), e.getRight().getType(), e.getRight().getKey());
 
-        var dotOutputStr = Utils.conflictsToDot(txns, conflicts.getLeft(), conflicts.getRight());
+        // construct opposite edges map and edge to constraint map
+        for (var constraint : constraintsBeforePruning) {
+            for (var eitherEdge : constraint.getEdges1()) {
+                edgeConstraintMap.put(SIEdgeToPair.apply(eitherEdge), constraint);
+                oppositeEdgesMap.put(SIEdgeToPair.apply(eitherEdge), constraint.getEdges2().stream()
+                        .map(SIEdgeToPair)
+                        .collect(Collectors.toList()));
+            }
+            for (var orEdge : constraint.getEdges2()) {
+                edgeConstraintMap.put(SIEdgeToPair.apply(orEdge), constraint);
+                oppositeEdgesMap.put(SIEdgeToPair.apply(orEdge), constraint.getEdges1().stream()
+                        .map(SIEdgeToPair)
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        // add edges and nodes in monoSAT conflicts to the result graph
+        var handleConflicts = (BiConsumer<Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>>, EndpointPair<Transaction<KeyType, ValueType>>>) (conflicts, relateToEdge) -> {
+            conflicts.getLeft().forEach(e -> {
+                edges.add(e);
+                txns.add(e.getLeft().source());
+                txns.add(e.getLeft().target());
+                if (relateToEdge != null) {
+                    txnRelateToMap.computeIfAbsent(e.getLeft().source(), k -> new HashSet<>()).add(relateToEdge);
+                    txnRelateToMap.computeIfAbsent(e.getLeft().target(), k -> new HashSet<>()).add(relateToEdge);
+                    edgeRelateToMap.computeIfAbsent(e.getKey(), k -> new HashSet<>()).add(relateToEdge);
+                }
+            });
+
+//            // TODO: what if noPruning is true?
+//            conflicts.getRight().forEach(c -> {
+//                var addEdges = ((Consumer<Collection<SIEdge<KeyType, ValueType>>>) s -> s.forEach(e -> {
+//                    txns.add(e.getFrom());
+//                    txns.add(e.getTo());
+//                }));
+//                addEdges.accept(c.getEdges1());
+//                addEdges.accept(c.getEdges2());
+//            });
+        };
+
+        // get all inferred edges from conflicts
+        Function<Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>>,
+                Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>>> getInferredEdges = conflicts -> {
+            var result = new ArrayList<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>>();
+            conflicts.getLeft().forEach(edgeCollection -> {
+                edgeCollection.getRight().stream()
+                        .filter(e -> e.getType().equals(EdgeType.WW) || e.getType().equals(EdgeType.RW))
+                        .forEach(e -> result.add(Pair.of(edgeCollection.getLeft(), e)));
+            });
+            return result;
+        };
+
+        TriFunction<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>, Boolean, EndpointPair<Transaction<KeyType, ValueType>>, Void> handleRWEdge = (rw, addWW, relateTo) -> {
+            var constraint = edgeConstraintMap.get(rw);
+            Collection<SIEdge<KeyType, ValueType>> chosenEdges;
+            if (constraint.getEdges1().contains(PairToSIEdge.apply(rw))) {
+                chosenEdges = constraint.getEdges1();
+            } else if (constraint.getEdges2().contains(PairToSIEdge.apply(rw))) {
+                chosenEdges = constraint.getEdges2();
+            } else {
+                throw new IllegalStateException();
+            }
+            var wwEdges = chosenEdges.stream()
+                    .filter(ww -> ww.getType().equals(EdgeType.WW))
+                    .collect(Collectors.toList());
+            assert wwEdges.size() == 1;
+            var wwEdge = wwEdges.get(0);
+            txns.add(wwEdge.getFrom());
+            txns.add(rw.getLeft().source());
+            edges.add(Pair.of(EndpointPair.ordered(wwEdge.getFrom(), rw.getLeft().source()), Collections.singleton(new Edge<>(EdgeType.WR, rw.getRight().getKey()))));
+            if (relateTo != null) {
+                txnRelateToMap.computeIfAbsent(wwEdge.getFrom(), k -> new HashSet<>()).add(relateTo);
+                txnRelateToMap.computeIfAbsent(rw.getLeft().source(), k -> new HashSet<>()).add(relateTo);
+                edgeRelateToMap.computeIfAbsent(EndpointPair.ordered(wwEdge.getFrom(), rw.getLeft().source()), k -> new HashSet<>()).add(relateTo);
+            }
+            if (addWW) {
+                txns.add(wwEdge.getTo());
+                edges.add(Pair.of(EndpointPair.ordered(wwEdge.getFrom(), wwEdge.getTo()), Collections.singleton(new Edge<>(EdgeType.WW, wwEdge.getKey()))));
+                if (relateTo != null) {
+                    txnRelateToMap.computeIfAbsent(wwEdge.getTo(), k -> new HashSet<>()).add(relateTo);
+                    edgeRelateToMap.computeIfAbsent(EndpointPair.ordered(wwEdge.getFrom(), wwEdge.getTo()), k -> new HashSet<>()).add(relateTo);
+                }
+            }
+            if (relateTo != null) {
+                txnRelateToMap.get(relateTo.source()).remove(relateTo);
+                txnRelateToMap.get(relateTo.target()).remove(relateTo);
+            }
+            return null;
+        };
+
+        // dfs to handle inferred edges and add all edges and nodes to the result graph
+        Recursive<TriFunction<KnownGraph<KeyType, ValueType>, Collection<SIConstraint<KeyType, ValueType>>, Pair<EndpointPair<Transaction<KeyType, ValueType>>, Edge<KeyType>>, Void>> dfs = new Recursive<>();
+        dfs.func = (graph, constraints, e) -> {
+            visited.add(e);
+            constraints.remove(edgeConstraintMap.get(e));
+            for (var oppositeEdge : oppositeEdgesMap.get(e)) {
+                graph.putEdge(oppositeEdge.getKey().nodeU(), oppositeEdge.getKey().nodeV(), oppositeEdge.getValue());
+            }
+            // if e is RW, add WR and WW
+
+            for (var oppositeEdge : oppositeEdgesMap.get(e)) {
+                var solver = new SISolver<>(history, graph, constraints, oppositeEdge.getKey().target(), oppositeEdge.getKey().source());
+                boolean accepted = solver.solve();
+
+                if (!accepted) {
+                    handleConflicts.accept(solver.getConflicts(), e.getKey());
+                    txnRelateToMap.get(oppositeEdge.getKey().source()).remove(e.getKey());
+                    txnRelateToMap.get(oppositeEdge.getKey().target()).remove(e.getKey());
+                    if (e.getRight().getType().equals(EdgeType.RW)) {
+                        handleRWEdge.apply(e, true, e.getKey());
+                    }
+                    if (oppositeEdge.getRight().getType().equals(EdgeType.RW)) {
+                        handleRWEdge.apply(oppositeEdge, false, e.getKey());
+                    }
+
+                    for (var inferredEdge : getInferredEdges.apply(solver.getConflicts())) {
+                        if (visited.contains(inferredEdge)) {
+                            continue;
+                        }
+                        dfs.func.apply(graph, constraints, inferredEdge);
+                    }
+                    break;
+                }
+            }
+
+            constraints.add(edgeConstraintMap.get(e));
+            for (var oppositeEdge : oppositeEdgesMap.get(e)) {
+                graph.removeEdge(oppositeEdge.getKey().nodeU(), oppositeEdge.getKey().nodeV(), oppositeEdge.getValue());
+            }
+            return null;
+        };
+
+        handleConflicts.accept(conflicts, null);
+        var inferredEdgesInOriginalCycle = new LinkedList<>(getInferredEdges.apply(conflicts));
+
+        for (var e : inferredEdgesInOriginalCycle) {
+            dfs.func.apply(graphBeforePruning, constraintsBeforePruning, e);
+        }
+
+        var edgeTypeCount = new HashMap<EdgeType, Integer>();
+        conflicts.getLeft().stream().forEach(edgeCollection -> edgeCollection.getRight().forEach(e -> edgeTypeCount.compute(e.getType(), (k, v) -> v == null ? 1 : v + 1)));
+
+        String anomaly;
+        if (edgeTypeCount.getOrDefault(EdgeType.RW, 0) > 0) {
+            anomaly = "G_SI"; // G-SI cannot be parsed by graphviz
+        } else if (edgeTypeCount.getOrDefault(EdgeType.SO, 0) > 0 || edgeTypeCount.getOrDefault(EdgeType.WR, 0) > 0) {
+            anomaly = "G1";
+        } else if (edgeTypeCount.getOrDefault(EdgeType.WW, 0) > 0) {
+            anomaly = "G0";
+        } else {
+            throw new IllegalStateException();
+        }
+
+        var dotOutputStr = Utils.conflictsToDot(anomaly, txns, edges, txnRelateToMap, edgeRelateToMap);
         System.out.print(dotOutputStr);
         Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
     }

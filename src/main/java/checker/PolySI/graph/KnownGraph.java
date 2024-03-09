@@ -84,6 +84,21 @@ public class KnownGraph<KeyType, ValueType> {
         }
     }
 
+    public void removeEdge(Transaction<KeyType, ValueType> u, Transaction<KeyType, ValueType> v, Edge<KeyType> edge) {
+        switch (edge.getType()) {
+            case WR:
+                removeEdge(readFrom, u, v, edge);
+                // fallthrough
+            case WW:
+            case SO:
+                removeEdge(knownGraphA, u, v, edge);
+                break;
+            case RW:
+                removeEdge(knownGraphB, u, v, edge);
+                break;
+        }
+    }
+
     private void addEdge(
             MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Edge<KeyType>>> graph,
             Transaction<KeyType, ValueType> u,
@@ -91,6 +106,22 @@ public class KnownGraph<KeyType, ValueType> {
         if (!graph.hasEdgeConnecting(u, v)) {
             graph.putEdgeValue(u, v, new ArrayList<>());
         }
+        if (graph.edgeValue(u, v).get().contains(edge)) {
+            return;
+        }
         graph.edgeValue(u, v).get().add(edge);
+    }
+
+    private void removeEdge(
+            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Edge<KeyType>>> graph,
+            Transaction<KeyType, ValueType> u,
+            Transaction<KeyType, ValueType> v, Edge<KeyType> edge) {
+        if (!graph.hasEdgeConnecting(u, v)) {
+            return;
+        }
+        graph.edgeValue(u, v).get().removeIf(e -> e.equals(edge));
+        if (graph.edgeValue(u, v).get().isEmpty()) {
+            graph.removeEdge(u, v);
+        }
     }
 }

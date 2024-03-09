@@ -206,14 +206,28 @@ class Utils {
         return builder.toString();
     }
 
-    static <KeyType, ValueType> String conflictsToDot(Collection<Transaction<KeyType, ValueType>> transactions,
-            Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> edges,
-            Collection<SIConstraint<KeyType, ValueType>> constraints) {
+    static <KeyType, ValueType> String conflictsToDot(String anomaly, Collection<Transaction<KeyType, ValueType>> transactions,
+                                                      Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> edges,
+                                                      Map<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> txnRelateToMap,
+                                                      Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> edgeRelateToMap) {
+        Function<Collection<EndpointPair<Transaction<KeyType, ValueType>>>, String> edgesToStr = (edgeList) -> {
+            if (edgeList == null || edgeList.isEmpty()) {
+                return "";
+            }
+            var builder = new StringBuilder();
+            for (var edge : edgeList) {
+                builder.append(String.format("%s -> %s, ", edge.source(), edge.target()));
+            }
+            builder.delete(builder.length() - 2, builder.length());
+            return builder.toString();
+        };
+
         var builder = new StringBuilder();
-        builder.append("digraph {\n");
+        builder.append("digraph ").append(anomaly).append(" {\n");
 
         for (var txn : transactions) {
-            builder.append(String.format("\"%s\" [ops=\"%s\"];\n", txn, txn.getOps()));
+            builder.append(String.format("\"%s\" [id=\"%s\" ops=\"%s\" relate_to=\"%s\"];\n",
+                    txn, txn, txn.getOps(), edgesToStr.apply(txnRelateToMap.get(txn))));
         }
 
         for (var e : edges) {
@@ -229,22 +243,9 @@ class Utils {
                 }
             }
 
-            builder.append(
-                    String.format("\"%s\" -> \"%s\" [label=\"%s\"];\n", pair.source(), pair.target(), label));
+            builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\"];\n",
+                    pair.source(), pair.target(), pair.source(), pair.target(), label, edgesToStr.apply(edgeRelateToMap.get(pair))));
         }
-
-//        int colorStep = 0x1000000 / (constraints.size() + 1);
-//        int color = 0;
-//        for (var c : constraints) {
-//            color += colorStep;
-//            for (var e : c.getEdges1()) {
-//                builder.append(String.format("\"%s\" -> \"%s\" [style=dotted,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
-//            }
-//
-//            for (var e : c.getEdges2()) {
-//                builder.append(String.format("\"%s\" -> \"%s\" [style=dashed,color=\"#%06x\"];\n", e.getFrom(), e.getTo(), color));
-//            }
-//        }
 
         builder.append("}\n");
         return builder.toString();
