@@ -130,3 +130,5 @@ Exception in thread "main" java.lang.UnsatisfiedLinkError: no monosat in java.li
 ```
 
 You can add JVM parameter `-Djava.library.path=src/main/resource/libmonosat.so` or add `src/main/resource/libmonosat.so` to a directory in `java.library.path`. If the `libmonosat.so` provided in this repository cannot run on your environment, please compile it yourself using [monoSAT source code](https://github.com/sambayless/monosat).
+
+sudo docker run -p 8080:8080 -p 8000:8000 --rm -d ghcr.io/hengxin/db-testing-platform:dev-ui

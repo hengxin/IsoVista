@@ -207,7 +207,7 @@ class Utils {
     }
 
     static <KeyType, ValueType> String conflictsToDot(String anomaly, Collection<Transaction<KeyType, ValueType>> transactions,
-                                                      Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> edges,
+                                                      Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>> edges,
                                                       Map<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> txnRelateToMap,
                                                       Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> edgeRelateToMap) {
         Function<Collection<EndpointPair<Transaction<KeyType, ValueType>>>, String> edgesToStr = (edgeList) -> {
@@ -230,9 +230,9 @@ class Utils {
                     txn, txn, txn.getOps(), edgesToStr.apply(txnRelateToMap.get(txn))));
         }
 
-        for (var e : edges) {
-            var pair = e.getLeft();
-            var keys = e.getRight();
+        for (var e : edges.entrySet()) {
+            var pair = e.getKey();
+            var keys = e.getValue();
             var label = new StringBuilder();
 
             for (var k : keys) {

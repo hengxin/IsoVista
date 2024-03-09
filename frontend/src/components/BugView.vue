@@ -150,7 +150,7 @@ onMounted(async () => {
         item.getModel().expanded = false
         removedNodes[item] = []
         removedEdges[item] = []
-        // remove edge should before remove node, since removing nodes can automatically remove edges
+        // remove edge should before remove node, since remove nodes can automatically remove edges
         graph.getEdges()
             .filter((edge) => {
               return edge.getModel().relate_to.includes(item.getModel().id)

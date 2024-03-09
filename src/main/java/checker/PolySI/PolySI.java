@@ -13,7 +13,7 @@ import java.util.Properties;
 public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
     private final Boolean noPruning = false;
 
-    private final Boolean noCoalescing = false;
+    private final Boolean noCoalescing = true;
 
     private final Boolean dotOutput = true;
 
