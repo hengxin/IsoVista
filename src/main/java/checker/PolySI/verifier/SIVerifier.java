@@ -115,6 +115,7 @@ public class SIVerifier<KeyType, ValueType> {
         // result graph
         var txns = new HashSet<Transaction<KeyType, ValueType>>();
         var edges = new HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>();
+        var oppositeEdges = new HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>();
         var txnRelateToMap = new HashMap<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>>();
         var edgeRelateToMap = new HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>>();
 
@@ -166,8 +167,12 @@ public class SIVerifier<KeyType, ValueType> {
         };
 
         // add edges and nodes in monoSAT conflicts to the result graph
-        var handleConflicts = (BiConsumer<Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>>, EndpointPair<Transaction<KeyType, ValueType>>>) (conflicts, relateToEdge) -> {
+        var handleConflicts = (TriConsumer<Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>>,
+                EndpointPair<Transaction<KeyType, ValueType>>, EndpointPair<Transaction<KeyType, ValueType>>>) (conflicts, relateToEdge, except) -> {
             conflicts.getLeft().forEach(e -> {
+                if (e.getLeft().equals(except)) {
+                    return;
+                }
                 addEdgeCollection.apply(e.getLeft(), e.getRight());
                 txns.add(e.getLeft().source());
                 txns.add(e.getLeft().target());
@@ -215,7 +220,7 @@ public class SIVerifier<KeyType, ValueType> {
                 throw new IllegalStateException();
             }
             var wwEdges = chosenEdges.stream()
-                    .filter(ww -> ww.getType().equals(EdgeType.WW))
+                    .filter(ww -> ww.getType().equals(EdgeType.WW) && ww.getKey().equals(rw.getRight().getKey()))
                     .collect(Collectors.toList());
             assert wwEdges.size() == 1;
             var wwEdge = wwEdges.get(0);
@@ -262,7 +267,7 @@ public class SIVerifier<KeyType, ValueType> {
                 if (!accepted) {
                     oppositeHasConflict = true;
                     visited.computeIfAbsent(e.getKey(), k -> new HashSet<>()).add(e.getRight());
-                    handleConflicts.accept(solver.getConflicts(), e.getKey());
+                    handleConflicts.accept(solver.getConflicts(), e.getKey(), oppositeEdge.getLeft());
                     txnRelateToMap.get(oppositeEdge.getKey().source()).remove(e.getKey());
                     txnRelateToMap.get(oppositeEdge.getKey().target()).remove(e.getKey());
                     if (e.getRight().getType().equals(EdgeType.RW)) {
@@ -273,6 +278,9 @@ public class SIVerifier<KeyType, ValueType> {
                     }
 
                     for (var inferredEdge : getInferredEdges.apply(solver.getConflicts())) {
+                        if (inferredEdge.equals(oppositeEdge)) {
+                            continue;
+                        }
                         dfs.func.apply(graph, constraints, inferredEdge);
                     }
                     break;
@@ -291,7 +299,7 @@ public class SIVerifier<KeyType, ValueType> {
             return null;
         };
 
-        handleConflicts.accept(conflicts, null);
+        handleConflicts.accept(conflicts, null, null);
         var inferredEdgesInOriginalCycle = new LinkedList<>(getInferredEdges.apply(conflicts));
         Collections.reverse(inferredEdgesInOriginalCycle);
         for (var e : inferredEdgesInOriginalCycle) {

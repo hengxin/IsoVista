@@ -4,13 +4,16 @@ import checker.PolySI.graph.Edge;
 import checker.PolySI.graph.EdgeType;
 import checker.PolySI.graph.KnownGraph;
 import checker.PolySI.graph.MatrixGraph;
+import com.google.common.collect.Sets;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraph;
 
+import com.mysql.cj.log.Log;
 import history.History;
 import history.Transaction;
 
+import monosat.Graph;
 import monosat.Lit;
 import monosat.Logic;
 import monosat.Solver;
@@ -35,6 +38,8 @@ class SISolver<KeyType, ValueType> {
 
     // The literals of the known graph
     private final Map<Lit, Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> knownLiterals = new HashMap<>();
+
+    private final Map<EndpointPair<Transaction<KeyType, ValueType>>, Lit> knownLiteralsReverse = new HashMap<>();
 
     // The literals asserting that exactly one set of edges exists in the graph
     // for each constraint
@@ -86,7 +91,7 @@ class SISolver<KeyType, ValueType> {
      * WR, SO edges, because those edges always exist. 2. For each constraint, a
      * literal that asserts exactly one set of edges exist in the graph.
      */
-    private void init(History<KeyType, ValueType> history,
+    protected void init(History<KeyType, ValueType> history,
             KnownGraph<KeyType, ValueType> precedenceGraph,
             Collection<SIConstraint<KeyType, ValueType>> constraints, ClauseType clauseType,
             Transaction<KeyType, ValueType> from, Transaction<KeyType, ValueType> to) {
@@ -151,7 +156,9 @@ class SISolver<KeyType, ValueType> {
         if (clauseType == ClauseType.ACYCLIC) {
             solver.assertTrue(monoGraph.acyclic());
         } else if (clauseType == ClauseType.REACHABLE) {
-            solver.assertFalse(monoGraph.reaches(nodeMap.get(from), nodeMap.get(to)));
+            var reaches = monoGraph.reaches(nodeMap.get(from), nodeMap.get(to));
+            var acyclic = monoGraph.acyclic();
+            solver.assertFalse(Logic.and(Logic.not(acyclic), reaches));
         }
 
         profiler.endTick("SI_SOLVER_GEN_MONO_GRAPH");
@@ -176,8 +183,15 @@ class SISolver<KeyType, ValueType> {
             ValueGraph<Transaction<KeyType, ValueType>, Collection<Edge<KeyType>>> knownGraph) {
         var g = Utils.createEmptyGraph(history);
         for (var e : knownGraph.edges()) {
+            if (knownLiteralsReverse.containsKey(e)) {
+                var lit = knownLiteralsReverse.get(e);
+                Utils.addEdge(g, e.source(), e.target(), lit);
+                knownLiterals.get(lit).getRight().addAll(knownGraph.edgeValue(e).get());
+                continue;
+            }
             var lit = new Lit(solver);
             knownLiterals.put(lit, Pair.of(e, knownGraph.edgeValue(e).get()));
+            knownLiteralsReverse.put(e, lit);
             Utils.addEdge(g, e.source(), e.target(), lit);
         }
 

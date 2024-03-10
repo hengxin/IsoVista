@@ -70,7 +70,7 @@ public class KnownGraph<KeyType, ValueType> {
 
     public void putEdge(Transaction<KeyType, ValueType> u,
             Transaction<KeyType, ValueType> v, Edge<KeyType> edge) {
-        System.out.println("put edge " + u.getId() + " " + v.getId() + " " + edge);
+//        System.out.println("put edge " + u.getId() + " " + v.getId() + " " + edge);
         switch (edge.getType()) {
         case WR:
             addEdge(readFrom, u, v, edge);

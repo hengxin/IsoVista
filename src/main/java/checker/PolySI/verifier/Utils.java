@@ -189,7 +189,7 @@ class Utils {
             firstInSession.values().forEach(m -> newGraph.putEdge(n, m));
 
             succ.stream()
-                .filter(m -> m.getSession() == n.getSession()
+                .filter(m -> m.getSession() == n.getSession() && m != n
                         && orderInSession.get(m) == orderInSession.get(n) + 1)
                 .forEach(m -> newGraph.putEdge(n, m));
             // @formatter:on
