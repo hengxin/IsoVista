@@ -209,7 +209,9 @@ class Utils {
     static <KeyType, ValueType> String conflictsToDot(String anomaly, Collection<Transaction<KeyType, ValueType>> transactions,
                                                       Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>> edges,
                                                       Map<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> txnRelateToMap,
-                                                      Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> edgeRelateToMap) {
+                                                      Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> edgeRelateToMap,
+                                                      HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>> oppositeEdges,
+                                                      List<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> mainCycle) {
         Function<Collection<EndpointPair<Transaction<KeyType, ValueType>>>, String> edgesToStr = (edgeList) -> {
             if (edgeList == null || edgeList.isEmpty()) {
                 return "";
@@ -226,11 +228,30 @@ class Utils {
         builder.append("digraph ").append(anomaly).append(" {\n");
 
         for (var txn : transactions) {
-            builder.append(String.format("\"%s\" [id=\"%s\" ops=\"%s\" relate_to=\"%s\"];\n",
-                    txn, txn, txn.getOps(), edgesToStr.apply(txnRelateToMap.get(txn))));
+            boolean inCycle = mainCycle.stream().anyMatch(p -> p.getKey().source().equals(txn) || p.getKey().target().equals(txn));
+            builder.append(String.format("\"%s\" [id=\"%s\" ops=\"%s\" relate_to=\"%s\" in_cycle=%s];\n",
+                    txn, txn, txn.getOps(), edgesToStr.apply(txnRelateToMap.get(txn)), inCycle));
         }
 
         for (var e : edges.entrySet()) {
+            var pair = e.getKey();
+            var keys = e.getValue();
+            var label = new StringBuilder();
+            boolean inCycle = mainCycle.stream().anyMatch(p -> p.getKey().equals(pair));
+
+            for (var k : keys) {
+                if (k.getType() != EdgeType.SO) {
+                    label.append(String.format("%s %s\\n", k.getType(), k.getKey()));
+                } else {
+                    label.append(String.format("%s\\n", k.getType()));
+                }
+            }
+
+            builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\" in_cycle=%s];\n",
+                    pair.source(), pair.target(), pair.source(), pair.target(), label, edgesToStr.apply(edgeRelateToMap.get(pair)), inCycle));
+        }
+
+        for (var e : oppositeEdges.entrySet()) {
             var pair = e.getKey();
             var keys = e.getValue();
             var label = new StringBuilder();
@@ -243,7 +264,7 @@ class Utils {
                 }
             }
 
-            builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\"];\n",
+            builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\" style=dotted];\n",
                     pair.source(), pair.target(), pair.source(), pair.target(), label, edgesToStr.apply(edgeRelateToMap.get(pair))));
         }
 

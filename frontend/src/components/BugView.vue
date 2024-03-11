@@ -199,7 +199,11 @@ onMounted(async () => {
     })
     res.data.edges.forEach(edge => {
       edge.expanded = false
-      edge.style = {}
+      if (edge.style === "dotted") {
+        edge.style = {lineDash: [1, 1]}
+      } else {
+        edge.style = {}
+      }
       if (edge.label.includes("WR")) {
         edge.style.stroke = "#5F95FF"
       } else if (edge.label.includes("SO")) {
@@ -278,16 +282,27 @@ onMounted(async () => {
   })
 
 // highlight cycle
-let cycle = detectDirectedCycle(data);
 let cycleNodeList = []
 let cycleEdgeList = []
-for (let key in cycle) {
-  cycleNodeList.push(key)
+if (data.nodes[0].hasOwnProperty("in_cycle")) {
+  console.log(data.nodes[0])
+  cycleEdgeList = data.edges.filter(edge => edge.in_cycle === "true").map(edge => {
+    return {target: edge.target, source: edge.source}
+  })
+  cycleNodeList = data.nodes.filter(node => node.in_cycle === "true").map(node => node.id)
+  console.log(cycleNodeList)
+  console.log(cycleEdgeList)
+} else {
+  let cycle = detectDirectedCycle(data);
+
+  for (let key in cycle) {
+    cycleNodeList.push(key)
+  }
+  for (let i = 0; i < cycleNodeList.length - 1; i++) {
+    cycleEdgeList.push({target: cycleNodeList[i], source: cycleNodeList[i + 1]})
+  }
+  cycleEdgeList.push({target: cycleNodeList[cycleNodeList.length - 1], source: cycleNodeList[0]})
 }
-for (let i = 0; i < cycleNodeList.length - 1; i++) {
-  cycleEdgeList.push({target: cycleNodeList[i], source: cycleNodeList[i + 1]})
-}
-cycleEdgeList.push({target: cycleNodeList[cycleNodeList.length - 1], source: cycleNodeList[0]})
 console.log(cycleNodeList)
 g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
   node.setState('marked', true)
@@ -297,6 +312,7 @@ g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source ===
   console.log(edge)
   edge.setState('marked', true)
 })
+
 
 if (typeof window !== 'undefined')
     window.onresize = () => {
