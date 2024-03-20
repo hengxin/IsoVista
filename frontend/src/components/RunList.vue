@@ -128,12 +128,12 @@ watch(dialogVisible, (newVal) => {
                   stripe
         >
           <el-table-column prop="id" label="ID" width="80"/>
-          <el-table-column prop="bugCount" label="Bug Count" width="100"/>
-          <el-table-column prop="histCount" label="Hist Count" width="100"/>
+          <el-table-column prop="bugCount" label="Bug Count" width="120"/>
+          <el-table-column prop="histCount" label="Hist Count" width="120"/>
           <el-table-column prop="dbType" label="DB Type" width="120"/>
-          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="270"/>
-          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="200"/>
-          <el-table-column prop="date" label="Date">
+          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="300"/>
+          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
+          <el-table-column prop="date" label="Date" width="200">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
             </template>
