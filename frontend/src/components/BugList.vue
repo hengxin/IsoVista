@@ -91,9 +91,9 @@ const handleChangeTag = (row, tagName, tagType) => {
                   >
           <el-table-column prop="id" label="ID" width="80"/>
           <el-table-column prop="dbType" label="DB Type" width="150"/>
-          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="250"/>
-          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="250"/>
-          <el-table-column prop="date" label="Date">
+          <el-table-column prop="dbIsolation" label="DB Isolation Level" width="300"/>
+          <el-table-column prop="checkerIsolation" label="Checker Isolation Level" width="280"/>
+          <el-table-column prop="date" label="Date" width="200">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
             </template>

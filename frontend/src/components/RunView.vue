@@ -48,20 +48,24 @@ const createProfileCharts = () => {
       boundaryGap: false,
       data: profileData.x_axis,
       axisLabel: {
-        fontSize: 17,
+        fontSize: 18,
+        color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 18
+        "fontSize": 18,
+        color: '#000'
       }
     },
     yAxis: {
       name: 'Time(s)',
       type: 'value',
       axisLabel: {
-        fontSize: 18
+        fontSize: 18,
+        color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20
+        "fontSize": 20,
+        color: '#000'
       }
     },
     series: profileData.timeSeries
@@ -91,20 +95,24 @@ const createProfileCharts = () => {
       boundaryGap: false,
       data: profileData.x_axis,
       axisLabel: {
-        fontSize: 17,
+        fontSize: 18,
+        color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 18
+        "fontSize": 18,
+        color: '#000'
       }
     },
     yAxis: {
       name: 'Memory(MB)',
       type: 'value',
       axisLabel: {
-        fontSize: 18
+        fontSize: 18,
+        color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20
+        "fontSize": 20,
+        color: '#000'
       }
     },
     series: profileData.memorySeries
@@ -131,7 +139,8 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 17,
+        fontSize: 15,
+        color: '#000',
       },
     },
     yAxis: {
@@ -139,10 +148,12 @@ const createRuntimeInfoCharts = () => {
       type: 'value',
       max: 100,
       axisLabel: {
-        fontSize: 18
+        fontSize: 18,
+        color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20
+        "fontSize": 20,
+        color: '#000'
       }
     },
     series: [
@@ -176,17 +187,20 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 17,
+        fontSize: 15,
+        color: '#000',
       },
     },
     yAxis: {
       name: 'Memory(MB)',
       type: 'value',
       axisLabel: {
-        fontSize: 18
+        fontSize: 18,
+        color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20
+        "fontSize": 20,
+        color: '#000'
       }
     },
     series: [
