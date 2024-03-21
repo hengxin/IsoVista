@@ -1,7 +1,5 @@
-import asyncio
 import glob
 import json
-import multiprocessing
 import os
 import queue
 import re
@@ -305,7 +303,8 @@ async def view_bug(bug_id: int):
             "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
                           node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"))
             .replace("[", "").replace("]", ""),
-            "relate_to": node.get("relate_to").replace("\"", "").split(",")
+            "relate_to": node.get("relate_to").replace("\"", "").split(","),
+            "in_cycle": node.get("in_cycle"),
         })
 
     for edge in graphs[0].get_edges():
@@ -314,7 +313,9 @@ async def view_bug(bug_id: int):
             "source": edge.get_source().replace("\"", ""),
             "target": edge.get_destination().replace("\"", ""),
             "label": edge.get("label").replace("\\n", " ").replace("\"", ""),
-            "relate_to": edge.get("relate_to").replace("\"", "").split(", ")
+            "relate_to": edge.get("relate_to").replace("\"", "").split(", "),
+            "style": edge.get("style"),
+            "in_cycle": edge.get("in_cycle"),
         })
 
     return {"name": graphs[0].get_name(), "nodes": nodes, "edges": edges}
