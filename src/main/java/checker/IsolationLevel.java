@@ -7,5 +7,5 @@ public enum IsolationLevel {
     REPEATABLE_READ,
     CAUSAL_CONSISTENCY,
     SNAPSHOT_ISOLATION,
-    SERIALIZATION
+    SERIALIZABLE;
 }
