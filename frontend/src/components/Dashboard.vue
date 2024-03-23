@@ -35,7 +35,7 @@ const testingOption = reactive({
 const dbOptions = [
   {label: 'MySQL', value: 'MYSQL'},
   {label: 'PostgreSQL', value: 'POSTGRES'},
-  {label: 'H2', value: 'H2'}
+  {label: 'MariaDB', value: 'MARIA'}
 ];
 const dbIsolationLevelOptions = [
   {label: 'Read_Uncommitted', value: 'TRANSACTION_READ_UNCOMMITTED'},
@@ -152,8 +152,8 @@ const handleIndexChange = (index) => {
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
-                      You can try jdbc:mysql://172.17.0.1:3306 for MYSQL, jdbc:postgresql://172.0.0.1:15432 for
-                      PostgreSQL and jdbc:h2:mem:testdb for H2.
+                      You can try jdbc:mysql://localhost:3306 for MYSQL, jdbc:postgresql://localhost15432 for
+                      PostgreSQL and jdbc:mariadb://localhost:3307 for MariaDB.
                       This URL SHOULD be consistent with the DB Type option.
                     </template>
                     <el-icon color="blue">
