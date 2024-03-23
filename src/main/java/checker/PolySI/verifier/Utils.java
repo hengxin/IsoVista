@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-class Utils {
-    static <KeyType, ValueType> Transaction<KeyType, ValueType> verifyInternalConsistency(History<KeyType, ValueType> history) {
+public class Utils {
+    public static <KeyType, ValueType> Transaction<KeyType, ValueType> verifyInternalConsistency(History<KeyType, ValueType> history) {
         var writes = new HashMap<Pair<KeyType, ValueType>, Pair<Operation<KeyType, ValueType>, Integer>>();
         var txnWrites = new HashMap<Pair<Transaction<KeyType, ValueType>, KeyType>, ArrayList<Integer>>();
         var getEvents = ((Function<Operation.Type, Stream<Pair<Integer, Operation<KeyType, ValueType>>>>) type -> history
@@ -198,7 +198,7 @@ class Utils {
         System.err.printf("After: %d edges\n", newGraph.edges().size());
         return newGraph;
     }
-    static <KeyType, ValueType> String intConflictToDot(Transaction<KeyType, ValueType> txn) {
+    public static <KeyType, ValueType> String intConflictToDot(Transaction<KeyType, ValueType> txn) {
         var builder = new StringBuilder();
         builder.append("digraph {\n");
         builder.append(String.format("\"%s\" [ops=\"%s\"];\n", txn, txn.getOps()));

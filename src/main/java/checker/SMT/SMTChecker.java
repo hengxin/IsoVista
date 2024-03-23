@@ -1,6 +1,7 @@
 package checker.SMT;
 
 import checker.Checker;
+import checker.PolySI.verifier.Utils;
 import config.Config;
 import history.History;
 import history.loader.ElleHistoryLoader;
@@ -10,6 +11,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.Properties;
 
 public class SMTChecker<VarType, ValType> implements Checker<VarType, ValType> {
@@ -30,6 +32,14 @@ public class SMTChecker<VarType, ValType> implements Checker<VarType, ValType> {
             new ElleTextHistorySerializer().serializeHistory((History<Integer, ElleHistoryLoader.ElleValue>) history, TMP_HIST_PATH);
         } else {
             new TextHistorySerializer().serializeHistory((History<Long, Long>) history, TMP_HIST_PATH);
+        }
+
+        var satisfy_int = Utils.verifyInternalConsistency(history);
+        if (satisfy_int != null) {
+            FileWriter writer = new FileWriter(DEFAULT_DOT_PATH);
+            writer.write(Utils.intConflictToDot(satisfy_int));
+            writer.close();
+            return false;
         }
 
         var accept = LibSMTChecker.INSTANCE.verify(TMP_HIST_PATH, "info", false, "z3", "text", true, DEFAULT_DOT_PATH);
