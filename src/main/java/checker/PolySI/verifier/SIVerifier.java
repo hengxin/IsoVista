@@ -40,6 +40,9 @@ public class SIVerifier<KeyType, ValueType> {
 
     private Transaction<KeyType, ValueType> intConflict;
 
+    @Getter
+    private Map<String, Long> stageTime;
+
     public SIVerifier(History<KeyType, ValueType> history) {
         this.history = history;
     }
@@ -66,9 +69,11 @@ public class SIVerifier<KeyType, ValueType> {
         profiler.endTick("SI_GEN_CONSTRAINTS");
         System.err.printf("Constraints count: %d\nTotal edges in constraints: %d\n", constraints.size(),
                 constraints.stream().map(c -> c.getEdges1().size() + c.getEdges2().size()).reduce(0, Integer::sum));
-        profiler.endTick("ONESHOT_CONS");
+        var constructionTime = profiler.endTick("ONESHOT_CONS");
 
+        profiler.startTick("PRUNING");
         var hasLoop = Pruning.pruneConstraints(graph, constraints, history);
+        var pruningTime = profiler.endTick("PRUNING");
         if (hasLoop) {
             System.err.printf("Cycle found in pruning\n");
         }
@@ -76,15 +81,23 @@ public class SIVerifier<KeyType, ValueType> {
                 constraints.size(),
                 constraints.stream().map(c -> c.getEdges1().size() + c.getEdges2().size()).reduce(0, Integer::sum));
 
-        profiler.startTick("ONESHOT_SOLVE");
+        profiler.startTick("ONESHOT_ENCODING");
         var solver = new SISolver<>(history, graph, constraints);
+        var encodeTime = profiler.endTick("ONESHOT_ENCODING");
 
+        profiler.startTick("ONESHOT_SOLVE");
         boolean accepted = solver.solve();
-        profiler.endTick("ONESHOT_SOLVE");
+        var solveTime = profiler.endTick("ONESHOT_SOLVE");
 
         if (!accepted) {
             conflicts = solver.getConflicts();
         }
+        this.stageTime = Map.of(
+                "Construction", constructionTime,
+                "Pruning", pruningTime,
+                "Encoding", encodeTime,
+                "Solving", solveTime
+        );
 
         return accepted;
     }

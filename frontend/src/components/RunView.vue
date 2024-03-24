@@ -19,6 +19,7 @@ const props = defineProps({
 
 let profileTimeChart;
 let profileMemoryChart;
+let profileStagesChart;
 let runTimeCPUChart;
 let runTimeMemoryChart;
 
@@ -118,6 +119,55 @@ const createProfileCharts = () => {
     series: profileData.memorySeries
   };
   profileMemoryOption && profileMemoryChart.setOption(profileMemoryOption);
+
+  const profileStagesChartDom = document.getElementById('profile-stages');
+  profileStagesChart = echarts.init(profileStagesChartDom);
+  let profileStagesOption;
+
+  profileStagesOption = {
+    tooltip: {
+      // trigger: 'axis',
+      // axisPointer: {
+      //   type: 'shadow'
+      // }
+    },
+    legend: {},
+    // grid: {
+    //   left: '3%',
+    //   right: '4%',
+    //   bottom: '3%',
+    //   containLabel: true
+    // },
+    xAxis: {
+      name: profileData.name,
+      type: 'category',
+      // boundaryGap: false,
+      data: profileData.x_axis,
+      axisLabel: {
+        fontSize: 18,
+        color: '#000',
+      },
+      nameTextStyle: {
+        "fontSize": 18,
+        color: '#000'
+      }
+    },
+    yAxis: {
+      name: 'Time(s)',
+      type: 'value',
+      axisLabel: {
+        fontSize: 18,
+        color: '#000'
+      },
+      nameTextStyle: {
+        "fontSize": 20,
+        color: '#000'
+      }
+    },
+    series: profileData.stageSeries
+  };
+
+  profileStagesOption && profileStagesChart.setOption(profileStagesOption);
 }
 
 let runtimeInfoData = {};
@@ -241,15 +291,28 @@ const handleGetRuntimeInfoRes = (res)=> {
 
 const handleGetProfileRes = (res)=> {
   console.log(res.data)
+  if (!res.data.series) {
+    return
+  }
   for (let data of res.data.series) {
     for (let i = 0; i < res.data.x_axis.length; i++) {
       data.time[i] = (data.time[i] / 1000).toFixed(2)
       data.memory[i] = (data.memory[i] / 1024).toFixed(2)
     }
+    for (let field in data.stage_times) {
+      // if (data.stage_times[field].every(element => element === 0)) {
+      //   delete data.stage_times[field]
+      //   continue
+      // }
+      for (let i = 0; i < res.data.x_axis.length; i++) {
+        data.stage_times[field][i] = (data.stage_times[field][i] / 1000.0).toFixed(2)
+      }
+    }
   }
   profileData = res.data
   profileData.timeSeries = []
   profileData.memorySeries = []
+  profileData.stageSeries = []
   profileData.legend = []
   for (let series of profileData.series) {
     profileData.timeSeries.push({
@@ -261,6 +324,17 @@ const handleGetProfileRes = (res)=> {
       name: series.checker,
       data: series.memory,
       type: 'line'
+    })
+    Object.entries(series.stage_times).forEach(([stage, state_times]) => {
+      profileData.stageSeries.push({
+        name: stage,
+        type: 'bar',
+        stack: series.checker,
+        emphasis: {
+          focus: 'series'
+        },
+        data: state_times
+      })
     })
     profileData.legend.push(series.checker)
   }
@@ -302,6 +376,12 @@ const setProfileData = ()=> {
     },
     legend: {
       data: profileData.legend
+    },
+  })
+  profileStagesChart.setOption({
+    series: profileData.stageSeries,
+    xAxis: {
+      data: profileData.x_axis,
     },
   })
 }
@@ -384,9 +464,9 @@ watch(shouldRefresh, async (newVal) => {
         </span>
     </el-header>
     <el-main class="profile-container">
-
       <div id="profile-time" class="chart"></div>
       <div id="profile-memory" class="chart"></div>
+      <div id="profile-stages" class="chart"></div>
     </el-main>
   </el-container>
 </template>

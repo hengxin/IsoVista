@@ -371,11 +371,16 @@ async def get_profile(run_id: int):
             "x_axis": df.iloc[:, 0].to_list(),
             "series": series
         }
-        series.append({
+        stage_times = df.to_dict('list')
+        for i in range(0, 3):
+            stage_times.pop(df.iloc[:, i].name)
+        df_dict = {
             "checker": os.path.basename(run_profile_path).split("-")[1],
             "time": df.iloc[:, 1].to_list(),
             "memory": df.iloc[:, 2].to_list(),
-        })
+            "stage_times": stage_times
+        }
+        series.append(df_dict)
     return result
 
 
@@ -430,11 +435,16 @@ async def get_current_profile():
                     "x_axis": df.iloc[:, 0].to_list(),
                     "series": series
                 }
-                series.append({
+                stage_times = df.to_dict('list')
+                for i in range(0, 3):
+                    stage_times.pop(df.iloc[:, i].name)
+                df_dict = {
                     "checker": os.path.basename(csv_file).split("-")[1],
                     "time": df.iloc[:, 1].to_list(),
                     "memory": df.iloc[:, 2].to_list(),
-                })
+                    "stage_times": stage_times
+                }
+                series.append(df_dict)
         return result
     except FileNotFoundError:
         return ""

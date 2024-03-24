@@ -24,6 +24,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Command(name = "DBTest", mixinStandardHelpOptions = true, version = "DBTest 0.1", description = "Test database isolation level.")
@@ -105,6 +107,7 @@ public class Main implements Callable<Integer> {
         if (enableProfile) {
             profiler.startTick("run_total_time");
         }
+        Map<String, Map<String, Long>> profileInfo = new HashMap<>();
         TriFunction<Integer, Integer, Integer, Void> runOneShot = (Integer currentBatch, Integer totalBatch, Integer nHist) -> {
             for (int i = 1; i <= nHist; i++) {
                 History history = null;
@@ -135,16 +138,19 @@ public class Main implements Callable<Integer> {
                     var isolation = checkerAndIsolation.getRight();
                     config.setProperty(Config.CHECKER_ISOLATION, isolation.toString());
                     log.info("Start history verification using checker {}", checker.getName() + "-" + isolation);
+                    String tag = checker.getName() + "-" + isolation;
                     if (enableProfile) {
-                        profiler.startTick(checker.getName() + "-" + isolation);
+                        profiler.startTick(tag);
                     }
                     boolean result;
                     try {
-                        // TODO: ww edge in elle history?
                         var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
                         result = checkerInstance.verify(history);
                         if (enableProfile) {
-                            profiler.endTick(checker.getName() + "-" + isolation);
+                            profiler.endTick(tag);
+                            if (checkerInstance.getProfileInfo() != null) {
+                                profileInfo.put(tag, checkerInstance.getProfileInfo());
+                            }
                             System.gc();
                         }
                         if (!result) {
@@ -154,7 +160,7 @@ public class Main implements Callable<Integer> {
                             try {
                                 Files.createDirectory(bugDir);
                             } catch (IOException e) {
-
+                                // do nothing
                             }
                             if (!skipGeneration) {
                                 new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
@@ -173,27 +179,39 @@ public class Main implements Callable<Integer> {
         };
 
         var variable = config.getProperty(Config.WORKLOAD_VARIABLE);
+        BiConsumer<String, String> outputProfileInfo = (String var, String val) -> {
+            var stages = profileInfo.values().stream()
+                    .map(Map::keySet)
+                    .flatMap(Set::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Profiler.createCSV(var, checkerIsoList, stages);
+            for (var pair : checkerIsoList) {
+                var checkerIsolation = pair.getLeft().getName() + "-" + pair.getRight();
+                var avgTime = profiler.getAvgTime(checkerIsolation);
+                var maxMemory = profiler.getMemory(checkerIsolation);
+                var profileMap = profileInfo.getOrDefault(checkerIsolation, new HashMap<String, Long>());
+                var stageTimeList = new ArrayList<Long>();
+                stages.forEach(stage -> stageTimeList.add(profileMap.getOrDefault(stage, 0L)));
+                Profiler.appendToCSV(val, avgTime, maxMemory, pair, stageTimeList);
+                profiler.removeTag(checkerIsolation);
+            }
+        };
         if (variable != null && !variable.isBlank()) {
-            Profiler.createCSV(variable, checkerIsoList);
-            variable = "workload." + variable;
-            var valueListString = config.getProperty(variable);
+            var fullVariable = "workload." + variable;
+            var valueListString = config.getProperty(fullVariable);
             var valueList = ConfigParser.parseListString(valueListString);
             nBatch = valueList.length;
             for (int i = 0; i < valueList.length; i++) {
                 var value = valueList[i];
-                config.setProperty(variable, value);
-                log.info("Run one shot {} = {}", variable, value);
+                config.setProperty(fullVariable, value);
+                log.info("Run one shot {} = {}", fullVariable, value);
                 runOneShot.apply(i, nBatch, historyNum);
-                for (var pair : checkerIsoList) {
-                    var checkerIsolation = pair.getLeft().getName() + "-" + pair.getRight();
-                    var avgTime = profiler.getAvgTime(checkerIsolation);
-                    var maxMemory = profiler.getMemory(checkerIsolation);
-                    Profiler.appendToCSV(value, avgTime, maxMemory, pair);
-                    profiler.removeTag(checkerIsolation);
-                }
+                outputProfileInfo.accept(variable, value);
             }
         } else {
             runOneShot.apply(0, nBatch, historyNum);
+            outputProfileInfo.accept(null, "0");
         }
 
         if (enableProfile) {

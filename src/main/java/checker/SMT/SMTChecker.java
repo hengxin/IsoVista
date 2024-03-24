@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Map;
 import java.util.Properties;
 
 public class SMTChecker<VarType, ValType> implements Checker<VarType, ValType> {
@@ -51,5 +52,10 @@ public class SMTChecker<VarType, ValType> implements Checker<VarType, ValType> {
     @SneakyThrows
     public void outputDotFile(String path) {
         FileUtils.moveFile(new File(DEFAULT_DOT_PATH), new File(path));
+    }
+
+    @Override
+    public Map<String, Long> getProfileInfo() {
+        return null;
     }
 }

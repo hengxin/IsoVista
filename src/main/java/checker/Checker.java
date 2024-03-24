@@ -2,6 +2,8 @@ package checker;
 
 import history.History;
 
+import java.util.Map;
+
 public interface Checker<KeyType, ValType> {
     /**
      * Verify a history.
@@ -17,4 +19,11 @@ public interface Checker<KeyType, ValType> {
      * @param  path  the path where the dot file will be outputted
      */
     void outputDotFile(String path);
+
+    /**
+     * Retrieves profile information.
+     *
+     * @return         Profile information as a map with tags as keys and time(ms) as values
+     */
+    Map<String, Long> getProfileInfo();
 }

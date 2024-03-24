@@ -10,10 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -97,7 +94,7 @@ public class Profiler {
         updateMemory();
     }
 
-    public synchronized void endTick(String tag) {
+    public synchronized long endTick(String tag) {
         if (startTime.containsKey(tag)) {
             long cur_time = System.currentTimeMillis();
             long duration = cur_time - startTime.get(tag);
@@ -111,11 +108,14 @@ public class Profiler {
             // rm the tick
             startTime.remove(tag);
             log.debug("Tag {} end tick after {} ms.", tag, duration);
+
+            updateMemory();
+            return duration;
         } else {
             // FIXME: shouldn't be here
             // but do nothing for now.
         }
-        updateMemory();
+        return 0;
     }
 
     public synchronized long getTotalTime(String tag) {
@@ -182,23 +182,30 @@ public class Profiler {
     }
 
     @SneakyThrows
-    public static void createCSV(String variable, List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsolationList) {
+    public static void createCSV(String variable, List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsolationList, List<String> stages) {
         for (var pair : checkerIsolationList) {
             String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
             File file = new File(csvPath);
+            if (file.exists()) {
+                continue;
+            }
             FileWriter csvWriter = new FileWriter(file, true);
-            csvWriter.write(String.format("%s,time(%s),memory(%s)\n", variable, timeUnit, memoryUnit));
+            String stagesString = String.join(",", stages);
+            csvWriter.write(String.format("%s,time(%s),memory(%s),%s\n", variable, timeUnit, memoryUnit, stagesString));
             csvWriter.close();
         }
     }
 
     @SneakyThrows
-    public static void appendToCSV(String value, long time, long memory, Pair<Class<? extends Checker>, IsolationLevel> pair) {
+    public static void appendToCSV(String value, long time, long memory, Pair<Class<? extends Checker>, IsolationLevel> pair, List<Long> stageTimeList) {
         // append a line to a csv file
         String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
         File file = new File(csvPath);
         FileWriter csvWriter = new FileWriter(file, true);
-        csvWriter.write(String.format("%s,%s,%s\n", value, formatTime(time, timeUnit), formatMemory(memory, memoryUnit)));
+        String stageTimeString = stageTimeList.stream()
+                                .map(Object::toString)
+                                .collect(Collectors.joining(","));
+        csvWriter.write(String.format("%s,%s,%s,%s\n", value, formatTime(time, timeUnit), formatMemory(memory, memoryUnit), stageTimeString));
         csvWriter.close();
     }
 }

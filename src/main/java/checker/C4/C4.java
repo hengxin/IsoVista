@@ -16,6 +16,7 @@ import javafx.util.Pair;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Triple;
+import util.Profiler;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +52,13 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     protected static final Map<IsolationLevel, Set<TAP>> PROHIBITED_TAPS = new HashMap<>();
 
     public static final String NAME = "C4";
+    private final Profiler profiler = Profiler.getInstance();
+
     public static IsolationLevel ISOLATION_LEVEL;
+    private final String constructionTag;
+    private final String traversalTag;
+    private long constructionTime;
+    private long traversalTime;
 
     static {
         Set<TAP> RCTAPs = new HashSet<>(List.of(new TAP[]{
@@ -83,24 +90,31 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
 
     public C4(Properties config) {
         ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
-        assert ISOLATION_LEVEL == IsolationLevel.SNAPSHOT_ISOLATION;
+        constructionTag = "Construction";
+        traversalTag = "Traversal";
     }
 
     public boolean verify(History<VarType, ValType> history) {
         this.history = history;
+        profiler.startTick(constructionTag);
         buildCO();
+        constructionTime = profiler.endTick(constructionTag);
+        profiler.startTick(traversalTag);
         checkCOTAP();
         if (ISOLATION_LEVEL == IsolationLevel.READ_COMMITTED) {
 //            System.out.println(badPatternCount);
+            traversalTime = profiler.endTick(traversalTag);
             return tapCount.isEmpty();
         }
         syncClock();
         buildCM();
         if (!hasCircle(Edge.Type.CM)) {
 //            System.out.println(badPatternCount);
+            traversalTime = profiler.endTick(traversalTag);
             return tapCount.isEmpty();
         }
         checkCMTAP();
+        traversalTime = profiler.endTick(traversalTag);
 //        System.out.println(badPatternCount);
         return tapCount.isEmpty();
     }
@@ -110,6 +124,15 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     public void outputDotFile(String path) {
         Files.writeString(Path.of(path), bugGraphs.get(0), StandardOpenOption.CREATE);
     }
+
+    @Override
+    public Map<String, Long> getProfileInfo() {
+        return new HashMap<>() {{
+            put(constructionTag, constructionTime);
+            put(traversalTag, traversalTime);
+        }};
+    }
+
 
     protected void buildCO() {
         var hist = history.getFlatTransactions();

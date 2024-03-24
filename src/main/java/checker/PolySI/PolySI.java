@@ -8,10 +8,11 @@ import config.Config;
 import history.History;
 import util.Profiler;
 
+import java.util.Map;
 import java.util.Properties;
 
 public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
-    private final Boolean noPruning = true;
+    private final Boolean noPruning = false;
 
     private final Boolean noCoalescing = false;
 
@@ -56,4 +57,10 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
     public void outputDotFile(String path) {
         verifier.outputDotFile(path);
     }
+
+    @Override
+    public Map<String, Long> getProfileInfo() {
+        return verifier.getStageTime();
+    }
+
 }
