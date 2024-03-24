@@ -16,6 +16,8 @@ from fastapi import FastAPI, Request, Body
 from fastapi import File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+import shutil
+
 
 app = FastAPI()
 origins = [
@@ -200,7 +202,9 @@ async def get_bug_count():
 
 current_run = ''
 run_queue = queue.Queue()
-
+stop_requested = False
+stop_event = threading.Event()
+process = None 
 
 @app.post("/run")
 def run_task(params: Any = Body(None)):
@@ -213,26 +217,43 @@ def run_task(params: Any = Body(None)):
 
     return {}
 
-
 def run_worker():
-    global current_run
+    global current_run, stop_requested, process
     while True:
         config = run_queue.get()
         current_run = config
         print("start running")
         with open(config_path, 'w') as file:
             file.write(config)
-        subprocess.run(["java", "-jar", dbtest_path, config_path])
+        # p = subprocess.run(["java", "-jar", dbtest_path, config_path])
+        process = subprocess.Popen(["java", "-jar", dbtest_path, config_path])
+        process.wait()
         bug_store.scan()
         run_store.scan()
         current_run = ''
+    print('Thread Stops.')
+    # if process and not process.poll(): 
+    #     process.terminate()  
+
+@app.put("/stop")
+async def stop_run():
+    global stop_requested, process
+    stop_requested = True
+    process.terminate()
+  
+    # remove current dir 
+    try:
+        shutil.rmtree(current_path)
+        print(f"{current_path} has been deleted.")
+    except Exception as e:
+        print(f"Failed to delete {current_path}. Reason: {e}")
+
 
 
 # start a background thread to run the queue
 t = threading.Thread(target=run_worker)
 t.daemon = True
 t.start()
-
 
 def config_to_run(config):
     pattern = r'(db\.type|db\.isolation|checker\.isolation|workload\.history)=(\w+)'
@@ -244,7 +265,8 @@ def config_to_run(config):
         value = match[1]
         result[key] = value
 
-    return Run(0, result['db.type'], result['db.isolation'], result['checker.isolation'],
+    checker_isolation = result.get('checker.isolation')
+    return Run(0, result['db.type'], result['db.isolation'], checker_isolation,
                int(time.time() * 1000), result['workload.history'], 0, '', status='Pending', percentage=0)
 
 
@@ -462,14 +484,14 @@ async def upload_file(file: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"message": "Upload failed!", "details": str(e)})
 
 
-@app.put("/stop/")
-async def stop_run():
+#@app.put("/stop/")
+#async def stop_run():
     # global p
     # p.terminate()
     # p = multiprocessing.Process(target=run_worker)
     # p.daemon = True
     # p.start()
-    pass
+#    pass
 
 if __name__ == "__main__":
     # multiprocessing.freeze_support()

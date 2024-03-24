@@ -55,23 +55,13 @@ function handleDownload(row) {
 
 function handleStop(row) {
   console.log(row.id)
-  download_run(row.id).then(res => {
-
-    const { data, headers } = res
-    const fileName = decodeURIComponent(escape(res.headers['file-name']))
-
-    //const blob = new Blob([JSON.stringify(data)], ...)
-    const blob = new Blob([data], {type: headers['content-type']})
-    let dom = document.createElement('a')
-    let url = window.URL.createObjectURL(blob)
-    dom.href = url
-    dom.download = decodeURI(fileName)
-    dom.style.display = 'none'
-    document.body.appendChild(dom)
-    dom.click()
-    dom.parentNode.removeChild(dom)
-    window.URL.revokeObjectURL(url)
-  })
+  try {
+    stop_run().then(res => {
+      console.log(res)
+    })
+  } catch (error) {
+    console.error('Error:', error);
+  }
 }
 
 let intervalRefreshList = null;
@@ -111,6 +101,7 @@ watch(dialogVisible, (newVal) => {
     clearInterval(intervalRefreshLog)
   }
 })
+
 </script>
 
 <template>
@@ -175,8 +166,7 @@ watch(dialogVisible, (newVal) => {
                     size="small"
                     type="primary"
                     @click="handleStop(scope.row)"
-                >Stop</el-button
-                >
+                >Stop</el-button>
               </div>
             </template>
           </el-table-column>
@@ -213,6 +203,7 @@ watch(dialogVisible, (newVal) => {
   display: inline-block;
   margin-top: 20px;
   font-weight: bold;
+  margin-right: 20px;
 }
 
 .current-log {

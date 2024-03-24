@@ -7,7 +7,7 @@ import {
   get_current_run_id,
   get_current_runtime_info,
   get_run_profile,
-  get_runtime_info
+  get_runtime_info,
 } from "@/api/api.js";
 
 const props = defineProps({
@@ -445,6 +445,7 @@ watch(shouldRefresh, async (newVal) => {
   }
 })
 
+
 </script>
 
 <template>
@@ -453,6 +454,7 @@ watch(shouldRefresh, async (newVal) => {
       <span class="info">
         Runtime Info
       </span>
+
     </el-header>
     <el-main class="runtime-info-container">
       <div id="runtime-cpu" class="chart"></div>
