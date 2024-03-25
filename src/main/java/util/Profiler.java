@@ -51,6 +51,12 @@ public class Profiler {
         MaxMemory.updateAndGet(oldMax -> Long.max(oldMax, currentMax));
     }
 
+    public static void updateMemory(long memory) {
+        var runtime = Runtime.getRuntime();
+        var currentMax = runtime.totalMemory() - runtime.freeMemory();
+        MaxMemory.updateAndGet(oldMax -> Long.max(oldMax, currentMax + memory));
+    }
+
     public synchronized static Profiler getInstance() {
         long tid = Thread.currentThread().getId();
         if (!profilers.containsKey(tid)) {

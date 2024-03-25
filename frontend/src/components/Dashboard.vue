@@ -54,6 +54,7 @@ const checkerIsolationLevelOptions = [
   {label: 'Causal_Consistency', value: 'CAUSAL_CONSISTENCY'},
   {label: 'Snapshot_Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
+  {label: 'Viper-SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
 ];
 const historyTypeOptions = [
   {label: 'Text', value: 'text'},
