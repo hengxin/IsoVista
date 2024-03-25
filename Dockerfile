@@ -17,6 +17,12 @@ RUN ln -s /lib/x86_64-linux-gnu/libmonosat.so /lib/x86_64-linux-gnu/liblibmonosa
 RUN apt update
 RUN apt install -y python3 python3-pip curl openjdk-11-jdk libgmp-dev libboost-log-dev
 
+# install Viper dependencies
+COPY resource ./resource
+RUN pip install --no-cache-dir --upgrade -U -r ./resouce/Viper/docker/requirements.txt
+RUN pyhon3 ./resouce/monosat/api/python/setup.py install -f
+
+# install backend dependencies
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -U -r ./requirements.txt
 COPY --from=build_jar /jar/target/*.jar ./

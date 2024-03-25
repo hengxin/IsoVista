@@ -78,20 +78,12 @@ public class Main implements Callable<Integer> {
         if (isolationStr.startsWith("[")) {
             var isolationList = ConfigParser.parseListString(isolationStr);
             for (var isolation : isolationList) {
-                var checkerName = ConfigParser.IsolationToCheckerName(isolation);
-                if (checkerName == null) {
-                    log.error("Can not find checker of {}", isolation);
-                    return;
-                }
-                checkerIsoList.add(Pair.of(checkers.get(checkerName.toLowerCase()), IsolationLevel.valueOf(isolation.toUpperCase())));
+                var checkerIso = ConfigParser.parseIsolationConfig(isolation);
+                checkerIsoList.add(Pair.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight()));
             }
         } else {
-            var checkerName = ConfigParser.IsolationToCheckerName(isolationStr);
-            if (checkerName == null) {
-                log.error("Can not find checker of {}", isolationStr);
-                return;
-            }
-            checkerIsoList.add(Pair.of(checkers.get(checkerName.toLowerCase()), IsolationLevel.valueOf(isolationStr.toUpperCase())));
+            var checkerIso = ConfigParser.parseIsolationConfig(isolationStr);
+            checkerIsoList.add(Pair.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight()));
         }
 
         // TODO: remove ENABLE_PROFILER

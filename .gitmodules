@@ -1,0 +1,6 @@
+[submodule "resource/monosat"]
+	path = resource/monosat
+	url = https://github.com/sambayless/monosat.git
+[submodule "resource/Viper"]
+	path = resource/Viper
+	url = https://github.com/Khoury-srg/Viper.git
