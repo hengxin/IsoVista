@@ -20,7 +20,15 @@ RUN apt install -y python3 python3-pip curl openjdk-11-jdk libgmp-dev libboost-l
 # install Viper dependencies
 COPY resource ./resource
 RUN pip install --no-cache-dir --upgrade -U -r ./resource/Viper/src/docker/requirements.txt
-RUN python3 ./resource/monosat/src/monosat/api/python/setup.py install -f
+
+# install MonoSAT
+WORKDIR resource/monosat
+RUN apt install -y git g++ openjdk-11-jdk cmake libgmp-dev zlib1g-dev
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+RUN cmake -DJAVA=ON -DPYTHON=ON .
+RUN make && make install
+
+WORKDIR /app
 
 # install backend dependencies
 COPY backend/requirements.txt ./requirements.txt
