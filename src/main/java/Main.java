@@ -4,12 +4,11 @@ import collector.Collector;
 import config.Config;
 import generator.general.GeneralGenerator;
 import history.History;
-import org.apache.commons.lang3.tuple.Pair;
-import util.HistoryLoaderFactory;
 import history.serializer.TextHistorySerializer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.reflections.Reflections;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -74,16 +73,16 @@ public class Main implements Callable<Integer> {
         }
 
         var isolationStr = config.getProperty(Config.CHECKER_ISOLATION);
-        List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsoList = new ArrayList<>();
+        List<Triple<Class<? extends Checker>, IsolationLevel, String>> checkerIsoList = new ArrayList<>();
         if (isolationStr.startsWith("[")) {
             var isolationList = ConfigParser.parseListString(isolationStr);
             for (var isolation : isolationList) {
                 var checkerIso = ConfigParser.parseIsolationConfig(isolation);
-                checkerIsoList.add(Pair.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight()));
+                checkerIsoList.add(Triple.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight(), isolation));
             }
         } else {
             var checkerIso = ConfigParser.parseIsolationConfig(isolationStr);
-            checkerIsoList.add(Pair.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight()));
+            checkerIsoList.add(Triple.of(checkers.get(checkerIso.getKey().toLowerCase()), checkerIso.getRight(), isolationStr));
         }
 
         // TODO: remove ENABLE_PROFILER
@@ -127,7 +126,7 @@ public class Main implements Callable<Integer> {
                 // verify history
                 for (var checkerAndIsolation : checkerIsoList) {
                     var checker = checkerAndIsolation.getLeft();
-                    var isolation = checkerAndIsolation.getRight();
+                    var isolation = checkerAndIsolation.getMiddle();
                     config.setProperty(Config.CHECKER_ISOLATION, isolation.toString());
                     log.info("Start history verification using checker {}", checker.getName() + "-" + isolation);
                     String tag = checker.getName() + "-" + isolation;
@@ -143,6 +142,7 @@ public class Main implements Callable<Integer> {
                             if (checkerInstance.getProfileInfo() != null) {
                                 profileInfo.put(tag, checkerInstance.getProfileInfo());
                             }
+                            profiler.resetMaxMemory();
                             System.gc();
                         }
                         if (!result) {
@@ -177,15 +177,15 @@ public class Main implements Callable<Integer> {
                     .flatMap(Set::stream)
                     .distinct()
                     .collect(Collectors.toList());
-            Profiler.createCSV(var, checkerIsoList, stages);
-            for (var pair : checkerIsoList) {
-                var checkerIsolation = pair.getLeft().getName() + "-" + pair.getRight();
+            Profiler.createCSV(var, checkerIsoList.stream().map(Triple::getRight).collect(Collectors.toList()), stages);
+            for (var triple : checkerIsoList) {
+                var checkerIsolation = triple.getLeft().getName() + "-" + triple.getMiddle();
                 var avgTime = profiler.getAvgTime(checkerIsolation);
                 var maxMemory = profiler.getMemory(checkerIsolation);
                 var profileMap = profileInfo.getOrDefault(checkerIsolation, new HashMap<String, Long>());
                 var stageTimeList = new ArrayList<Long>();
                 stages.forEach(stage -> stageTimeList.add(profileMap.getOrDefault(stage, 0L)));
-                Profiler.appendToCSV(val, avgTime, maxMemory, pair, stageTimeList);
+                Profiler.appendToCSV(val, avgTime, maxMemory, triple.getRight(), stageTimeList);
                 profiler.removeTag(checkerIsolation);
             }
         };

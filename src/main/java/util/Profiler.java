@@ -1,7 +1,5 @@
 package util;
 
-import checker.Checker;
-import checker.IsolationLevel;
 import config.Config;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +8,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -155,6 +156,10 @@ public class Profiler {
         return MaxMemory.get();
     }
 
+    public void resetMaxMemory() {
+        MaxMemory.set(0);
+    }
+
     public synchronized Collection<Pair<String, Long>> getDurations() {
         return tags.stream().map(tag -> Pair.of(tag, totalTime.get(tag))).collect(Collectors.toList());
     }
@@ -188,9 +193,9 @@ public class Profiler {
     }
 
     @SneakyThrows
-    public static void createCSV(String variable, List<Pair<Class<? extends Checker>, IsolationLevel>> checkerIsolationList, List<String> stages) {
-        for (var pair : checkerIsolationList) {
-            String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
+    public static void createCSV(String variable, List<String> checkerIsolationList, List<String> stages) {
+        for (var checkerIsolation : checkerIsolationList) {
+            String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, checkerIsolation + "-profile.csv").toString();
             File file = new File(csvPath);
             if (file.exists()) {
                 continue;
@@ -203,9 +208,9 @@ public class Profiler {
     }
 
     @SneakyThrows
-    public static void appendToCSV(String value, long time, long memory, Pair<Class<? extends Checker>, IsolationLevel> pair, List<Long> stageTimeList) {
+    public static void appendToCSV(String value, long time, long memory, String checkerIsolation, List<Long> stageTimeList) {
         // append a line to a csv file
-        String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, pair.getLeft().getName() + "-" + pair.getRight() + "-profile.csv").toString();
+        String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, checkerIsolation + "-profile.csv").toString();
         File file = new File(csvPath);
         FileWriter csvWriter = new FileWriter(file, true);
         String stageTimeString = stageTimeList.stream()
