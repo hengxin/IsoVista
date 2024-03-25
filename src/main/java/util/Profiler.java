@@ -32,19 +32,19 @@ public class Profiler {
     private static final String timeUnit = "ms";
     private static final String memoryUnit = "KB";
 
-    static {
-        var t = new Thread(() -> {
-            while (true) {
-                updateMemory();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                }
-            }
-        });
-        t.setDaemon(true);
-        t.start();
-    }
+//    static {
+//        var t = new Thread(() -> {
+//            while (true) {
+//                updateMemory();
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                }
+//            }
+//        });
+//        t.setDaemon(true);
+//        t.start();
+//    }
 
     private static void updateMemory() {
         var runtime = Runtime.getRuntime();
@@ -53,9 +53,10 @@ public class Profiler {
     }
 
     public static void updateMemory(long memory) {
-        var runtime = Runtime.getRuntime();
-        var currentMax = runtime.totalMemory() - runtime.freeMemory();
-        MaxMemory.updateAndGet(oldMax -> Long.max(oldMax, currentMax + memory));
+//        var runtime = Runtime.getRuntime();
+//        var currentMax = runtime.totalMemory() - runtime.freeMemory();
+//        MaxMemory.updateAndGet(oldMax -> Long.max(oldMax, currentMax + memory));
+        MaxMemory.updateAndGet(oldMax -> Long.max(oldMax, memory));
     }
 
     public synchronized static Profiler getInstance() {

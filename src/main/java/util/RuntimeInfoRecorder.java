@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RuntimeInfoRecorder {
     static final Lock lock = new ReentrantLock();
     static final String ExportCSVPath = Paths.get(Config.DEFAULT_CURRENT_PATH, "runtime_info.csv").toString();
+    static ArrayList<Long> pidList = new ArrayList<>();
     static ArrayList<Long> timestampList = new ArrayList<>();
     static ArrayList<Double> cpuUsageList = new ArrayList<>();
     static ArrayList<Long> memoryUsageList = new ArrayList<>();
@@ -92,16 +93,34 @@ public class RuntimeInfoRecorder {
         lock.unlock();
     }
 
+    public static void addPid(long pid) {
+        lock.lock();
+        pidList.add(pid);
+        lock.unlock();
+    }
+
+    public static void removePid(long pid) {
+        lock.lock();
+        pidList.remove(pid);
+        lock.unlock();
+    }
+
 
     static void updateCPU() {
         OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         double processCpuUsage = osBean.getProcessCpuLoad() * 100;
+        for (var pid : pidList) {
+            processCpuUsage += utils.getProcessCPUUsage(pid);
+        }
         cpuUsageList.add(processCpuUsage);
     }
 
     static void updateMemory() {
         var runtime = Runtime.getRuntime();
         var currentMemory = runtime.totalMemory() - runtime.freeMemory();
+        for (var pid : pidList) {
+            currentMemory += utils.getProcessMemoryUsage(pid) * 1024;
+        }
         memoryUsageList.add(currentMemory);
     }
 }

@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.yaml.snakeyaml.Yaml;
+import util.RuntimeInfoRecorder;
 import util.utils;
 
 import java.io.BufferedReader;
@@ -84,17 +85,17 @@ public class Viper<VarType, ValType> implements Checker<VarType, ValType> {
 
         Process process = pb.start();
 
+        RuntimeInfoRecorder.addPid(process.pid());
+
         AtomicBoolean done = new AtomicBoolean(false);
         var t = new Thread(() -> {
             log.info("Start a thread to update python memory usage");
             while (!done.get()) {
-                try {
-                    long mem = utils.getProcessMemoryUsage(process);
-                    updateMemory(mem * 1024);
-                    log.info("Python memory usage: " + mem + "KB");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                long mem = utils.getProcessMemoryUsage(process.pid());
+//                double cpu = utils.getProcessCPUUsage(process.pid());
+//                log.info("Python memory usage: " + mem + "KB");
+//                log.info("Python cpu usage: " + cpu + "%");
+                updateMemory(mem * 1024);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -113,6 +114,8 @@ public class Viper<VarType, ValType> implements Checker<VarType, ValType> {
 
         int exitCode = process.waitFor();
         done.set(true);
+        RuntimeInfoRecorder.removePid(process.pid());
+
         log.info("Python script exited with code: " + exitCode);
     }
 
