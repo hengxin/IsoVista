@@ -19,8 +19,8 @@ RUN apt install -y python3 python3-pip curl openjdk-11-jdk libgmp-dev libboost-l
 
 # install Viper dependencies
 COPY resource ./resource
-RUN pip install --no-cache-dir --upgrade -U -r ./resource/Viper/docker/requirements.txt
-RUN pyhon3 ./resource/monosat/api/python/setup.py install -f
+RUN pip install --no-cache-dir --upgrade -U -r ./resource/Viper/src/docker/requirements.txt
+RUN pyhon3 ./resource/monosat/src/monosat/api/python/setup.py install -f
 
 # install backend dependencies
 COPY backend/requirements.txt ./requirements.txt
