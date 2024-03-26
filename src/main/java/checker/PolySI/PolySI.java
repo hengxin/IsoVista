@@ -21,7 +21,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
     private final Profiler profiler = Profiler.getInstance();
 
-    private SERVerifier verifier;
+    private SIVerifier verifier;
 
     public static final String NAME = "PolySI";
     public static IsolationLevel ISOLATION_LEVEL;
@@ -46,7 +46,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
         profiler.startTick("ENTIRE_EXPERIMENT");
         var pass = true;
-        verifier = new SERVerifier<>(history);
+        verifier = new SIVerifier<>(history);
         pass = verifier.audit();
         profiler.endTick("ENTIRE_EXPERIMENT");
 

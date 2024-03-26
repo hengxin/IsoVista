@@ -233,6 +233,7 @@ public class AnomalyInterpreter {
                 });
                 txnRelateToMap.computeIfAbsent(edge.getLeft().source(), k -> new HashSet<>()).remove(edge.getLeft());
                 txnRelateToMap.computeIfAbsent(edge.getLeft().target(), k -> new HashSet<>()).remove(edge.getLeft());
+                break;
             }
             similarEdgesMap.get(edge).forEach(addEdgeToKnownGraph::apply);
             oppositeEdgesMap.get(edge).forEach(removeEdgeInKnownGraph::apply);
@@ -258,6 +259,10 @@ public class AnomalyInterpreter {
         });
         edges.entrySet().removeIf(e -> e.getValue().isEmpty());
         txns.removeIf(t -> edges.keySet().stream().noneMatch(e -> e.source().equals(t) || e.target().equals(t)));
+
+        // Remove nodes with in-degree==1 or out-degree==1
+        txns.removeIf(t -> edges.keySet().stream().filter(e -> e.source().equals(t) || e.target().equals(t)).count() == 1);
+        edges.entrySet().removeIf(e -> !txns.contains(e.getKey().source()) || !txns.contains(e.getKey().target()));
 
         var edgeTypeCount = new HashMap<EdgeType, Integer>();
         mainCycle.forEach(edgeCollection -> edgeCollection.getRight().forEach(e -> edgeTypeCount.compute(e.getType(), (k, v) -> v == null ? 1 : v + 1)));
