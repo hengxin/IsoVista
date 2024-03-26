@@ -9,7 +9,7 @@ import java.util.Collection;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-class SIConstraint<KeyType, ValueType> {
+public class SIConstraint<KeyType, ValueType> {
 
     // writeTransaction1 -> writeTransaction2
     @ToString.Include(rank = 1)

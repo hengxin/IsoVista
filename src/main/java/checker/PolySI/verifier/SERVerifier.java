@@ -25,7 +25,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @SuppressWarnings("UnstableApiUsage")
-public class SIVerifier<KeyType, ValueType> {
+public class SERVerifier<KeyType, ValueType> {
     private final History<KeyType, ValueType> history;
 
     @Getter
@@ -40,7 +40,7 @@ public class SIVerifier<KeyType, ValueType> {
     @Getter
     private Map<String, Long> stageTime;
 
-    public SIVerifier(History<KeyType, ValueType> history) {
+    public SERVerifier(History<KeyType, ValueType> history) {
         this.history = history;
     }
 
@@ -48,9 +48,9 @@ public class SIVerifier<KeyType, ValueType> {
         var profiler = Profiler.getInstance();
 
         profiler.startTick("ONESHOT_CONS");
-        profiler.startTick("SI_VERIFY_INT");
+        profiler.startTick("SER_VERIFY_INT");
         var satisfy_int = Utils.verifyInternalConsistency(history);
-        profiler.endTick("SI_VERIFY_INT");
+        profiler.endTick("SER_VERIFY_INT");
         if (satisfy_int != null) {
             intConflict = satisfy_int;
             return false;
@@ -79,7 +79,7 @@ public class SIVerifier<KeyType, ValueType> {
                 constraints.stream().map(c -> c.getEdges1().size() + c.getEdges2().size()).reduce(0, Integer::sum));
 
         profiler.startTick("ONESHOT_ENCODING");
-        var solver = new SISolver<>(history, graph, constraints);
+        var solver = new SERSolver<>(history, graph, constraints);
         var encodeTime = profiler.endTick("ONESHOT_ENCODING");
 
         profiler.startTick("ONESHOT_SOLVE");
@@ -112,7 +112,8 @@ public class SIVerifier<KeyType, ValueType> {
             Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
             return;
         }
-        var dotOutputStr = AnomalyInterpreter.interpretSI(history);
+
+        var dotOutputStr = AnomalyInterpreter.interpretSER(history);
         Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
     }
 

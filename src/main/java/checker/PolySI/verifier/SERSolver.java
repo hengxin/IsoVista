@@ -4,15 +4,11 @@ import checker.PolySI.graph.Edge;
 import checker.PolySI.graph.EdgeType;
 import checker.PolySI.graph.KnownGraph;
 import checker.PolySI.graph.MatrixGraph;
-import com.google.common.collect.Sets;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraph;
-
-import com.mysql.cj.log.Log;
 import history.History;
 import history.Transaction;
-
 import monosat.Graph;
 import monosat.Lit;
 import monosat.Logic;
@@ -27,8 +23,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static checker.PolySI.verifier.Utils.mergeGraph;
+
 @SuppressWarnings("UnstableApiUsage")
-class SISolver<KeyType, ValueType> {
+class SERSolver<KeyType, ValueType> {
     private final Solver solver = new Solver();
 
     // The literals of the known graph
@@ -86,7 +84,7 @@ class SISolver<KeyType, ValueType> {
      * WR, SO edges, because those edges always exist. 2. For each constraint, a
      * literal that asserts exactly one set of edges exist in the graph.
      */
-    SISolver(History<KeyType, ValueType> history,
+    SERSolver(History<KeyType, ValueType> history,
               KnownGraph<KeyType, ValueType> precedenceGraph,
               Collection<SIConstraint<KeyType, ValueType>> constraints) {
         var profiler = Profiler.getInstance();
@@ -97,41 +95,27 @@ class SISolver<KeyType, ValueType> {
                 precedenceGraph.getKnownGraphA());
         var graphB = createKnownGraph(history,
                 precedenceGraph.getKnownGraphB());
+        var graph = mergeGraph(graphA, graphB);
         profiler.endTick("SI_SOLVER_GEN_GRAPH_A_B");
 
         profiler.startTick("SI_SOLVER_GEN_REACHABILITY");
         // The reachability information is used to delete unneeded edges from
         // the generated graph
-        var matA = new MatrixGraph<>(graphA.asGraph());
+        var mat = new MatrixGraph<>(graph.asGraph());
         var orderInSession = Utils.getOrderInSession(history);
-        var matAC = Utils.reduceEdges(
-                matA.union(
-                        matA.composition(new MatrixGraph<>(graphB.asGraph(), matA.getNodeMap()))),
-                orderInSession);
-        var reachability = matAC.reachability();
+        mat = Utils.reduceEdges(mat, orderInSession);
+        var reachability = mat.reachability();
         profiler.endTick("SI_SOLVER_GEN_REACHABILITY");
 
         profiler.startTick("SI_SOLVER_GEN_GRAPH_A_UNION_C");
         // Known edges and unknown edges are collected separately
-        var knownEdges = Utils.getKnownEdges(graphA, graphB, matAC);
-        addConstraints(constraints, graphA, graphB);
-        var unknownEdges = Utils.getUnknownEdges(graphA, graphB, reachability,
-                solver);
+        var knownEdges = Utils.getKnownEdges(graph, mat);
+        addConstraints(constraints, graph);
+        var unknownEdges = Utils.getUnknownEdges(graph, reachability);
         profiler.endTick("SI_SOLVER_GEN_GRAPH_A_UNION_C");
 
-        List.of(Pair.of('A', graphA), Pair.of('B', graphB)).forEach(p -> {
-            var g = p.getRight();
-            var edgesSize = g.edges().stream()
-                    .map(e -> g.edgeValue(e).get().size()).reduce(Integer::sum)
-                    .orElse(0);
-            System.err.printf("Graph %s edges count: %d\n", p.getLeft(),
-                    edgesSize);
-        });
-        System.err.printf("Graph A union C edges count: %d\n",
-                knownEdges.size() + unknownEdges.size());
-
         profiler.startTick("SI_SOLVER_GEN_MONO_GRAPH");
-        var monoGraph = new monosat.Graph(solver);
+        var monoGraph = new Graph(solver);
         var nodeMap = new HashMap<Transaction<KeyType, ValueType>, Integer>();
 
         history.getTransactions().values().forEach(n -> {
@@ -173,10 +157,11 @@ class SISolver<KeyType, ValueType> {
         return g;
     }
 
+
+
     private void addConstraints(
             Collection<SIConstraint<KeyType, ValueType>> constraints,
-            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> graphA,
-            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> graphB) {
+            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> graph) {
         var addEdges = ((Function<Collection<SIEdge<KeyType, ValueType>>, Pair<Lit, Lit>>) edges -> {
             // all means all edges exists in the graph.
             // Similar for none.
@@ -191,12 +176,7 @@ class SISolver<KeyType, ValueType> {
                 solver.setDecisionLiteral(all, false);
                 solver.setDecisionLiteral(none, false);
 
-
-                if (e.getType().equals(EdgeType.WW)) {
-                    Utils.addEdge(graphA, e.getFrom(), e.getTo(), lit);
-                } else {
-                    Utils.addEdge(graphB, e.getFrom(), e.getTo(), lit);
-                }
+                Utils.addEdge(graph, e.getFrom(), e.getTo(), lit);
             }
             return Pair.of(all, none);
         });

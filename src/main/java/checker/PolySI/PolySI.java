@@ -3,6 +3,7 @@ package checker.PolySI;
 import checker.Checker;
 import checker.IsolationLevel;
 import checker.PolySI.verifier.Pruning;
+import checker.PolySI.verifier.SERVerifier;
 import checker.PolySI.verifier.SIVerifier;
 import config.Config;
 import history.History;
@@ -20,7 +21,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
     private final Profiler profiler = Profiler.getInstance();
 
-    private SIVerifier verifier;
+    private SERVerifier verifier;
 
     public static final String NAME = "PolySI";
     public static IsolationLevel ISOLATION_LEVEL;
@@ -45,7 +46,7 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
         profiler.startTick("ENTIRE_EXPERIMENT");
         var pass = true;
-        verifier = new SIVerifier<>(history);
+        verifier = new SERVerifier<>(history);
         pass = verifier.audit();
         profiler.endTick("ENTIRE_EXPERIMENT");
 

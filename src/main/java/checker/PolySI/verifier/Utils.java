@@ -2,6 +2,7 @@ package checker.PolySI.verifier;
 
 import checker.PolySI.graph.Edge;
 import checker.PolySI.graph.EdgeType;
+import checker.PolySI.graph.KnownGraph;
 import checker.PolySI.graph.MatrixGraph;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
@@ -86,6 +87,10 @@ public class Utils {
             MatrixGraph<Transaction<KeyType, ValueType>> reachability, Solver solver) {
         var edges = new ArrayList<Triple<Transaction<KeyType, ValueType>, Transaction<KeyType, ValueType>, Lit>>();
 
+        // predEdges: p ww-> n
+        // p==s || p can reach s by known
+        // succEdges: n rw-> s
+        //
         for (var p : graphA.nodes()) {
             for (var n : graphA.successors(p)) {
                 var predEdges = graphA.edgeValue(p, n).get();
@@ -105,6 +110,31 @@ public class Utils {
                         solver.setDecisionLiteral(lit, false);
                         edges.add(Triple.of(p, s, lit));
                     }));
+                }
+            }
+        }
+
+        return edges;
+    }
+
+    /**
+     * Collect unknown edges
+     *
+     * @param graph        graph containing known and unknown edges
+     * @param reachability known reachable node pairs. Edges that connect reachable
+     *                     pairs are not collected
+     */
+    static <KeyType, ValueType> List<Triple<Transaction<KeyType, ValueType>, Transaction<KeyType, ValueType>, Lit>> getUnknownEdges(
+            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> graph,
+            MatrixGraph<Transaction<KeyType, ValueType>> reachability) {
+        var edges = new ArrayList<Triple<Transaction<KeyType, ValueType>, Transaction<KeyType, ValueType>, Lit>>();
+
+        for (var p : graph.nodes()) {
+            for (var n : graph.successors(p)) {
+                var predEdges = graph.edgeValue(p, n).get();
+
+                if (p == n || !reachability.hasEdgeConnecting(p, n)) {
+                    predEdges.forEach(e -> edges.add(Triple.of(p, n, e)));
                 }
             }
         }
@@ -138,6 +168,28 @@ public class Utils {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Collect known edges
+     *
+     * @param graph known graph
+     * @param AC     the graph containing the edges to collect
+     */
+    static <KeyType, ValueType> List<Triple<Transaction<KeyType, ValueType>, Transaction<KeyType, ValueType>, Lit>> getKnownEdges(
+            MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> graph,
+            MatrixGraph<Transaction<KeyType, ValueType>> AC) {
+        return AC.edges().stream().map(e -> {
+            var n = e.source();
+            var m = e.target();
+            var firstEdge = ((Function<Optional<Collection<Lit>>, Lit>) c -> c.get().iterator().next());
+
+            if (graph.hasEdgeConnecting(n, m)) {
+                return Triple.of(n, m, firstEdge.apply(graph.edgeValue(n, m)));
+            } else {
+                throw new RuntimeException("Can not reach here");
+            }
+        }).collect(Collectors.toList());
+    }
+
     static <KeyType, ValueType> Map<Transaction<KeyType, ValueType>, Integer> getOrderInSession(
             History<KeyType, ValueType> history) {
         // @formatter:off
@@ -156,6 +208,27 @@ public class Utils {
                 .allowsSelfLoops(true).build();
 
         history.getTransactions().values().forEach(g::addNode);
+        return g;
+    }
+
+    static <KeyType, ValueType> MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>>
+    mergeGraph(MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> g1,
+               MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> g2) {
+        MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Lit>> g = ValueGraphBuilder.directed()
+                .allowsSelfLoops(true).build();
+        g1.nodes().forEach(g::addNode);
+        g2.nodes().forEach(g::addNode);
+
+        g1.edges().forEach(e -> {
+            g1.edgeValue(e).get().forEach(lit -> {
+                addEdge(g, e.source(), e.target(), lit);
+            });
+        });
+        g2.edges().forEach(e -> {
+            g2.edgeValue(e).get().forEach(lit -> {
+                addEdge(g, e.source(), e.target(), lit);
+            });
+        });
         return g;
     }
 
@@ -206,7 +279,7 @@ public class Utils {
         return builder.toString();
     }
 
-    static <KeyType, ValueType> String conflictsToDot(String anomaly, Collection<Transaction<KeyType, ValueType>> transactions,
+    public static <KeyType, ValueType> String conflictsToDot(String anomaly, Collection<Transaction<KeyType, ValueType>> transactions,
                                                       Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>> edges,
                                                       Map<Transaction<KeyType, ValueType>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> txnRelateToMap,
                                                       Map<EndpointPair<Transaction<KeyType, ValueType>>, Collection<EndpointPair<Transaction<KeyType, ValueType>>>> edgeRelateToMap,
@@ -273,17 +346,23 @@ public class Utils {
     }
 
     static <KeyType, ValueType> String conflictsToLegacy(Collection<Transaction<KeyType, ValueType>> transactions,
-            Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> edges,
-            Collection<SIConstraint<KeyType, ValueType>> constraints) {
+                                                         Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>> edges,
+                                                         Collection<SIConstraint<KeyType, ValueType>> constraints, KnownGraph <KeyType, ValueType> knownGraph) {
         var builder = new StringBuilder();
 
         edges.forEach(p -> builder.append(String.format("Edge: %s\n", p)));
         constraints.forEach(c -> builder.append(String.format("Constraint: %s\n", c)));
-        builder.append(String.format("Related transactions:\n"));
-        transactions.forEach(t -> {
-            builder.append(String.format("sessionid: %d, id: %d\nops:\n", t.getSession().getId(), t.getId()));
-            t.getOps().forEach(e -> builder.append(String.format("%s %s = %s\n", e.getType(), e.getKey(), e.getValue())));
-        });
+        builder.append("Known edges:\n");
+        knownGraph.getKnownGraphA().edges().stream()
+                .map(e -> Pair.of(e, knownGraph.getKnownGraphA().edgeValue(e).get()))
+                .forEach(p -> builder.append(String.format("%s,\n", p)));
+
+
+//        builder.append(String.format("Related transactions:\n"));
+//        transactions.forEach(t -> {
+//            builder.append(String.format("sessionid: %d, id: %d\nops:\n", t.getSession().getId(), t.getId()));
+//            t.getOps().forEach(e -> builder.append(String.format("%s %s = %s\n", e.getType(), e.getKey(), e.getValue())));
+//        });
 
         return builder.toString();
     }
