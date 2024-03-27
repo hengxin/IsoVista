@@ -59,7 +59,8 @@ public class SMTCheckerSI<VarType, ValType> implements Checker<VarType, ValType>
             new TextHistorySerializer().serializeHistory((History<Long, Long>) history, TMP_HIST_PATH);
         }
 
-        var accept = LibSMTCheckerSI.INSTANCE.verify(TMP_HIST_PATH, "info", true, "acyclic-minisat", "text", true, DEFAULT_PERF_PATH);
+        // if using acyclic-minisat(fastest), the shared lib would corrupt
+        var accept = LibSMTCheckerSI.INSTANCE.verify(TMP_HIST_PATH, "info", true, "z3", "text", true, DEFAULT_PERF_PATH);
 
         FileUtils.delete(new File(TMP_HIST_PATH));
         return accept;
