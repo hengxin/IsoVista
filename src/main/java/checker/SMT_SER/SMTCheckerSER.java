@@ -16,7 +16,9 @@ import util.AnomalyInterpreter;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Properties;
 
@@ -75,7 +77,9 @@ public class SMTCheckerSER<VarType, ValType> implements Checker<VarType, ValType
         if (this.history == null) {
             return;
         }
-        AnomalyInterpreter.interpretSER(this.history);
+        this.history.addInitSession();
+        var dotOutputStr = AnomalyInterpreter.interpretSER(this.history);
+        Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
     }
 
     @Override
