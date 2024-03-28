@@ -44,16 +44,10 @@ public class SMTCheckerSER<VarType, ValType> implements Checker<VarType, ValType
     @SneakyThrows
     public boolean verify(History<VarType, ValType> history) {
         this.history = history;
-        if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
-            history.addInitSessionElle();
-        } else {
-            history.addInitSession();
-        }
         satisfyINT = Utils.verifyInternalConsistency(history);
         if (satisfyINT != null) {
             return false;
         }
-        history.removeInitSession();
 
         if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
             new ElleTextHistorySerializer().serializeHistory((History<Integer, ElleHistoryLoader.ElleValue>) history, TMP_HIST_PATH);
@@ -77,7 +71,6 @@ public class SMTCheckerSER<VarType, ValType> implements Checker<VarType, ValType
         if (this.history == null) {
             return;
         }
-        this.history.addInitSession();
         var dotOutputStr = AnomalyInterpreter.interpretSER(this.history);
         Files.writeString(Path.of(path), dotOutputStr, StandardOpenOption.CREATE);
     }

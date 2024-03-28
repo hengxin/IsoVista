@@ -36,11 +36,6 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
 
     @Override
     public boolean verify(History<VarType, ValType> history) {
-        if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
-            history.addInitSessionElle();
-        } else {
-            history.addInitSession();
-        }
         Pruning.setEnablePruning(!noPruning);
         SIVerifier.setCoalesceConstraints(!noCoalescing);
 
@@ -50,7 +45,6 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
         pass = verifier.audit();
         profiler.endTick("ENTIRE_EXPERIMENT");
 
-        history.removeInitSession();
         return pass;
     }
 

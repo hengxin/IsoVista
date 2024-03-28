@@ -52,12 +52,12 @@ public class GeneralGenerator implements Generator<Long, Long> {
         var counts = new HashMap<Long, Long>();
         ExecutorService executor = Executors.newFixedThreadPool((int) this.session);
         var todo = new ArrayList<Callable<Void>>();
-        for (var iSession = 0; iSession < this.session; iSession++) {
+        for (var iSession = 1; iSession <= this.session; iSession++) {
             int finalISession = iSession;
             history.addSession(iSession);
             Callable<Void> task = () -> {
-                for (var iTxn = 0; iTxn < transaction; iTxn++) {
-                    var txnId = finalISession * transaction + iTxn;
+                for (var iTxn = 1; iTxn <= transaction; iTxn++) {
+                    var txnId = (finalISession - 1) * transaction + iTxn;
                     synchronized (history) {
                         history.addTransaction(history.getSession(finalISession), txnId);
                     }
