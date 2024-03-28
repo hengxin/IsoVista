@@ -200,7 +200,7 @@ onMounted(async () => {
     res.data.edges.forEach(edge => {
       edge.expanded = false
       if (edge.style === "dotted") {
-        edge.style = {lineDash: [1, 1]}
+        edge.style = {lineDash: [2, 2]}
       } else {
         edge.style = {}
       }
@@ -284,8 +284,8 @@ onMounted(async () => {
 // highlight cycle
 let cycleNodeList = []
 let cycleEdgeList = []
-if (data.nodes[0].hasOwnProperty("in_cycle")) {
-  console.log(data.nodes[0])
+if (data.nodes[0].hasOwnProperty("in_cycle") && data.nodes[0].in_cycle !== null) {
+  console.log("data has cycle info")
   cycleEdgeList = data.edges.filter(edge => edge.in_cycle === "true").map(edge => {
     return {target: edge.target, source: edge.source}
   })
@@ -293,6 +293,7 @@ if (data.nodes[0].hasOwnProperty("in_cycle")) {
   console.log(cycleNodeList)
   console.log(cycleEdgeList)
 } else {
+  console.log("data has no cycle info, detect cycle")
   let cycle = detectDirectedCycle(data);
 
   for (let key in cycle) {

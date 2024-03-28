@@ -38,9 +38,9 @@ const dbOptions = [
   {label: 'MariaDB', value: 'MARIA'}
 ];
 const dbIsolationLevelOptions = [
-  {label: 'Read_Uncommitted', value: 'TRANSACTION_READ_UNCOMMITTED'},
-  {label: 'Read_Committed', value: 'TRANSACTION_READ_COMMITTED'},
-  {label: 'Repeatable_Read', value: 'TRANSACTION_REPEATABLE_READ'},
+  {label: 'Read Uncommitted', value: 'TRANSACTION_READ_UNCOMMITTED'},
+  {label: 'Read Committed', value: 'TRANSACTION_READ_COMMITTED'},
+  {label: 'Repeatable Read', value: 'TRANSACTION_REPEATABLE_READ'},
   {label: 'Serializable', value: 'TRANSACTION_SERIALIZATION'},
 ];
 const distributionOptions = [
@@ -49,13 +49,14 @@ const distributionOptions = [
   {label: 'Hotspot', value: 'hotspot'},
 ];
 const checkerIsolationLevelOptions = [
-  {label: 'Read_Committed', value: 'READ_COMMITTED'},
-  {label: 'Read_Atomicity', value: 'READ_ATOMICITY'},
-  {label: 'Causal_Consistency', value: 'CAUSAL_CONSISTENCY'},
-  {label: 'Snapshot_Isolation', value: 'SNAPSHOT_ISOLATION'},
+  {label: 'Read Committed', value: 'READ_COMMITTED'},
+  {label: 'Repeatable Read', value: 'REPEATABLE_READ'},
+  {label: 'Read Atomicity', value: 'READ_ATOMICITY'},
+  {label: 'Transactional Causal Consistency', value: 'CAUSAL_CONSISTENCY'},
+  {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
-  {label: 'Viper-SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'Custom_SI', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
+  // {label: 'Viper SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
+  {label: 'Custom SI Checker', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
 ];
 const historyTypeOptions = [
   {label: 'Text', value: 'text'},
@@ -337,7 +338,7 @@ const handleIndexChange = (index) => {
                   <el-button type="primary">Upload</el-button>
                   <template #tip>
                     <div class="el-upload__tip">
-                      upload your generated history file here
+                      upload your history file here
                     </div>
                   </template>
                 </el-upload>
@@ -364,7 +365,7 @@ const handleIndexChange = (index) => {
                   </el-select>
                 </el-form-item>
                 <el-divider/>
-                <el-form-item label="Enable Profiler">
+                <el-form-item v-show="false" label="Enable Profiler">
                   <el-switch
                       v-model="testingOption.profiler_enable"
                       class="ml-2"
