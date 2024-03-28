@@ -92,7 +92,15 @@ public class Main implements Callable<Integer> {
         int historyNum = 1;
         if (!skipGeneration) {
             historyNum = Integer.parseInt(config.getProperty(Config.WORKLOAD_HISTORY));
+        } else {
+            log.info("Skip workload generation");
+            // disable some config
+            config.setProperty(Config.DB_TYPE, "NONE");
+            config.setProperty(Config.DB_ISOLATION, "NONE");
+            config.setProperty(Config.WORKLOAD_HISTORY, "1");
+            config.setProperty(Config.WORKLOAD_VARIABLE, "");
         }
+        var isolationLevel = config.getProperty(Config.CHECKER_ISOLATION);
         int nBatch = 1;
         AtomicInteger bugCount = new AtomicInteger();
         if (enableProfile) {
@@ -224,6 +232,7 @@ public class Main implements Callable<Integer> {
 
         // output to the specific dir
         var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);
+        config.setProperty(Config.CHECKER_ISOLATION, isolationLevel);
         RuntimeDataSerializer.getInstance(outputPath).outputToPath(historyNum * nBatch, bugCount.get(), config, enableProfile);
     }
 

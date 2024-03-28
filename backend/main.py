@@ -256,7 +256,7 @@ t.daemon = True
 t.start()
 
 def config_to_run(config):
-    pattern = r'(db\.type|db\.isolation|checker\.isolation|workload\.history)=(\w+)'
+    pattern = r'(db\.type|db\.isolation|checker\.isolation|workload\.history)=(.+)\n'
     matches = re.findall(pattern, config)
     result = {}
 

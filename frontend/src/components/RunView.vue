@@ -471,7 +471,7 @@ watch(shouldRefresh, async (newVal) => {
     </el-main>
     <el-header>
         <span class="info">
-          Profile
+          Statistics
         </span>
     </el-header>
     <el-main class="profile-container">
