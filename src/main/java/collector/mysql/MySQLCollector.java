@@ -46,6 +46,8 @@ public class MySQLCollector extends Collector<Long, Long> {
         });
         executor.invokeAll(todo);
         dropDatabase();
+        history.getSessions().values().forEach(session -> session.getTransactions().removeIf(txn -> !txn.isSuccess()));
+        history.getSessions().entrySet().removeIf(entry -> entry.getValue().getTransactions().isEmpty());
         history.getTransactions().entrySet().removeIf((entry) -> !entry.getValue().isSuccess());
         return history;
     }
