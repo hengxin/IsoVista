@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import {reactive, ref} from "vue"
-import {ElMessage, ElMessageBox} from "element-plus"
 import type {UploadProps, UploadUserFile} from "element-plus"
-import {run, get_current_run_id} from "@/api/api"
+import {ElMessage, ElMessageBox} from "element-plus"
+import {get_current_run_id, run} from "@/api/api"
 import {InfoFilled} from "@element-plus/icons-vue"
 import {useRouter} from "vue-router";
 
@@ -55,6 +55,7 @@ const checkerIsolationLevelOptions = [
   {label: 'Snapshot_Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
   {label: 'Viper-SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
+  {label: 'Custom_SI', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
 ];
 const historyTypeOptions = [
   {label: 'Text', value: 'text'},
