@@ -20,6 +20,7 @@ public class ConfigParser {
 
     static {
         ConfigToCheckerIsolationMap.put("READ_COMMITTED", Pair.of("C4", IsolationLevel.READ_COMMITTED));
+        ConfigToCheckerIsolationMap.put("REPEATABLE_READ", Pair.of("C4", IsolationLevel.REPEATABLE_READ));
         ConfigToCheckerIsolationMap.put("READ_ATOMICITY", Pair.of("C4", IsolationLevel.READ_ATOMICITY));
         ConfigToCheckerIsolationMap.put("CAUSAL_CONSISTENCY", Pair.of("C4", IsolationLevel.CAUSAL_CONSISTENCY));
         ConfigToCheckerIsolationMap.put("SNAPSHOT_ISOLATION", Pair.of("PolySI", IsolationLevel.SNAPSHOT_ISOLATION));

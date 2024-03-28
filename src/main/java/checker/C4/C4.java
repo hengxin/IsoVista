@@ -72,6 +72,9 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 TAP.NonMonoReadCO,
                 TAP.NonMonoReadCM,
         }));
+        Set<TAP> RRTAPS = new HashSet<>(List.of(new TAP[]{
+                TAP.NonRepeatableRead
+        }));
         Set<TAP> RATAPs = new HashSet<>(RCTAPs);
         RATAPs.addAll(List.of(new TAP[]{
                 TAP.NonRepeatableRead,
@@ -84,6 +87,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 TAP.ConflictCM
         }));
         PROHIBITED_TAPS.put(IsolationLevel.READ_COMMITTED, RCTAPs);
+        PROHIBITED_TAPS.put(IsolationLevel.REPEATABLE_READ, RRTAPS);
         PROHIBITED_TAPS.put(IsolationLevel.READ_ATOMICITY, RATAPs);
         PROHIBITED_TAPS.put(IsolationLevel.CAUSAL_CONSISTENCY, TCCTAPs);
     }
@@ -101,7 +105,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
         constructionTime = profiler.endTick(constructionTag);
         profiler.startTick(traversalTag);
         checkCOTAP();
-        if (ISOLATION_LEVEL == IsolationLevel.READ_COMMITTED) {
+        if (ISOLATION_LEVEL == IsolationLevel.READ_COMMITTED || ISOLATION_LEVEL == IsolationLevel.REPEATABLE_READ) {
 //            System.out.println(badPatternCount);
             traversalTime = profiler.endTick(traversalTag);
             return tapCount.isEmpty();
