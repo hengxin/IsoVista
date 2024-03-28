@@ -267,16 +267,16 @@ public class AnomalyInterpreter {
         var edgeTypeCount = new HashMap<EdgeType, Integer>();
         mainCycle.forEach(edgeCollection -> edgeCollection.getRight().forEach(e -> edgeTypeCount.compute(e.getType(), (k, v) -> v == null ? 1 : v + 1)));
 
-        String anomaly;
-        if (edgeTypeCount.getOrDefault(EdgeType.RW, 0) > 0) {
-            anomaly = "G_SI"; // G-SI cannot be parsed by graphviz
-        } else if (edgeTypeCount.getOrDefault(EdgeType.SO, 0) > 0 || edgeTypeCount.getOrDefault(EdgeType.WR, 0) > 0) {
-            anomaly = "G1";
-        } else if (edgeTypeCount.getOrDefault(EdgeType.WW, 0) > 0) {
-            anomaly = "G0";
-        } else {
-            throw new IllegalStateException();
-        }
+        String anomaly = "";
+//        if (edgeTypeCount.getOrDefault(EdgeType.RW, 0) > 0) {
+//            anomaly = "G_SI"; // G-SI cannot be parsed by graphviz
+//        } else if (edgeTypeCount.getOrDefault(EdgeType.SO, 0) > 0 || edgeTypeCount.getOrDefault(EdgeType.WR, 0) > 0) {
+//            anomaly = "G1";
+//        } else if (edgeTypeCount.getOrDefault(EdgeType.WW, 0) > 0) {
+//            anomaly = "G0";
+//        } else {
+//            throw new IllegalStateException();
+//        }
 
         var dotOutputStr = Utils.conflictsToDot(anomaly, txns, edges, txnRelateToMap, edgeRelateToMap, oppositeEdges, mainCycle);
         System.out.print(dotOutputStr);
