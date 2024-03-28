@@ -2,7 +2,6 @@
 import * as echarts from 'echarts';
 import {defineProps, onMounted, onUnmounted, ref, watch} from "vue";
 import {
-  get_current_log,
   get_current_profile,
   get_current_run_id,
   get_current_runtime_info,
@@ -41,6 +40,9 @@ const createProfileCharts = () => {
       trigger: 'axis'
     },
     legend: {
+      textStyle: {
+        fontSize: 18
+      },
       data: profileData.legend
     },
     xAxis: {
@@ -88,6 +90,9 @@ const createProfileCharts = () => {
       trigger: 'axis'
     },
     legend: {
+      textStyle: {
+        fontSize: 18
+      },
       data: profileData.legend
     },
     xAxis: {
@@ -131,7 +136,11 @@ const createProfileCharts = () => {
       //   type: 'shadow'
       // }
     },
-    legend: {},
+    legend: {
+      textStyle: {
+        fontSize: 18
+      },
+    },
     // grid: {
     //   left: '3%',
     //   right: '4%',
@@ -189,7 +198,7 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 15,
+        fontSize: 16,
         color: '#000',
       },
     },
@@ -237,7 +246,7 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 15,
+        fontSize: 16,
         color: '#000',
       },
     },
