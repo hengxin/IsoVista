@@ -334,7 +334,7 @@ async def view_bug(bug_id: int):
             "id": edge.get("id").replace("\"", ""),
             "source": edge.get_source().replace("\"", ""),
             "target": edge.get_destination().replace("\"", ""),
-            "label": edge.get("label").replace("\\n", " ").replace("\"", ""),
+            "label": re.sub(r'(\w+)\s+(\d+)', r'\1(k\2)', edge.get("label").replace("\\n", " ").replace("\"", "")),
             "relate_to": edge.get("relate_to").replace("\"", "").split(", "),
             "style": edge.get("style"),
             "in_cycle": edge.get("in_cycle"),

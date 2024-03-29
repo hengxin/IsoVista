@@ -195,7 +195,7 @@ onMounted(async () => {
     data.nodes = res.data.nodes
     data.edges = res.data.edges
     res.data.nodes.forEach(node => {
-      node.label = node.label.replace(/Transaction/g, 'Txn')
+      node.label = node.label.replace(/Transaction\(id=/g, 'Txn(\id')
     })
     res.data.edges.forEach(edge => {
       edge.expanded = false
