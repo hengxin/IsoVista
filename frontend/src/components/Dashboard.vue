@@ -351,7 +351,7 @@ const handleIndexChange = (index) => {
                 <header class="form-header">
                   <h2>Checker Settings</h2>
                 </header>
-                <el-form-item label="Checker Isolation Level">
+                <el-form-item label="Isolation Level">
                   <el-select v-model="testingOption.checker_isolation" placeholder=""
                              multiple
                              @change="handleSelectionChange"
@@ -364,7 +364,6 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>
                 </el-form-item>
-                <el-divider/>
                 <el-form-item v-show="false" label="Enable Profiler">
                   <el-switch
                       v-model="testingOption.profiler_enable"

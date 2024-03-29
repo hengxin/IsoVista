@@ -130,6 +130,11 @@ const createProfileCharts = () => {
   let profileStagesOption;
 
   profileStagesOption = {
+    toolbox: {
+      feature: {
+        saveAsImage: {}
+      }
+    },
     tooltip: {
       // trigger: 'axis',
       // axisPointer: {
