@@ -52,11 +52,11 @@ const checkerIsolationLevelOptions = [
   {label: 'Read Committed', value: 'READ_COMMITTED'},
   {label: 'Repeatable Read', value: 'REPEATABLE_READ'},
   {label: 'Read Atomicity', value: 'READ_ATOMICITY'},
-  {label: 'Transactional Causal Consistency', value: 'CAUSAL_CONSISTENCY'},
+  {label: 'Transactional Causal Consistency', value: 'TRANSACTIONAL_CAUSAL_CONSISTENCY'},
   {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
-  // {label: 'Viper SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'Custom SI Checker', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
+  {label: 'Viper SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
+  {label: 'PolySI+', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
 ];
 const historyTypeOptions = [
   {label: 'Text', value: 'text'},
