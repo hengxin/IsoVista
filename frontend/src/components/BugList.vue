@@ -18,7 +18,7 @@ async function get_bugs() {
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
         filename: res.data[i].bug_dir,
-        checkerIsolation: res.data[i].checker_isolation,
+        checkerIsolation: res.data[i].checker_isolation.replace('[', '').replace(']', '').replace(/'/g, ""),
         date: res.data[i].timestamp
       })
     }
@@ -117,7 +117,7 @@ const handleChangeTag = (row, tagName, tagType) => {
                       </el-tag>
                     </el-dropdown-item>
                     <el-dropdown-item v-for="tag in tagNameType" :key="tag" @click="handleChangeTag(scope.row, tag.name, tag.type)">
-                      <el-tag :type="tag.type">
+                      <el-tag :type="tag.type" size="large">
                         {{tag.name}}
                       </el-tag>
                     </el-dropdown-item>
@@ -130,14 +130,12 @@ const handleChangeTag = (row, tagName, tagType) => {
             <template #default="scope">
               <el-button
                   link
-                  size="small"
                   type="primary"
                   @click="handleView(scope.row)"
               >View</el-button
               >
               <el-button
                   link
-                  size="small"
                   type="primary"
                   @click="handleDownload(scope.row)"
               >Download</el-button

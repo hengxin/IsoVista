@@ -10,6 +10,9 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 
 </script>
 
-<style scoped>
-
+<style>
+:root {
+  --el-text-color-regular: black;
+  --el-text-color-secondary: black;
+}
 </style>

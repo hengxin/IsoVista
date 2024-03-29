@@ -159,7 +159,7 @@ const handleIndexChange = (index) => {
                       PostgreSQL and jdbc:mariadb://localhost:3307 for MariaDB.
                       This URL SHOULD be consistent with the DB Type option.
                     </template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -178,7 +178,7 @@ const handleIndexChange = (index) => {
                     <template #content> The database type you want to test. This option SHOULD be consistent with the
                       JDBC URL.
                     </template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -196,7 +196,7 @@ const handleIndexChange = (index) => {
                   <el-tooltip placement="top">
                     <template #content> The isolation level of transactions running according to the SQL-92 standard.
                     </template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -227,7 +227,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of histories in the workload.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -239,7 +239,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of simulated sessions.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -251,7 +251,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>Number of transactions in each session.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -263,7 +263,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of operations in each transaction.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -275,7 +275,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of the keys in the workload.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -287,7 +287,7 @@ const handleIndexChange = (index) => {
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> The proportion of read operations in the workload.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -305,7 +305,7 @@ const handleIndexChange = (index) => {
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> The distribution type of transaction access keys.</template>
-                    <el-icon color="blue">
+                    <el-icon color="#409EFF">
                       <InfoFilled/>
                     </el-icon>
                   </el-tooltip>
@@ -410,7 +410,7 @@ const handleIndexChange = (index) => {
           </el-card>
         </el-col>
       </el-row>
-      <el-button type="success" @click="handleSubmit()">start</el-button>
+      <el-button size="large" type="primary" @click="handleSubmit()">Start</el-button>
     </el-main>
   </el-container>
 </template>

@@ -16,7 +16,7 @@ async function get_runs() {
         id: res.data[i].run_id,
         dbType: res.data[i].db_type,
         dbIsolation: res.data[i].db_isolation,
-        checkerIsolation: res.data[i].checker_isolation,
+        checkerIsolation: res.data[i].checker_isolation.replace('[', '').replace(']', '').replace(/'/g, ""),
         histCount: res.data[i].hist_count,
         bugCount: res.data[i].bug_count,
         status: res.data[i].status,
@@ -131,14 +131,14 @@ watch(dialogVisible, (newVal) => {
           </el-table-column>
           <el-table-column label="Status" width="130">
             <template #default="{ row }">
-              <el-tag v-if="row.status === 'Finished' && row.bugCount === 0" type="success">
+              <el-tag v-if="row.status === 'Finished' && row.bugCount === 0" type="success" size="large">
                 Healthy
               </el-tag>
-              <el-tag v-else-if="row.status === 'Finished' && row.bugCount > 0" type="danger">
+              <el-tag v-else-if="row.status === 'Finished' && row.bugCount > 0" type="danger" size="large">
                 Buggy
               </el-tag>
               <el-progress v-else-if="row.status === 'Running'" :percentage="row.percentage" @click="dialogVisible = true"></el-progress>
-              <el-tag v-else-if="row.status === 'Pending'" type="warning">
+              <el-tag v-else-if="row.status === 'Pending'" type="warning" size="large">
                 Pending
               </el-tag>
             </template>
@@ -148,7 +148,6 @@ watch(dialogVisible, (newVal) => {
               <div style="display: flex;align-items: center">
                 <el-button
                     link
-                    size="small"
                     type="primary"
                     @click="handleView(scope.row)"
                 >View</el-button
@@ -163,8 +162,7 @@ watch(dialogVisible, (newVal) => {
                 <el-button
                     v-if="scope.row.status === 'Running'"
                     link
-                    size="small"
-                    type="primary"
+                    type="danger"
                     @click="handleStop(scope.row)"
                 >Stop</el-button>
               </div>
