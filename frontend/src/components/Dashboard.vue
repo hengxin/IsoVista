@@ -11,7 +11,7 @@ const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 const router = useRouter();
 
 const testingOption = reactive({
-  db_url: 'jdbc:mysql://127.0.0.1:3306',
+  db_url: 'jdbc:mysql://172.0.0.1:3306/',
   db_type: 'MYSQL',
   db_isolation: 'TRANSACTION_SERIALIZATION',
   db_username: 'root',
@@ -333,7 +333,7 @@ async function handleReadChange(value) {
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
-                      You can try jdbc:mysql://172.17.0.1:3306/ for MYSQL, jdbc:postgresql://172.17.0.1:5432 for
+                      You can try jdbc:mysql://172.17.0.1:3306/ for MYSQL, jdbc:postgresql://172.17.0.1:5432/ for
                       PostgreSQL and jdbc:mariadb://172.17.0.1:3307/ for MariaDB.
                       This URL SHOULD be consistent with the Database option.
                     </template>
