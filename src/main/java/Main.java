@@ -192,7 +192,7 @@ public class Main implements Callable<Integer> {
                 var profileMap = profileInfo.getOrDefault(checkerIsolation, new HashMap<String, Long>());
                 var stageTimeList = new ArrayList<Long>();
                 stages.forEach(stage -> stageTimeList.add(profileMap.getOrDefault(stage, 0L)));
-                Profiler.appendToCSV(val, avgTime, maxMemory, triple.getRight(), stageTimeList);
+                Profiler.appendToCSV(val, Math.min(avgTime, stageTimeList.stream().reduce(0L, Long::sum)), maxMemory, triple.getRight(), stageTimeList);
                 profiler.removeTag(checkerIsolation);
             }
         };

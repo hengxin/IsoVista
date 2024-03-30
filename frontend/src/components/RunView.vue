@@ -41,7 +41,7 @@ const createProfileCharts = () => {
     },
     legend: {
       textStyle: {
-        fontSize: 18
+        fontSize: 20
       },
       data: profileData.legend
     },
@@ -51,11 +51,11 @@ const createProfileCharts = () => {
       boundaryGap: false,
       data: profileData.x_axis,
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 18,
+        "fontSize": 20,
         color: '#000'
       }
     },
@@ -63,11 +63,11 @@ const createProfileCharts = () => {
       name: 'Time(s)',
       type: 'value',
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -91,7 +91,7 @@ const createProfileCharts = () => {
     },
     legend: {
       textStyle: {
-        fontSize: 18
+        fontSize: 20
       },
       data: profileData.legend
     },
@@ -101,11 +101,11 @@ const createProfileCharts = () => {
       boundaryGap: false,
       data: profileData.x_axis,
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 18,
+        "fontSize": 20,
         color: '#000'
       }
     },
@@ -113,11 +113,11 @@ const createProfileCharts = () => {
       name: 'Memory(MB)',
       type: 'value',
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -136,14 +136,15 @@ const createProfileCharts = () => {
       }
     },
     tooltip: {
-      // trigger: 'axis',
-      // axisPointer: {
-      //   type: 'shadow'
-      // }
+      trigger: "item",
+      formatter: function (params) {
+        console.log(params)
+        return profileData.idxToChecker[params.dataIndex][params.componentIndex] + "<br/>" + params.marker + params.seriesName + ":&nbsp;&nbsp;<b>" + params.data + "</b>"
+      }
     },
     legend: {
       textStyle: {
-        fontSize: 18
+        fontSize: 20
       },
     },
     // grid: {
@@ -158,11 +159,11 @@ const createProfileCharts = () => {
       // boundaryGap: false,
       data: profileData.x_axis,
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 18,
+        "fontSize": 20,
         color: '#000'
       }
     },
@@ -170,15 +171,15 @@ const createProfileCharts = () => {
       name: 'Time(s)',
       type: 'value',
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20,
+        "fontSize": 22,
         color: '#000'
       }
     },
-    series: profileData.stageSeries
+    series: profileData.stageSeries,
   };
 
   profileStagesOption && profileStagesChart.setOption(profileStagesOption);
@@ -203,8 +204,9 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 16,
+        fontSize: 20,
         color: '#000',
+        rotate: 30
       },
     },
     yAxis: {
@@ -212,11 +214,11 @@ const createRuntimeInfoCharts = () => {
       type: 'value',
       max: 100,
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -251,19 +253,20 @@ const createRuntimeInfoCharts = () => {
       type: 'time',
       axisLabel: {
         formatter: '{HH}:{mm}:{ss}',
-        fontSize: 16,
+        fontSize: 20,
         color: '#000',
+        rotate: 30
       },
     },
     yAxis: {
       name: 'Memory(MB)',
       type: 'value',
       axisLabel: {
-        fontSize: 18,
+        fontSize: 20,
         color: '#000'
       },
       nameTextStyle: {
-        "fontSize": 20,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -328,7 +331,15 @@ const handleGetProfileRes = (res)=> {
   profileData.memorySeries = []
   profileData.stageSeries = []
   profileData.legend = []
-  for (let series of profileData.series) {
+  profileData.idxToChecker = {}
+  let maxIndex = {}
+  for (let i = 0; i < res.data.x_axis.length; i++) {
+    profileData.idxToChecker[i] = {}
+    maxIndex[i] = 0
+  }
+  for (let [seriesIdx, series] of profileData.series.entries()) {
+    console.log("series")
+    console.log(seriesIdx, series)
     profileData.timeSeries.push({
       name: series.checker,
       data: series.time,
@@ -339,17 +350,22 @@ const handleGetProfileRes = (res)=> {
       data: series.memory,
       type: 'line'
     })
-    Object.entries(series.stage_times).forEach(([stage, state_times]) => {
+    console.log(maxIndex)
+    Object.entries(series.stage_times).forEach(([stage, state_times], stageIdx) => {
       profileData.stageSeries.push({
         name: stage,
         type: 'bar',
         stack: series.checker,
-        emphasis: {
-          focus: 'series'
-        },
-        data: state_times
+        emphasis: {},
+        data: state_times,
       })
+      for (let [timeIdx, time] of state_times.entries()) {
+        profileData.idxToChecker[timeIdx][maxIndex[timeIdx]] = series.checker
+        maxIndex[timeIdx] += 1
+      }
     })
+    console.log(profileData.idxToChecker)
+
     profileData.legend.push(series.checker)
   }
   console.log(profileData)
@@ -497,7 +513,7 @@ watch(shouldRefresh, async (newVal) => {
 }
 
 .chart {
-  width: 800px;
+  width: 850px;
   height: 500px;
 }
 

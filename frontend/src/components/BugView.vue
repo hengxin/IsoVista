@@ -112,7 +112,7 @@ onMounted(async () => {
         <li>Label: ${e.item.getModel().label || e.item.getModel().id}</li>
       </ul>
       <ul>
-        <li>Ops: <br> ${e.item.getModel().ops.replace(/\n/g, "<br>")}</li>
+        <li>Operations: <br> ${e.item.getModel().ops.replace(/\n/g, "<br>")}</li>
       </ul>`;
       return outDiv;
     },

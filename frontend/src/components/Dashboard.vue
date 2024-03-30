@@ -55,12 +55,12 @@ const checkerIsolationLevelOptions = [
   {label: 'Transactional Causal Consistency', value: 'TRANSACTIONAL_CAUSAL_CONSISTENCY'},
   {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
-  {label: 'Viper SI', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'PolySI+', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
+  {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
+  {label: 'Snapshot Isolation(PolySI+)', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
 ];
 const historyTypeOptions = [
-  {label: 'Text', value: 'text'},
-  {label: 'Elle', value: 'elle'},
+  {label: 'Read-Write Register(text)', value: 'text'},
+  {label: 'List-Append(elle)', value: 'elle'},
 ];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
@@ -142,12 +142,13 @@ const handleIndexChange = (index) => {
                        height="500px"
                        arrow="always"
                        @change="handleIndexChange">
+
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
                        label-width="33%"
               >
                 <header class="form-header">
-                  <h2>Database Settings</h2>
+                  <h2>Database Setting</h2>
                 </header>
                 <el-form-item label="JDBC URL">
                   <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable
@@ -164,7 +165,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="DB Type">
+                <el-form-item label="Database">
                   <el-select v-model="testingOption.db_type" placeholder="" @change="handleSelectionChange"
                              class="fixed-width">
                     <el-option
@@ -183,7 +184,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="DB Isolation Level">
+                <el-form-item label="Isolation Level">
                   <el-select v-model="testingOption.db_isolation" placeholder="" @change="handleSelectionChange"
                              class="fixed-width">
                     <el-option
@@ -211,15 +212,16 @@ const handleIndexChange = (index) => {
                 </el-form-item>
               </el-form>
             </el-carousel-item>
+
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
                        label-width="33%"
               >
                 <header class="form-header">
-                  <h2>Workload Settings</h2>
+                  <h2>Workload Setting</h2>
                 </header>
                 <el-switch v-model="testingOption.workload_skipgeneration"
-                           inactive-text="Skip Generation"/>
+                           inactive-text="Skip Generator"/>
                 <el-form-item label="#History" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_history"
@@ -244,7 +246,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Txn/Sess" v-if="!testingOption.workload_skipgeneration">
+                <el-form-item label="#Txn/Session" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_transaction"
                       class="fixed-width"
@@ -256,7 +258,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="#Op/Txn" v-if="!testingOption.workload_skipgeneration">
+                <el-form-item label="#Operation/Txn" v-if="!testingOption.workload_skipgeneration">
                   <el-input
                       v-model="testingOption.workload_operation"
                       class="fixed-width"
@@ -292,7 +294,7 @@ const handleIndexChange = (index) => {
                     </el-icon>
                   </el-tooltip>
                 </el-form-item>
-                <el-form-item label="Distribution" v-if="!testingOption.workload_skipgeneration">
+                <el-form-item label="Skewness" v-if="!testingOption.workload_skipgeneration">
                   <el-select v-model="testingOption.workload_distribution" placeholder=""
                              @change="handleSelectionChange"
                              class="fixed-width">
@@ -344,12 +346,13 @@ const handleIndexChange = (index) => {
                 </el-upload>
               </el-form>
             </el-carousel-item>
+
             <el-carousel-item class="el-carousel-item-demo">
               <el-form label-position="left"
                        label-width="35%"
               >
                 <header class="form-header">
-                  <h2>Checker Settings</h2>
+                  <h2>Checker Setting</h2>
                 </header>
                 <el-form-item label="Isolation Level">
                   <el-select v-model="testingOption.checker_isolation" placeholder=""
@@ -375,6 +378,7 @@ const handleIndexChange = (index) => {
                 </el-form-item>
               </el-form>
             </el-carousel-item>
+
           </el-carousel>
         </el-col>
         <el-col :span="8">

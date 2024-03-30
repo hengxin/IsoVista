@@ -61,9 +61,7 @@ const formatDate = (timestamp) => {
 
 const tagNameType = [
   { name: "Fixed", type: "success"},
-  { name: "Minor", type: ""},
-  { name: "Normal", type: "warning"},
-  { name: "Critical", type: "danger"}
+  { name: "Open", type: "danger"}
 ]
 
 const handleChangeTag = (row, tagName, tagType) => {
