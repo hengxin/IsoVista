@@ -156,9 +156,9 @@ const handleIndexChange = (index) => {
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
-                      You can try jdbc:mysql://localhost:3306 for MYSQL, jdbc:postgresql://localhost15432 for
-                      PostgreSQL and jdbc:mariadb://localhost:3307 for MariaDB.
-                      This URL SHOULD be consistent with the DB Type option.
+                      You can try jdbc:mysql://172.17.0.1:3306/ for MYSQL, jdbc:postgresql://172.17.0.1:5432 for
+                      PostgreSQL and jdbc:mariadb://172.17.0.1:3307/ for MariaDB.
+                      This URL SHOULD be consistent with the Database option.
                     </template>
                     <el-icon color="#409EFF">
                       <InfoFilled/>
@@ -176,7 +176,7 @@ const handleIndexChange = (index) => {
                     </el-option>
                   </el-select>&nbsp;&nbsp;
                   <el-tooltip placement="top">
-                    <template #content> The database type you want to test. This option SHOULD be consistent with the
+                    <template #content> The database you want to test. This option SHOULD be consistent with the
                       JDBC URL.
                     </template>
                     <el-icon color="#409EFF">
