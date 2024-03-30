@@ -56,7 +56,7 @@ const checkerIsolationLevelOptions = [
   {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
   {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'Snapshot Isolation(PolySI+)', value: 'CUSTOM_SNAPSHOT_ISOLATION'}
+  {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'}
 ];
 const historyTypeOptions = [
   {label: 'Read-Write Register(text)', value: 'text'},
