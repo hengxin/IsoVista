@@ -7,6 +7,7 @@ import checker.PolySI.verifier.*;
 import com.google.common.graph.EndpointPair;
 import history.History;
 import history.Transaction;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -14,8 +15,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class AnomalyInterpreter {
-    static <KeyType, ValueType> String interpretConflicts(Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>> conflicts) {
+    static <KeyType, ValueType> Pair<Boolean, String> interpretConflicts(Pair<Collection<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>, Collection<SIConstraint<KeyType, ValueType>>> conflicts) {
         // result graph
         var txns = new HashSet<Transaction<KeyType, ValueType>>();
         var edges = new HashMap<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>();
@@ -88,9 +90,23 @@ public class AnomalyInterpreter {
         };
 
         conflicts.getLeft().forEach(addEdgeCollectionToKnownGraph::apply);
-        conflicts.getRight().forEach(c -> c.getEdges1().stream().map(SIEdgeToPair).forEach(e -> {
-            addEdgeCollectionToKnownGraph.apply(Pair.of(e.getLeft(), Collections.singleton(e.getRight())));
-        }));
+        conflicts.getRight().forEach(c -> {
+            boolean chooseEdges1;
+            if (c.getWriteTransaction1().getId() == 0 || c.getWriteTransaction2().getId() == 0) {
+                if (c.getWriteTransaction1().getId() == 0) {
+                    chooseEdges1 = true;
+                } else {
+                    chooseEdges1 = false;
+                }
+            } else {
+                chooseEdges1 = new Random().nextBoolean();
+            }
+            if (chooseEdges1) {
+                c.getEdges1().stream().map(SIEdgeToPair).forEach(e -> addEdgeCollectionToKnownGraph.apply(Pair.of(e.getLeft(), Collections.singleton(e.getRight()))));
+            } else {
+                c.getEdges2().stream().map(SIEdgeToPair).forEach(e -> addEdgeCollectionToKnownGraph.apply(Pair.of(e.getLeft(), Collections.singleton(e.getRight()))));
+            }
+        });
 
         Recursive<TriFunction<Transaction<KeyType, ValueType>, Transaction<KeyType, ValueType>, Set<Transaction<KeyType, ValueType>>, List<Pair<EndpointPair<Transaction<KeyType, ValueType>>, Collection<Edge<KeyType>>>>>> getPathEdges = new Recursive<>();
         getPathEdges.func = (source, target, visited) -> {
@@ -138,7 +154,7 @@ public class AnomalyInterpreter {
         var cycleList = checkCyclic.apply(null);
         if (cycleList.isEmpty()) {
             System.err.println("No cycles found!");
-            return "";
+            return Pair.of(false, "");
         }
         mainCycle = cycleList.get(0);
 
@@ -241,8 +257,8 @@ public class AnomalyInterpreter {
         };
 
 
-        int i = 0;
-        while (!toExplainEdges.isEmpty() && ++i < 10000) {
+        int retry = 0, MAX_RETRY = 10000;
+        while (!toExplainEdges.isEmpty() && ++retry < MAX_RETRY) {
             var edge = toExplainEdges.remove(0);
             if (explainedEdges.contains(edge.getLeft())) {
                 continue;
@@ -252,11 +268,12 @@ public class AnomalyInterpreter {
                 toExplainEdges.add(edge);
             }
         }
+        boolean success = retry < MAX_RETRY;
 
         // clean up
-        edges.forEach((p, e) -> {
-            e.removeIf(e1 -> (!e1.getType().equals(EdgeType.SO) && !e1.getType().equals(EdgeType.WR)) && (!explainedEdges.contains(p)));
-        });
+//        edges.forEach((p, e) -> {
+//            e.removeIf(e1 -> (!e1.getType().equals(EdgeType.SO) && !e1.getType().equals(EdgeType.WR)) && (!explainedEdges.contains(p)));
+//        });
         edges.entrySet().removeIf(e -> e.getValue().isEmpty());
         txns.removeIf(t -> edges.keySet().stream().noneMatch(e -> e.source().equals(t) || e.target().equals(t)));
 
@@ -280,7 +297,7 @@ public class AnomalyInterpreter {
 
         var dotOutputStr = Utils.conflictsToDot(anomaly, txns, edges, txnRelateToMap, edgeRelateToMap, oppositeEdges, mainCycle);
         System.out.print(dotOutputStr);
-        return dotOutputStr;
+        return Pair.of(success, dotOutputStr);
     }
 
     public static <KeyType, ValueType> String interpretSER(History<KeyType, ValueType> history) {
@@ -293,7 +310,17 @@ public class AnomalyInterpreter {
         if (conflicts == null) {
             return "";
         }
-        return interpretConflicts(conflicts);
+        int retry = 0, MAX_RETRY = 100;
+        String lastDotStr = "";
+        while (++retry < MAX_RETRY) {
+            var result = interpretConflicts(conflicts);
+            lastDotStr = result.getRight();
+            if (result.getLeft()) {
+                return lastDotStr;
+            }
+            log.warn("Interpretation failed, retrying...");
+        }
+        return lastDotStr;
     }
 
     public static <KeyType, ValueType> String interpretSI(History<KeyType, ValueType> history) {
@@ -306,6 +333,16 @@ public class AnomalyInterpreter {
         if (conflicts == null) {
             return "";
         }
-        return interpretConflicts(conflicts);
+        int retry = 0, MAX_RETRY = 100;
+        String lastDotStr = "";
+        while (++retry < MAX_RETRY) {
+            var result = interpretConflicts(conflicts);
+            lastDotStr = result.getRight();
+            if (result.getLeft()) {
+                return lastDotStr;
+            }
+            log.warn("Interpretation failed, retrying...");
+        }
+        return lastDotStr;
     }
 }
