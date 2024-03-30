@@ -162,8 +162,9 @@ public class Main implements Callable<Integer> {
                             } catch (IOException e) {
                                 // do nothing
                             }
-
-                            new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                            if (config.getOrDefault(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE) == Config.DEFAULT_HISTORY_TYPE) {
+                                new TextHistorySerializer().serializeHistory(history, Paths.get(bugDir.toString(), "bug_hist.txt").toString());
+                            }
                             checkerInstance.outputDotFile(Paths.get(bugDir.toString(), "conflict.dot").toString());
                         } else {
                             log.info("NO BUG");
