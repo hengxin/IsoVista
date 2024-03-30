@@ -105,7 +105,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
         constructionTime = profiler.endTick(constructionTag);
         profiler.startTick(traversalTag);
         checkCOTAP();
-        if (ISOLATION_LEVEL == IsolationLevel.READ_COMMITTED || ISOLATION_LEVEL == IsolationLevel.REPEATABLE_READ) {
+        if (ISOLATION_LEVEL == IsolationLevel.REPEATABLE_READ) {
 //            System.out.println(badPatternCount);
             traversalTime = profiler.endTick(traversalTag);
             return tapCount.isEmpty();
