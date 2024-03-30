@@ -362,7 +362,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
 //                        if (t.canReachByCO(t1)) {
 //                            return;
 //                        }
-                        graph.addEdge(t, t1, new Edge<>(Edge.Type.CM, null));
+                        graph.addEdge(t, t1, new Edge<>(Edge.Type.CM, variable));
                         CMCauses.put(new Pair<>(t, t1), t2);
                         pendingNodes.add(t);
                     }
@@ -569,7 +569,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 return null;
             };
 
-            var CMEdge = Triple.of(nodes[1], nodes[0], new Edge<VarType>(Edge.Type.CM, null));
+            var CMEdge = Triple.of(nodes[1], nodes[0], new Edge<VarType>(Edge.Type.CM, varX));
             edgeMap.put(CMEdge, null);
             edgeMap.put(Triple.of(nodes[0], nodes[2], new Edge<>(Edge.Type.WR, varX)), Sets.newHashSet(CMEdge));
 
@@ -621,7 +621,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
                 builder.append(String.format("\"%s\" -> \"%s\" [id=\"%s -> %s\" label=\"%s\" relate_to=\"%s\"];\n",
                         e.getKey().getLeft().getTransaction(), e.getKey().getMiddle().getTransaction(),
                         e.getKey().getLeft().getTransaction(), e.getKey().getMiddle().getTransaction(),
-                        e.getKey().getRight(), CMListToString.apply(e.getValue())));
+                        e.getKey().getRight().toString(), CMListToString.apply(e.getValue())));
             }
             builder.append("}\n");
             bugGraphs.add(builder.toString());

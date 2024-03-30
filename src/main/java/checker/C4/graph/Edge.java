@@ -14,6 +14,9 @@ public class Edge<VarType> {
         if (variable == null) {
             return type.toString();
         }
+        if (type == Type.CM) {
+            return String.format("WW %s", variable);
+        }
         return String.format("%s %s", type, variable);
     }
 }
