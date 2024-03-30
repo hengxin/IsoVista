@@ -153,9 +153,7 @@ const handlePreview: UploadProps['onPreview'] = (uploadFile) => {
 
 const handleExceed: UploadProps['onExceed'] = (files, uploadFiles) => {
   ElMessage.warning(
-      `The limit is 3, you selected ${files.length} files this time, add up to ${
-          files.length + uploadFiles.length
-      } totally`
+      "Upload at most ONE file."
   )
 }
 
@@ -185,23 +183,23 @@ async function checkInput(value, inputBox) {
   switch (inputBox) {
     case 'workload_session':
       lowerBound.value = 1
-      upperBound.value = 50
-      boxName.value = 'Session'
+      upperBound.value = 100
+      boxName.value = '#Session'
       break
     case 'workload_transaction':
       lowerBound.value = 1
       upperBound.value = 1000
-      boxName.value = 'Txn/Session'
+      boxName.value = '#Txn/Session'
       break
     case 'workload_operation':
       lowerBound.value = 1
       upperBound.value = 50
-      boxName.value = 'Operation/Txn'
+      boxName.value = '#Operation/Txn'
       break
     case 'workload_key':
       lowerBound.value = 1
       upperBound.value = 100000000
-      boxName.value = 'Key'
+      boxName.value = '#Key'
       break
     case 'workload_readproportion':
       lowerBound.value = 0
@@ -221,7 +219,7 @@ async function checkInput(value, inputBox) {
   if (!number.test(value.toString()) && !list.test(value.toString())) {
     hasWrongInput[inputBox] = true
     return ElMessage({
-      message: 'Please enter a NUMBER or a LIST like [5, 10, 20, 30] in ' + boxName.value,
+      message: 'Please enter a NUMBER or a LIST like [5,10,20,30] in ' + boxName.value,
       type: 'warning'
     })
   }
@@ -515,6 +513,7 @@ async function handleReadChange(value) {
                     class="upload-demo"
                     :action="backendUrl + 'upload'"
                     multiple
+                    :limit="1"
                     :on-preview="handlePreview"
                     :on-remove="handleRemove"
                     :before-remove="beforeRemove"
