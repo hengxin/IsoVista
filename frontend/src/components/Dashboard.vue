@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {reactive, ref} from "vue"
+import {reactive, ref, watch} from "vue"
 import type {UploadProps, UploadUserFile} from "element-plus"
 import {ElMessage, ElMessageBox} from "element-plus"
 import {get_current_run_id, run} from "@/api/api"
@@ -70,8 +70,53 @@ const handleSwitch = (value: boolean) => {
   console.log('Enabled: ', value);
 };
 
-
+const hasWrongInput = reactive({
+  db_url: false,
+  db_username: false,
+  db_password: false,
+  workload_history: false,
+  workload_session: false,
+  workload_transaction: false,
+  workload_operation: false,
+  workload_key: false,
+  workload_readproportion: false,
+  history_type: false,
+})
+const useList = reactive({
+  workload_session: false,
+  workload_transaction: false,
+  workload_operation: false,
+  workload_key: false,
+  workload_readproportion: false,
+})
 async function handleSubmit() {
+  // check input validation
+  const hasTrue = Object.values(hasWrongInput).some(value => value === true);
+  if (hasTrue) {
+    return ElMessage({
+      message: 'Please check the required fields',
+      type: 'warning'
+    })
+  }
+  let listCount = 0;
+  Object.values(testingOption).forEach(value => {
+    if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          listCount++;
+        }
+      } catch (e) {
+      }
+    }
+  });
+  if (listCount > 1) {
+    return ElMessage({
+      message: 'At most one list is allowed',
+      type: 'warning'
+    })
+  }
+
   for (const key in testingOption) {
     if (!testingOption.hasOwnProperty(key) || !key.startsWith("workload_")) {
       continue;
@@ -127,6 +172,136 @@ const activeIndex = ref(0)
 const handleIndexChange = (index) => {
   activeIndex.value = index
 }
+
+// input check
+const listRegex = /^\[\s*\d+(?:\s*,\s*\d+)*\s*\]$/
+const readProportionListRegex = /^\[\s*(-?\d+(\.\d+)?)(\s*,\s*-?\d+(\.\d+)?)*\s*\]$/
+const numberRegex = /^-?\d+$/
+const readProportionNumberRegex = /^-?\d+(\.\d+)?$/
+const lowerBound = ref(1)
+const upperBound = ref(50)
+const boxName = ref('')
+async function checkInput(value, inputBox) {
+  switch (inputBox) {
+    case 'workload_session':
+      lowerBound.value = 1
+      upperBound.value = 50
+      boxName.value = 'Session'
+      break
+    case 'workload_transaction':
+      lowerBound.value = 1
+      upperBound.value = 1000
+      boxName.value = 'Txn/Session'
+      break
+    case 'workload_operation':
+      lowerBound.value = 1
+      upperBound.value = 50
+      boxName.value = 'Operation/Txn'
+      break
+    case 'workload_key':
+      lowerBound.value = 1
+      upperBound.value = 100000000
+      boxName.value = 'Key'
+      break
+    case 'workload_readproportion':
+      lowerBound.value = 0
+      upperBound.value = 1
+      boxName.value = 'Read Proportion'
+      break
+  }
+  if (value.trim().length === 0) {
+    hasWrongInput[inputBox] = true
+    return ElMessage({
+      message: 'Please enter ' + boxName.value,
+      type: 'warning'
+    })
+  }
+  const number = inputBox === 'workload_readproportion' ? readProportionNumberRegex : numberRegex
+  const list = inputBox === 'workload_readproportion' ? readProportionListRegex : listRegex
+  if (!number.test(value.toString()) && !list.test(value.toString())) {
+    hasWrongInput[inputBox] = true
+    return ElMessage({
+      message: 'Please enter a NUMBER or a LIST like [5, 10, 20, 30] in ' + boxName.value,
+      type: 'warning'
+    })
+  }
+  if (number.test(value.toString())) {
+    if (value < lowerBound.value || value > upperBound.value) {
+      hasWrongInput[inputBox] = true
+      return ElMessage({
+        message: `Please enter a number between ${lowerBound.value} and ${upperBound.value} in ${boxName.value}`,
+        type: 'warning'
+      })
+    }
+  } else {
+    // set list
+    const list = JSON.parse(value)
+    for (let i = 0; i < list.length; i++) {
+      if (list[i] < lowerBound.value || list[i] > upperBound.value) {
+        hasWrongInput[inputBox] = true
+        return ElMessage({
+          message: `Please make sure numbers in the LIST are between ${lowerBound.value} and ${upperBound.value} in ${boxName.value}`,
+          type: 'warning'
+        })
+      }
+    }
+  }
+  // pass all the tests
+  hasWrongInput[inputBox] = false
+}
+
+async function handleHistoryChange(value) {
+  if (value.trim().length === 0 || !numberRegex.test(value)) {
+    hasWrongInput['workload_history'] = true
+    return ElMessage({
+      message: 'Please enter history number',
+      type: 'warning'
+    })
+  }
+  hasWrongInput['workload_history'] = false
+}
+
+async function handleurlChange(value) {
+  if (value.trim().length === 0) {
+    hasWrongInput['db_url'] = true
+    return ElMessage({
+      message: 'Please enter JDBC URL',
+      type: 'warning'
+    })
+  }
+  hasWrongInput['db_url'] = false
+}
+
+async function handleUserChange(value) {
+  if (value.trim().length === 0) {
+    hasWrongInput['db_username'] = true
+    return ElMessage({
+      message: 'Please enter DB username',
+      type: 'warning'
+    })
+  }
+  hasWrongInput['db_username'] = false
+}
+
+async function handleSessionChange(value) {
+  await checkInput(value, 'workload_session')
+}
+
+async function handleTransactionChange(value) {
+  await checkInput(value, 'workload_transaction')
+}
+
+async function handleOperationChange(value) {
+  await checkInput(value, 'workload_operation')
+}
+async function handleKeyChange(value) {
+  await checkInput(value, 'workload_key')
+}
+
+async function handleReadChange(value) {
+  await checkInput(value, 'workload_readproportion')
+}
+
 </script>
 
 <template>
@@ -152,7 +327,9 @@ const handleIndexChange = (index) => {
                 </header>
                 <el-form-item label="JDBC URL">
                   <el-input v-model="testingOption.db_url" placeholder="JDBC URL" clearable
-                            class="fixed-width"></el-input>
+                            class="fixed-width"
+                            @blur="handleurlChange(testingOption.db_url)"
+                  ></el-input>
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
@@ -204,7 +381,9 @@ const handleIndexChange = (index) => {
                 </el-form-item>
                 <el-form-item label="Username">
                   <el-input v-model="testingOption.db_username" placeholder="DB username" clearable
-                            class="fixed-width"></el-input>
+                            class="fixed-width"
+                            @blur="handleUserChange(testingOption.db_username)"
+                  ></el-input>
                 </el-form-item>
                 <el-form-item label="Password">
                   <el-input v-model="testingOption.db_password" placeholder="DB password" clearable
@@ -226,6 +405,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_history"
                       class="fixed-width"
+                      @blur="handleHistoryChange(testingOption.workload_history)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of histories in the workload.</template>
@@ -238,6 +418,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_session"
                       class="fixed-width"
+                      @blur="handleSessionChange(testingOption.workload_session)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of simulated sessions.</template>
@@ -250,6 +431,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_transaction"
                       class="fixed-width"
+                      @blur="handleTransactionChange(testingOption.workload_transaction)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>Number of transactions in each session.</template>
@@ -262,6 +444,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_operation"
                       class="fixed-width"
+                      @blur="handleOperationChange(testingOption.workload_operation)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of operations in each transaction.</template>
@@ -274,6 +457,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_key"
                       class="fixed-width"
+                      @blur="handleKeyChange(testingOption.workload_key)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> Number of the keys in the workload.</template>
@@ -286,6 +470,7 @@ const handleIndexChange = (index) => {
                   <el-input
                       v-model="testingOption.workload_readproportion"
                       class="fixed-width"
+                      @blur="handleReadChange(testingOption.workload_readproportion)"
                   />&nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content> The proportion of read operations in the workload.</template>
