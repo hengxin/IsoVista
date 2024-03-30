@@ -47,6 +47,7 @@ const createProfileCharts = () => {
     },
     xAxis: {
       name: 'name' in profileData ? profileData.name : '',
+      nameLocation: 'middle',
       type: 'category',
       boundaryGap: false,
       data: profileData.x_axis,
@@ -55,7 +56,8 @@ const createProfileCharts = () => {
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 20,
+        lineHeight: 56,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -97,6 +99,7 @@ const createProfileCharts = () => {
     },
     xAxis: {
       name: profileData.name,
+      nameLocation: 'middle',
       type: 'category',
       boundaryGap: false,
       data: profileData.x_axis,
@@ -105,7 +108,8 @@ const createProfileCharts = () => {
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 20,
+        lineHeight: 56,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -155,6 +159,7 @@ const createProfileCharts = () => {
     // },
     xAxis: {
       name: profileData.name,
+      nameLocation: 'middle',
       type: 'category',
       // boundaryGap: false,
       data: profileData.x_axis,
@@ -163,7 +168,8 @@ const createProfileCharts = () => {
         color: '#000',
       },
       nameTextStyle: {
-        "fontSize": 20,
+        lineHeight: 56,
+        "fontSize": 22,
         color: '#000'
       }
     },
@@ -513,7 +519,7 @@ watch(shouldRefresh, async (newVal) => {
 }
 
 .chart {
-  width: 850px;
+  width: 800px;
   height: 500px;
 }
 
