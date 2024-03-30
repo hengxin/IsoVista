@@ -497,7 +497,7 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
 
     protected Node<VarType, ValType> constructNode(Transaction<VarType, ValType> transaction, Node<VarType, ValType> prev) {
         short tid = (short) transaction.getSession().getId();
-        int dim = history.getSessions().size();
+        int dim = Math.toIntExact(Collections.max(history.getSessions().keySet())) + 1;
         return new TCNode<>(graph, transaction, tid, dim, prev);
     }
 
@@ -519,13 +519,12 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
         if (nodes.length < 1) {
             // do nothing
         } else if (nodes.length == 1) {
-            var builder = new StringBuilder();
-            builder.append("digraph ");
-            builder.append(tap);
-            builder.append(" {\n");
-            builder.append(String.format("\"%s\" [ops=\"%s\"];\n", nodes[0].getTransaction(), nodes[0].getTransaction().getOps()));
-            builder.append("}\n");
-            bugGraphs.add(builder.toString());
+            String builder = "digraph " +
+                    tap +
+                    " {\n" +
+                    String.format("\"%s\" [ops=\"%s\"];\n", nodes[0].getTransaction(), nodes[0].getTransaction().getOps()) +
+                    "}\n";
+            bugGraphs.add(builder);
         } else {
             Map<Node<VarType, ValType>, Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>>> nodeMap = new HashMap<>();
             Map<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>, Set<Triple<Node<VarType, ValType>, Node<VarType, ValType>, Edge<VarType>>>> edgeMap = new HashMap<>();
