@@ -196,7 +196,7 @@ public class Profiler {
     @SneakyThrows
     public static void createCSV(String variable, List<String> checkerIsolationList, List<String> stages) {
         for (var checkerIsolation : checkerIsolationList) {
-            String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, checkerIsolation + "-profile.csv").toString();
+            String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, ConfigParser.getCheckerIsolationAbbreviation(checkerIsolation) + "-profile.csv").toString();
             File file = new File(csvPath);
             if (file.exists()) {
                 continue;
@@ -211,7 +211,7 @@ public class Profiler {
     @SneakyThrows
     public static void appendToCSV(String value, long time, long memory, String checkerIsolation, List<Long> stageTimeList) {
         // append a line to a csv file
-        String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, checkerIsolation + "-profile.csv").toString();
+        String csvPath = Paths.get(Config.DEFAULT_CURRENT_PATH, ConfigParser.getCheckerIsolationAbbreviation(checkerIsolation) + "-profile.csv").toString();
         File file = new File(csvPath);
         FileWriter csvWriter = new FileWriter(file, true);
         String stageTimeString = stageTimeList.stream()

@@ -142,7 +142,6 @@ const createProfileCharts = () => {
     tooltip: {
       trigger: "item",
       formatter: function (params) {
-        console.log(params)
         return profileData.idxToChecker[params.dataIndex][params.componentIndex] + "<br/>" + params.marker + params.seriesName + ":&nbsp;&nbsp;<b>" + params.data + "</b>"
       }
     },
