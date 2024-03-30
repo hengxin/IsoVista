@@ -11,7 +11,7 @@ const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 const router = useRouter();
 
 const testingOption = reactive({
-  db_url: 'jdbc:mysql://172.0.0.1:3306/',
+  db_url: 'jdbc:mysql://172.17.0.1:3306/',
   db_type: 'MYSQL',
   db_isolation: 'TRANSACTION_SERIALIZATION',
   db_username: 'root',
