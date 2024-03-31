@@ -32,11 +32,12 @@ let data = {
   nodes: [],
   edges: []
 }
-
+let data_extend = {
+  nodes: [],
+  edges: []
+}
 let g = ref(G6.Graph);
 let bugName = ref("")
-let removedNodes = new Map()
-let removedEdges = new Map()
 
 const {detectDirectedCycle} = Algorithm;
 
@@ -148,36 +149,39 @@ onMounted(async () => {
         graph.removeItem(item)
       } else if (target.innerHTML === "Collapse") {
         item.getModel().expanded = false
-        removedNodes[item] = []
-        removedEdges[item] = []
         // remove edge should before remove node, since remove nodes can automatically remove edges
         graph.getEdges()
             .filter((edge) => {
-              return edge.getModel().relate_to.includes(item.getModel().id)
+              return edge.getModel().relate_to.includes(item.getModel().id) && --edge.getModel().depCount === 0
                   && !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())
             })
             .forEach((edge) => {
-              removedEdges[item].push(JSON.parse(JSON.stringify(edge.getModel())))
               graph.removeItem(edge)
             })
         graph.getNodes()
             .filter((node) => {
-              return node.getModel().relate_to.includes(item.getModel().id) && !cycleNodeList.includes(node.getID())
+              return node.getModel().relate_to.includes(item.getModel().id) && --node.getModel().depCount === 0 && !cycleNodeList.includes(node.getID())
             })
             .forEach((node) => {
-              removedNodes[item].push(JSON.parse(JSON.stringify(node.getModel())))
               graph.removeItem(node)
             })
       } else if (target.innerHTML === "Expand") {
-        console.log(removedNodes[item])
-        console.log(removedEdges[item])
         item.getModel().expanded = true
-        removedNodes[item].forEach((node) => {
-          graph.addItem("node", node)
+
+        data_extend.nodes.filter((node) => {
+          return node.relate_to.includes(item.getModel().id) && node.depCount++ === 0 && !cycleNodeList.includes(node.id)
+        }).forEach((node) => {
+          graph.addItem('node', node)
         })
-        removedEdges[item].forEach((edge) => {
-          graph.addItem("edge", edge)
+        data_extend.edges.filter((edge) => {
+          // console.log(edge)
+          return edge.relate_to.includes(item.getModel().id) && edge.depCount++ === 0
+              && !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.source && cycleEdge.target === edge.target)
+        }).forEach((edge) => {
+          console.log(edge)
+          graph.addItem('edge', edge)
         })
+        graph.layout()
       }
     },
   });
@@ -195,10 +199,14 @@ onMounted(async () => {
     data.nodes = res.data.nodes
     data.edges = res.data.edges
     res.data.nodes.forEach(node => {
+      node.depCount = 0
       node.label = node.label.replace(/Transaction\(id=/g, 'Txn(\id')
     })
     res.data.edges.forEach(edge => {
       edge.expanded = false
+      console.log(edge.relate_to.length)
+      edge.depCount = 0
+
       if (edge.style === "dotted") {
         edge.style = {lineDash: [2, 2]}
       } else {
@@ -210,13 +218,13 @@ onMounted(async () => {
         edge.style.stroke = "#61DDAA"
       } else if (edge.label.includes("WW")) {
         edge.style.stroke = "#F6903D"
-        edge.expanded = true
+        edge.expanded = false
       } else if (edge.label.includes("RW")) {
         edge.style.stroke = "#F6BD16"
-        edge.expanded = true
+        edge.expanded = false
       } else if (edge.label.includes("CM")) {
         edge.style.stroke = "#F08BB4"
-        edge.expanded = true
+        edge.expanded = false
       }
     })
   })
@@ -274,6 +282,7 @@ onMounted(async () => {
 
   G6.Util.processParallelEdges(data.edges, 20, 'quadratic', 'line', 'loop');
   graph.data(data);
+  graph.layout()
   graph.render();
   g = graph
 
@@ -313,6 +322,18 @@ g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source ===
   console.log(edge)
   edge.setState('marked', true)
 })
+
+graph.getEdges()
+    .filter(edge => !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID()))
+    .forEach((edge) => {
+      data_extend.edges.push(JSON.parse(JSON.stringify(edge.getModel())))
+      graph.removeItem(edge)
+    })
+g.getNodes().filter(node => !cycleNodeList.includes(node.getID()))
+    .forEach((node) => {
+      data_extend.nodes.push(JSON.parse(JSON.stringify(node.getModel())))
+      graph.removeItem(node)
+    })
 
 
 if (typeof window !== 'undefined')
