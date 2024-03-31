@@ -325,7 +325,7 @@ async def view_bug(bug_id: int):
             "ops": re.sub(r"transaction=Transaction\(id=\d+\), ", "",
                           node.get("ops").replace("\"", "").replace("), Operation", ")\nOperation"))
             .replace("[", "").replace("]", ""),
-            "relate_to": node.get("relate_to").replace("\"", "").split(","),
+            "relate_to": node.get("relate_to").replace("\"", "").split(", "),
             "in_cycle": node.get("in_cycle"),
         })
 
