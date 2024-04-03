@@ -1,14 +1,37 @@
 <script lang="ts" setup>
-import {reactive, ref, watch} from "vue"
+import {reactive, ref, onMounted} from "vue"
 import type {UploadProps, UploadUserFile} from "element-plus"
 import {ElMessage, ElMessageBox} from "element-plus"
 import {get_current_run_id, run} from "@/api/api"
-import {InfoFilled} from "@element-plus/icons-vue"
+import {InfoFilled, ArrowDown} from "@element-plus/icons-vue"
 import {useRouter} from "vue-router";
+
 
 const backendUrl = ref(import.meta.env.VITE_BACKEND_URL);
 
 const router = useRouter();
+
+const defaultOption = {
+  db_url: 'jdbc:mysql://172.17.0.1:3306/',
+  db_type: 'MYSQL',
+  db_isolation: 'TRANSACTION_SERIALIZATION',
+  db_username: 'root',
+  db_password: 'dbtest_pwd',
+  workload_type: 'general',
+  workload_history: 1,
+  workload_session: '[5,10,20,30]',
+  workload_transaction: 100,
+  workload_operation: 5,
+  workload_key: 1000,
+  workload_readproportion: 0.5,
+  workload_variable: '',
+  workload_distribution: 'UNIFORM',
+  workload_skipgeneration: false,
+  history_path: 'user_history.txt',
+  history_type: 'text',
+  checker_isolation: ['SNAPSHOT_ISOLATION'],
+  profiler_enable: true
+}
 
 const testingOption = reactive({
   db_url: 'jdbc:mysql://172.17.0.1:3306/',
@@ -31,6 +54,8 @@ const testingOption = reactive({
   checker_isolation: ['SNAPSHOT_ISOLATION'],
   profiler_enable: true
 });
+
+const savedOptions = reactive([]);
 
 const dbOptions = [
   {label: 'MySQL', value: 'MYSQL'},
@@ -82,13 +107,7 @@ const hasWrongInput = reactive({
   workload_readproportion: false,
   history_type: false,
 })
-const useList = reactive({
-  workload_session: false,
-  workload_transaction: false,
-  workload_operation: false,
-  workload_key: false,
-  workload_readproportion: false,
-})
+
 async function handleSubmit() {
   // check input validation
   const hasTrue = Object.values(hasWrongInput).some(value => value === true);
@@ -126,6 +145,15 @@ async function handleSubmit() {
     }
   }
   console.log(testingOption)
+  // save current config
+  let optionsArray = JSON.parse(localStorage.getItem('savedOptions') || '[]');
+  const isUnique = !optionsArray.some(option => JSON.stringify(option) === JSON.stringify(testingOption));
+  if (isUnique) {
+    optionsArray.push(testingOption);
+    localStorage.setItem('savedOptions', JSON.stringify(optionsArray));
+    loadSavedOptions();
+  }
+
   run(testingOption).then(res => {
     console.log(res)
     ElMessage({
@@ -138,6 +166,45 @@ async function handleSubmit() {
     })
   })
 }
+
+function initializeDefaultOption() {
+  if (!localStorage.getItem('Default')) {
+    localStorage.setItem('Default', JSON.stringify(defaultOption));
+  }
+}
+function loadSavedOptions() {
+  const options = JSON.parse(localStorage.getItem('savedOptions') || '[]');
+  savedOptions.splice(0, savedOptions.length, ...options);
+}
+
+const loadSetting = (command) => {
+  if (command === 'default') {
+    for (const key in testingOption) {
+      delete testingOption[key];
+    }
+    Object.keys(defaultOption).forEach(key => {
+      testingOption[key] = defaultOption[key];
+    });
+    return;
+  }
+  const selectedSetting = savedOptions[command];
+  for (const key in testingOption) {
+    delete testingOption[key];
+  }
+  Object.keys(selectedSetting).forEach(key => {
+    testingOption[key] = selectedSetting[key];
+  });
+}
+
+function clearStorage() {
+  localStorage.removeItem('savedOptions');
+  savedOptions.splice(0, savedOptions.length);
+}
+
+onMounted(() => {
+  initializeDefaultOption();
+  loadSavedOptions();
+})
 
 const fileList = ref<UploadUserFile[]>([])
 const handleFileChange = () => {
@@ -304,7 +371,28 @@ async function handleReadChange(value) {
 
 <template>
   <el-container class="layout-container-demo">
-    <el-header></el-header>
+    <el-header>
+      <el-dropdown trigger="click" @command="loadSetting">
+        <el-button type="primary">
+          Presets<el-icon class="el-icon--right"><arrow-down /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item :command="'default'">
+              Default
+            </el-dropdown-item>
+            <el-dropdown-item v-for="(option, index) in savedOptions"
+                              :key="index"
+                              :command="index">
+              {{ 'Config ' + (index + 1) }}</el-dropdown-item>
+
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-button @click="clearStorage" type="success">
+        Clear
+      </el-button>
+    </el-header>
 
     <el-main>
       <el-row :gutter="20">
