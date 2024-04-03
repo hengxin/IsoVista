@@ -72,6 +72,7 @@ public class Elle<VarType, ValType> implements Checker<VarType, ValType> {
             output.append(line);
         }
 
+        // match stage time
         String regex = "Stage ([\\w-]+) Time: (\\d+) ms";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(output);
@@ -85,12 +86,30 @@ public class Elle<VarType, ValType> implements Checker<VarType, ValType> {
         }
         stageTime.forEach((key, value) -> log.info(key + ": " + value + " ms"));
 
+        // match true/false
+        Pattern resultPattern = Pattern.compile("true|false");
+        Matcher resultMatcher = resultPattern.matcher(output);
+
+        String lastMatch = null;
+
+        while (resultMatcher.find()) {
+            lastMatch = resultMatcher.group();
+        }
+
+        boolean result = true;
+        if (lastMatch != null) {
+            log.info("Elle-cli returned: " + lastMatch);
+            result = Boolean.parseBoolean(lastMatch);
+        } else {
+            log.error("No match true/false found in output");
+        }
+
         int exitCode = process.waitFor();
         done.set(true);
         RuntimeInfoRecorder.removePid(process.pid());
 
         log.info("Elle-cli jar exited with code: " + exitCode);
-        return true;
+        return result;
     }
 
     @Override
