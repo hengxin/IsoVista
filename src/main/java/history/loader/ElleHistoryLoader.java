@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
@@ -287,6 +288,14 @@ public class ElleHistoryLoader implements HistoryLoader<Integer, ElleHistoryLoad
                 return String.format("ElleAppend(%d)", lastElement);
             } else {
                 return String.format("ElleList(%s)", list);
+            }
+        }
+
+        public String toEdn() {
+            if (list == null) {
+                return String.format("%d", lastElement);
+            } else {
+                return String.format("[%s]", list.stream().map(Object::toString).collect(Collectors.joining(" ")));
             }
         }
     }

@@ -29,15 +29,17 @@ public class ConfigParser {
         ConfigToCheckerIsolationMap.put("SERIALIZABLE", Pair.of("SMT_SER", IsolationLevel.SERIALIZABLE));
         ConfigToCheckerIsolationMap.put("VIPER_SNAPSHOT_ISOLATION", Pair.of("Viper", IsolationLevel.SNAPSHOT_ISOLATION));
         ConfigToCheckerIsolationMap.put("POLYSI+_SNAPSHOT_ISOLATION", Pair.of("SMT_SI", IsolationLevel.SNAPSHOT_ISOLATION));
+        ConfigToCheckerIsolationMap.put("ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY", Pair.of("ELLE_TCC", IsolationLevel.SNAPSHOT_ISOLATION));
 
         IsolationAbbreviation.put("READ_COMMITTED", "RC");
         IsolationAbbreviation.put("REPEATABLE_READ", "RR");
         IsolationAbbreviation.put("READ_ATOMICITY", "RA");
         IsolationAbbreviation.put("TRANSACTIONAL_CAUSAL_CONSISTENCY", "TCC");
-        IsolationAbbreviation.put("SNAPSHOT_ISOLATION", "SI");
+        IsolationAbbreviation.put("SNAPSHOT_ISOLATION", "PolySI");
         IsolationAbbreviation.put("SERIALIZABLE", "SER");
         IsolationAbbreviation.put("VIPER_SNAPSHOT_ISOLATION", "Viper");
         IsolationAbbreviation.put("POLYSI+_SNAPSHOT_ISOLATION", "PolySI+");
+        IsolationAbbreviation.put("ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY", "ELLE_TCC");
     }
 
     public static Pair<String, IsolationLevel> parseIsolationConfig(String isolationConfig) {
