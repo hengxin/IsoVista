@@ -283,7 +283,7 @@ def get_current_run_percentage():
     match = match[-1]
     cur = int(match.split(" ")[0])
     total = int(match.split(" ")[2])
-    return cur / total * 100
+    return (cur - 1) / total * 100
 
 
 def current_runs():
