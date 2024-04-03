@@ -56,7 +56,7 @@ class Bug:
     """
 
     def __init__(self, bug_id, db_type, db_isolation, checker_isolation, timestamp, bug_dir, config_path,
-                 metadata_path, log_path):
+                 metadata_path, log_path, tag_name, tag_type):
         self.bug_id = bug_id
         self.db_type = db_type
         self.db_isolation = db_isolation
@@ -68,8 +68,8 @@ class Bug:
         self.config_path = config_path
         self.metadata_path = metadata_path
         self.log_path = log_path
-        self.tag_name = ""
-        self.tag_type = ""
+        self.tag_name = tag_name
+        self.tag_type = tag_type
 
     def zip(self, filename):
         file_paths = [self.config_path, self.metadata_path, self.log_path]
@@ -105,10 +105,12 @@ class BugStore:
             for bug_dir in os.listdir(os.path.join(self.directory, run_dir)):
                 if not bug_dir.startswith("bug_"):
                     continue
+                tag_name = run_meta.get("tag_name", "")
+                tag_type = run_meta.get("tag_type", "")
                 bug_list.append(Bug(0, run_meta["db_type"], run_meta["db_isolation"],
                                     run_meta["checker_isolation"], run_meta["timestamp"],
                                     os.path.join(self.directory, run_dir, bug_dir),
-                                    config_path, metadata_path, log_path))
+                                    config_path, metadata_path, log_path, tag_name, tag_type))
         bug_list.sort(key=lambda bug: bug.timestamp)
         for index, bug in enumerate(bug_list):
             bug.bug_id = index + 1
@@ -377,6 +379,15 @@ async def change_bug_tag(request: Request):
     bug = bug_store.get(data["bug_id"])
     bug.tag_name = data["tag_name"]
     bug.tag_type = data["tag_type"]
+    # save to metadata
+    path = bug.metadata_path
+    with open(path, "r") as f:
+        metadata = json.load(f) 
+    metadata["tag_name"] = bug.tag_name
+    metadata["tag_type"] = bug.tag_type
+    with open(path, "w") as f:
+        json.dump(metadata, f)
+    
 
 
 @app.get("/run_profile/{run_id}")
