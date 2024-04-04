@@ -19,7 +19,7 @@ const defaultOption = {
   db_password: 'dbtest_pwd',
   workload_type: 'general',
   workload_history: 1,
-  workload_session: '[5,10,20,30]',
+  workload_session: '[5,10,15,20]',
   workload_transaction: 100,
   workload_operation: 5,
   workload_key: 1000,

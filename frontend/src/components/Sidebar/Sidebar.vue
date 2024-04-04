@@ -12,12 +12,12 @@ import {Failed, List, Setting} from "@element-plus/icons-vue";
         <el-menu
             default-active="1"
         >
-          <el-menu-item index="1" @click="$router.push('/dashboard')">
+          <el-menu-item index="1" @click="$router.push('/configuration')">
             <template #title>
               <el-icon>
                 <Setting />
               </el-icon>
-              <span>Dashboard</span>
+              <span>Configuration</span>
             </template>
           </el-menu-item>
           <el-menu-item index="2" @click="$router.push('/runs')">
