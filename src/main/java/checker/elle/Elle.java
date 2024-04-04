@@ -42,7 +42,7 @@ public class Elle<VarType, ValType> implements Checker<VarType, ValType> {
     @SneakyThrows
     private boolean runJar(String path) {
         // java -jar target/elle-cli-0.1.7-standalone.jar --model list-append --consistency-models snapshot-isolation histories/elle/list-append-gh-30.edn
-        ProcessBuilder pb = new ProcessBuilder("java", "-jar", ELLE_CLI_PATH, "--model", MODEL, "--consistency-models", CONSISTENCY_MODEL, "--cycle-search-timeout", "10000000", "/Users/draco/IdeaProjects/Plume/History/figure/fig_9/sess50/history0.edn");
+        ProcessBuilder pb = new ProcessBuilder("java", "-jar", ELLE_CLI_PATH, "--model", MODEL, "--consistency-models", CONSISTENCY_MODEL, "--cycle-search-timeout", "10000000", path);
 
         Process process = pb.start();
 

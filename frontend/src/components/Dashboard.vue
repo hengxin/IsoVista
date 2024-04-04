@@ -82,7 +82,7 @@ const checkerIsolationLevelOptions = [
   {label: 'Serializable', value: 'SERIALIZABLE'},
   {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
   {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'},
-  {label: 'Transactional Snapshot Isolation(ELLE)', value: 'ELLE_TRANSACTIONAL_SNAPSHOT_ISOLATION'},
+  {label: 'Transactional Causal Consistency(ELLE)', value: 'ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY'},
 ];
 const historyTypeOptions = [
   {label: 'Read-Write Register(text)', value: 'text'},
