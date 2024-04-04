@@ -387,9 +387,6 @@ async function handleReadChange(value) {
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      <el-button @click="clearStorage" type="success">
-        Clear
-      </el-button>
     </el-header>
 
     <el-main>
@@ -652,38 +649,41 @@ async function handleReadChange(value) {
           </el-carousel>
         </el-col>
         <el-col :span="8">
-          <el-card class="box-card" v-if="activeIndex===0">
-            <template #header>
-              <div class="card-header">
-                <span>Database Setting Details</span>
-              </div>
-            </template>
-          </el-card>
-          <el-card class="box-card" v-if="activeIndex===1">
-            <template #header>
-              <div class="card-header">
-                <span>Workload Details</span>
-              </div>
-            </template>
-            <p>If you want to upload your own history file, please make sure the format is correct.</p>
-            <p>opType(key, value, session, txnID) </p>
-            <p>For example:</p>
-            <p>r(4,34,0,0)</p>
-            <p> w(6,1,0,0)</p>
-            <p> r(9,15,0,0)</p>
-            <p> w(8,1,0,0)</p>
-          </el-card>
-          <el-card class="box-card" v-if="activeIndex===2">
-            <template #header>
-              <div class="card-header">
-                <span>Checker Setting Details</span>
-              </div>
+<!--          <el-card class="box-card" v-if="activeIndex===0">-->
+<!--            <template #header>-->
+<!--              <div class="card-header">-->
+<!--                <span>Database Setting Details</span>-->
+<!--              </div>-->
+<!--            </template>-->
+<!--          </el-card>-->
+<!--          <el-card class="box-card" v-if="activeIndex===1">-->
+<!--            <template #header>-->
+<!--              <div class="card-header">-->
+<!--                <span>Workload Details</span>-->
+<!--              </div>-->
+<!--            </template>-->
+<!--            <p>If you want to upload your own history file, please make sure the format is correct.</p>-->
+<!--            <p>opType(key, value, session, txnID) </p>-->
+<!--            <p>For example:</p>-->
+<!--            <p>r(4,34,0,0)</p>-->
+<!--            <p> w(6,1,0,0)</p>-->
+<!--            <p> r(9,15,0,0)</p>-->
+<!--            <p> w(8,1,0,0)</p>-->
+<!--          </el-card>-->
+<!--          <el-card class="box-card" v-if="activeIndex===2">-->
+<!--            <template #header>-->
+<!--              <div class="card-header">-->
+<!--                <span>Checker Setting Details</span>-->
+<!--              </div>-->
 
-            </template>
-          </el-card>
+<!--            </template>-->
+<!--          </el-card>-->
         </el-col>
       </el-row>
       <el-button size="large" type="primary" @click="handleSubmit()">Start</el-button>
+      <el-button size="large" @click="clearStorage(); loadSetting('default')" type="success">
+        Clear
+      </el-button>
     </el-main>
   </el-container>
 </template>
@@ -731,6 +731,10 @@ async function handleReadChange(value) {
 }
 
 .box-card {
+}
+
+.el-header {
+  text-align: right;
 }
 
 .el-carousel-item-demo {
