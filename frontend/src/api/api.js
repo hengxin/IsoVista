@@ -103,3 +103,15 @@ const stopRunUrl = "/stop"
 export function stop_run() {
     return request.put(stopRunUrl)
 }
+
+const runtimeStageUrl = "/runtime_stage/"
+
+export function get_runtime_stage(run_id) {
+    return request.get(runtimeStageUrl + run_id)
+}
+
+const currentRunStageUrl = "/current_runtime_stage"
+
+export function get_current_runtime_stage() {
+    return request.get(currentRunStageUrl)
+}

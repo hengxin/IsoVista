@@ -143,6 +143,11 @@ class Run:
             self.runtime_info_path = runtime_info_path
         else:
             self.runtime_info_path = None
+        runtime_stage_path = os.path.join(dir_path, "runtime_stage.csv")
+        if os.path.exists(runtime_stage_path):
+            self.runtime_stage_path = runtime_stage_path
+        else:
+            self.runtime_stage_path = None
 
     def zip(self, filename):
         with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -428,6 +433,55 @@ async def get_runtime_info(run_id: int):
         "cpu": df.iloc[:, 1].to_list(),
         "memory": df.iloc[:, 2].to_list(),
     }
+
+
+@app.get("/runtime_stage/{run_id}")
+async def get_runtime_stage(run_id: int):
+    run = run_store.get(run_id)
+    if run is None or run.runtime_stage_path is None:
+        return None
+    df = pd.read_csv(run.runtime_stage_path)
+    dicts = df.to_dict('records')
+    result = []
+    for i in range(len(dicts)):
+        if i == len(dicts) - 1:
+            result.append({
+                "begin_timestamp": dicts[i]['timestamp'],
+                "end_timestamp": 0xffffffff,
+                "stage": dicts[i]["stage"]
+         })
+        else:
+            result.append({
+                "begin_timestamp": dicts[i]['timestamp'],
+                "end_timestamp": dicts[i + 1]['timestamp'],
+                "stage": dicts[i]['stage']
+            })
+    return result
+
+
+@app.get("/current_runtime_stage")
+async def get_current_runtime_stage():
+    try:
+        with open(os.path.join(current_path, "runtime_stage.csv")) as runtime_stage:
+            df = pd.read_csv(runtime_stage)
+            dicts = df.to_dict('records')
+            result = []
+            for i in range(len(dicts)):
+                if i == len(dicts) - 1:
+                    result.append({
+                        "begin_timestamp": dicts[i]['timestamp'],
+                        "end_timestamp": 0xffffffff,
+                        "stage": dicts[i]["stage"]
+                    })
+                else:
+                    result.append({
+                        "begin_timestamp": dicts[i]['timestamp'],
+                        "end_timestamp": dicts[i + 1]['timestamp'],
+                        "stage": dicts[i]['stage']
+                    })
+            return result
+    except FileNotFoundError:
+        return ""
 
 
 @app.get("/current_run_id")

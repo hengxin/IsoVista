@@ -47,6 +47,7 @@ public class Main implements Callable<Integer> {
     @SneakyThrows
     public void run(Properties config) {
         RuntimeInfoRecorder.start();
+        RuntimeStageRecorder.createCSV();
 
         var collectorReflections = new Reflections("collector");
         Set<Class<? extends Collector>> collectorSubClasses = collectorReflections.getSubTypesOf(Collector.class);
@@ -113,6 +114,7 @@ public class Main implements Callable<Integer> {
                 if (!skipGeneration) {
                     // generate history
                     log.info("Start workload generation {} of {}", i + nHist * currentBatch, nHist * totalBatch);
+                    RuntimeStageRecorder.updateStage("History Collection");
                     history = new GeneralGenerator(config).generate();
 
                     // collect result
@@ -141,6 +143,7 @@ public class Main implements Callable<Integer> {
                     if (enableProfile) {
                         profiler.startTick(tag);
                     }
+                    RuntimeStageRecorder.updateStage(ConfigParser.getCheckerIsolationAbbreviation(checkerAndIsolation.getRight()) + " Verification");
                     boolean result;
                     try {
                         var checkerInstance = checker.getDeclaredConstructor(Properties.class).newInstance(config);
@@ -229,6 +232,7 @@ public class Main implements Callable<Integer> {
         }
 
         RuntimeInfoRecorder.stop();
+        RuntimeStageRecorder.close();
 
         // output to the specific dir
         var outputPath = config.getProperty(Config.OUTPUT_PATH, Config.DEFAULT_OUTPUT_PATH);

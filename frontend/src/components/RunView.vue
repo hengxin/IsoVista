@@ -4,9 +4,9 @@ import {defineProps, onMounted, onUnmounted, ref, watch} from "vue";
 import {
   get_current_profile,
   get_current_run_id,
-  get_current_runtime_info,
+  get_current_runtime_info, get_current_runtime_stage,
   get_run_profile,
-  get_runtime_info,
+  get_runtime_info, get_runtime_stage,
 } from "@/api/api.js";
 
 const props = defineProps({
@@ -23,6 +23,42 @@ let runTimeCPUChart;
 let runTimeMemoryChart;
 
 let profileData = {}
+
+let stageColorMap = {
+  'History Collection': {
+    'background': 'rgba(137,194,255,0.2)',
+    'color': 'rgb(51,122,255)'
+  },
+  'Verification': {
+    'background': 'rgba(255,202,174,0.2)',
+    'color': 'rgb(255,106,0)'
+  }
+}
+
+const getStageColorLine = (stage) => {
+  if (stage === 'History Collection') {
+    return stageColorMap[stage]['color']
+  } else if (stage.includes('Verification')) {
+    return stageColorMap['Verification']['color']
+  }
+}
+
+const getStageColorBackground = (stage) => {
+  if (stage === 'History Collection') {
+    return stageColorMap[stage]['background']
+  } else if (stage.includes('Verification')) {
+    return stageColorMap['Verification']['background']
+  }
+}
+
+function findStageByTimestamp(timestamp) {
+  for (let item of runtimeInfoData.stages) {
+    if (timestamp >= item.begin_timestamp && timestamp <= item.end_timestamp) {
+      return item.stage;
+    }
+  }
+  return 'No stage found';
+}
 
 const createProfileCharts = () => {
   const profileTimeChartDom = document.getElementById('profile-time');
@@ -203,7 +239,10 @@ const createRuntimeInfoCharts = () => {
       }
     },
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      formatter: function (params) {
+        return params[0].axisValueLabel + "<br/>" + params[0].marker + findStageByTimestamp(params[0].data[0]) + ":&nbsp;&nbsp;" + params[0].data[1] + "</br>"
+      }
     },
     xAxis: {
       type: 'time',
@@ -227,13 +266,22 @@ const createRuntimeInfoCharts = () => {
         color: '#000'
       }
     },
+    visualMap: {
+      type: "piecewise",
+      show: false,
+      dimension: 0,
+      pieces: runtimeInfoData.pieces
+    },
     series: [
       {
         data: runtimeInfoData.cpuUsage,
         type: 'line',
         smooth: true,
-        showSymbol: false
-      }
+        showSymbol: false,
+        markArea: {
+          data: runtimeInfoData.markAreas
+        }
+      },
     ]
   };
   runtimeCPUCOption && runTimeCPUChart.setOption(runtimeCPUCOption);
@@ -251,7 +299,10 @@ const createRuntimeInfoCharts = () => {
       }
     },
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      formatter: function (params) {
+        return params[0].axisValueLabel + "<br/>" + params[0].marker + findStageByTimestamp(params[0].data[0]) + ":&nbsp;&nbsp;" + params[0].data[1] + "</br>"
+      }
     },
     xAxis: {
       // name: runtimeInfoData.name,
@@ -275,12 +326,21 @@ const createRuntimeInfoCharts = () => {
         color: '#000'
       }
     },
+    visualMap: {
+      type: "piecewise",
+      show: false,
+      dimension: 0,
+      pieces: runtimeInfoData.pieces
+    },
     series: [
       {
         data: runtimeInfoData.memoryUsage,
         type: 'line',
         smooth: true,
-        showSymbol: false
+        showSymbol: false,
+        markArea: {
+          data: runtimeInfoData.markAreas
+        }
       }
     ]
   };
@@ -300,13 +360,42 @@ const updateShouldRefresh = async () => {
   })
 }
 
-const handleGetRuntimeInfoRes = (res)=> {
-  runtimeInfoData = res.data
+const handleGetRuntimeInfoRes = (res_info, res_stage) => {
+  runtimeInfoData = res_info.data
+  runtimeInfoData.stages = res_stage.data
   runtimeInfoData.cpuUsage = []
   runtimeInfoData.memoryUsage = []
   for (let i = 0; i < runtimeInfoData.x_axis.length; i++) {
-    runtimeInfoData.cpuUsage.push([runtimeInfoData.x_axis[i], runtimeInfoData.cpu[i]])
-    runtimeInfoData.memoryUsage.push([runtimeInfoData.x_axis[i], (runtimeInfoData.memory[i] / 1024 / 1024).toFixed(2)])
+    let timestamp = runtimeInfoData.x_axis[i]
+    runtimeInfoData.cpuUsage.push([timestamp, runtimeInfoData.cpu[i]])
+    runtimeInfoData.memoryUsage.push([timestamp, (runtimeInfoData.memory[i] / 1024 / 1024).toFixed(2)])
+  }
+  runtimeInfoData.pieces = []
+  runtimeInfoData.markAreas = []
+  for (let i = 0; i < runtimeInfoData.stages.length; i++) {
+    if (i === 0 && runtimeInfoData.stages[i].begin_timestamp > runtimeInfoData.x_axis[0]) {
+      runtimeInfoData.stages[i].begin_timestamp = runtimeInfoData.x_axis[0]
+    }
+    if (runtimeInfoData.stages[i].end_timestamp === 0xffffffff) {
+      runtimeInfoData.stages[i].end_timestamp = runtimeInfoData.x_axis[runtimeInfoData.x_axis.length - 1]
+    }
+    runtimeInfoData.pieces.push({
+      min: runtimeInfoData.stages[i].begin_timestamp,
+      max: runtimeInfoData.stages[i].end_timestamp,
+      label: runtimeInfoData.stages[i].stage,
+      color: getStageColorLine(runtimeInfoData.stages[i].stage)
+    })
+    runtimeInfoData.markAreas.push([{
+      itemStyle: {
+        color: getStageColorBackground(runtimeInfoData.stages[i].stage)
+      },
+      xAxis: runtimeInfoData.stages[i].begin_timestamp,
+    }, {
+      itemStyle: {
+        color: getStageColorBackground(runtimeInfoData.stages[i].stage)
+      },
+      xAxis: runtimeInfoData.stages[i].end_timestamp,
+    }])
   }
   console.log(runtimeInfoData)
 }
@@ -377,14 +466,23 @@ const handleGetProfileRes = (res)=> {
 }
 
 const getData = async () => {
-  await get_runtime_info(props.run_id).then((res) => {
-    if (!res.data) {
+  await get_runtime_info(props.run_id).then(async (res_info) => {
+    if (!res_info.data) {
       console.log("no runtime info data")
       return
     }
-    console.log(res.data)
-    handleGetRuntimeInfoRes(res)
+    console.log(res_info.data)
+    await get_runtime_stage(props.run_id).then((res_stage) => {
+      if (!res_stage.data) {
+        console.log("no runtime stage data")
+        return
+      }
+      console.log(res_stage.data)
+      handleGetRuntimeInfoRes(res_info, res_stage)
+    })
   })
+
+
   await get_run_profile(props.run_id).then((res) => {
     if (!res.data) {
       console.log("no profile data")
@@ -423,13 +521,25 @@ const setProfileData = ()=> {
 
 const setRuntimeData = ()=> {
   runTimeCPUChart.setOption({
+    visualMap: {
+      pieces: runtimeInfoData.pieces
+    },
     series: {
       data: runtimeInfoData.cpuUsage,
+      markArea: {
+        data: runtimeInfoData.markAreas
+      }
     }
   })
   runTimeMemoryChart.setOption({
+    visualMap: {
+      pieces: runtimeInfoData.pieces
+    },
     series: {
-      data: runtimeInfoData.memoryUsage
+      data: runtimeInfoData.memoryUsage,
+      markArea: {
+        data: runtimeInfoData.markAreas
+      }
     }
   })
 }
@@ -442,12 +552,18 @@ onMounted(async () => {
   } else {
     console.log("should refresh")
     refreshInterval = setInterval(() => {
-      get_current_runtime_info().then((res) => {
-        if (!res.data) {
+      get_current_runtime_info().then(async (res_info) => {
+        if (!res_info.data) {
           console.log("no runtime info data")
           return
         }
-        handleGetRuntimeInfoRes(res)
+        await get_current_runtime_stage().then((res_stage) => {
+          if (!res_stage.data) {
+            console.log("no runtime stage data")
+            return
+          }
+          handleGetRuntimeInfoRes(res_info, res_stage)
+        })
         setRuntimeData()
       })
       get_current_profile().then((res) => {

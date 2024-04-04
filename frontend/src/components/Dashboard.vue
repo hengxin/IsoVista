@@ -81,7 +81,8 @@ const checkerIsolationLevelOptions = [
   {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
   {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'}
+  {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'},
+  {label: 'Transactional Snapshot Isolation(ELLE)', value: 'ELLE_TRANSACTIONAL_SNAPSHOT_ISOLATION'},
 ];
 const historyTypeOptions = [
   {label: 'Read-Write Register(text)', value: 'text'},
@@ -160,10 +161,7 @@ async function handleSubmit() {
       message: 'Add to run queue successfully',
       type: 'success',
     })
-    get_current_run_id().then(res => {
-      console.log(res.data)
-      router.push({path: `/run_view/${res.data}`})
-    })
+    router.push('/runs')
   })
 }
 
