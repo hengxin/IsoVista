@@ -12,6 +12,7 @@ import config.Config;
 import history.History;
 import history.Operation;
 import history.Transaction;
+import history.loader.ElleHistoryLoader;
 import javafx.util.Pair;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -52,13 +53,14 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     protected static final Map<IsolationLevel, Set<TAP>> PROHIBITED_TAPS = new HashMap<>();
 
     public static final String NAME = "C4";
-    private final Profiler profiler = Profiler.getInstance();
+    protected final Profiler profiler = Profiler.getInstance();
+    private final Properties config;
 
     public static IsolationLevel ISOLATION_LEVEL;
-    private final String constructionTag;
-    private final String traversalTag;
-    private long constructionTime;
-    private long traversalTime;
+    protected final String constructionTag = "Construction";
+    protected final String traversalTag = "Traversal";
+    protected long constructionTime;
+    protected long traversalTime;
 
     static {
         Set<TAP> RCTAPs = new HashSet<>(List.of(new TAP[]{
@@ -93,12 +95,14 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     }
 
     public C4(Properties config) {
+        this.config = config;
         ISOLATION_LEVEL = IsolationLevel.valueOf(config.getProperty(Config.CHECKER_ISOLATION));
-        constructionTag = "Construction";
-        traversalTag = "Traversal";
     }
 
     public boolean verify(History<VarType, ValType> history) {
+        if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle") && config.getProperty(Config.WORKLOAD_SKIP_GENERATION).equals("true")) {
+            return new C4List<>(config).verify((History<Object, ElleHistoryLoader.ElleValue>) history);
+        }
         this.history = history;
         profiler.startTick(constructionTag);
         buildCO();
@@ -126,6 +130,9 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
     @SneakyThrows
     @Override
     public void outputDotFile(String path) {
+        if (bugGraphs.isEmpty()) {
+            return;
+        }
         Files.writeString(Path.of(path), bugGraphs.get(0), StandardOpenOption.CREATE);
     }
 
