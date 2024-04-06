@@ -233,8 +233,17 @@ public class ElleHistoryLoader implements HistoryLoader<Integer, ElleHistoryLoad
     }
 
     private void parseErrorList(CharBuffer s) {
-        while (s.charAt(0) != ',') {
+        if (s.charAt(0) == '[') {
             advance(s, 1);
+
+            while (s.charAt(0) != ']') {
+                advance(s, 1);
+            }
+            advance(s, 1);
+        } else {
+            while (s.charAt(0) != ',') {
+                advance(s, 1);
+            }
         }
     }
 
