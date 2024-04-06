@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PostgreSQLCollector extends Collector<Long, Long> {
-    public static final String NAME = "POSTGRES";
+    public static final String NAME = "POSTGRES-SAVE";
 
     static {
         try {
