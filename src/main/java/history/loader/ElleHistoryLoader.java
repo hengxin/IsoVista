@@ -166,6 +166,8 @@ public class ElleHistoryLoader implements HistoryLoader<Integer, ElleHistoryLoad
         assertEq(s.charAt(0), '[');
         advance(s, 1);
 
+        skipCommaAndSpace(s);
+
         Triple<Operation.Type, Integer, ElleValue> result;
         if (startsWith(s, ":r ")) {
             advance(s, ":r ".length());

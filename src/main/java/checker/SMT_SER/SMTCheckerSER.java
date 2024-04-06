@@ -44,7 +44,8 @@ public class SMTCheckerSER<VarType, ValType> implements Checker<VarType, ValType
     @SneakyThrows
     public boolean verify(History<VarType, ValType> history) {
         this.history = history;
-        if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
+        String historyType = config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE);
+        if (historyType.equals("elle")) {
             history.addInitSessionElle();
             new ElleTextHistorySerializer().serializeHistory((History<Integer, ElleHistoryLoader.ElleValue>) history, TMP_HIST_PATH);
         } else {
@@ -56,7 +57,7 @@ public class SMTCheckerSER<VarType, ValType> implements Checker<VarType, ValType
             return false;
         }
 
-        var accept = LibSMTCheckerSER.INSTANCE.verify(TMP_HIST_PATH, "info", true, "acyclic-minisat", "text", true, DEFAULT_PERF_PATH);
+        var accept = LibSMTCheckerSER.INSTANCE.verify(TMP_HIST_PATH, "info", true, "acyclic-minisat", historyType, true, DEFAULT_PERF_PATH);
 
         FileUtils.delete(new File(TMP_HIST_PATH));
         return accept;
