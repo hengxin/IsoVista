@@ -44,15 +44,16 @@ public class SMTCheckerSI<VarType, ValType> implements Checker<VarType, ValType>
     @SneakyThrows
     public boolean verify(History<VarType, ValType> history) {
         this.history = history;
-        satisfyINT = Utils.verifyInternalConsistency(history);
-        if (satisfyINT != null) {
-            return false;
-        }
-
         if (config.getProperty(Config.HISTORY_TYPE, Config.DEFAULT_HISTORY_TYPE).equals("elle")) {
+            history.addInitSessionElle();
             new ElleTextHistorySerializer().serializeHistory((History<Integer, ElleHistoryLoader.ElleValue>) history, TMP_HIST_PATH);
         } else {
             new TextHistorySerializer().serializeHistory((History<Long, Long>) history, TMP_HIST_PATH);
+        }
+
+        satisfyINT = Utils.verifyInternalConsistency(history);
+        if (satisfyINT != null) {
+            return false;
         }
 
         var accept = LibSMTCheckerSI.INSTANCE.verify(TMP_HIST_PATH, "info", true, "acyclic-minisat", "text", true, DEFAULT_PERF_PATH);

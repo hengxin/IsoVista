@@ -80,8 +80,11 @@ public class History<KeyType, ValType> {
     }
 
     public void addInitSessionElle() {
-        Session<KeyType, ValType> initSession = addSession(0);
-        Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, 0);
+        // Since ElleHistory's Session0 and Txn0 might be occupied, create a new maximum Session and Txn id to add an init transaction.
+        Long maxSession = Collections.max(sessions.keySet()) + 1;
+        Long maxTransaction = Collections.max(transactions.keySet()) + 1;
+        Session<KeyType, ValType> initSession = addSession(maxSession);
+        Transaction<KeyType, ValType> initTransaction = addTransaction(initSession, maxTransaction);
         for (var i : keySet) {
             addOperation(initTransaction, Operation.Type.WRITE, i, (ValType) new ElleHistoryLoader.ElleValue(null, null));
         }

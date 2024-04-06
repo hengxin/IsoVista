@@ -5,7 +5,9 @@ import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
 import history.History;
 import history.Transaction;
+import history.loader.ElleHistoryLoader;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -18,6 +20,9 @@ import static history.Operation.Type.WRITE;
 @SuppressWarnings("UnstableApiUsage")
 @Getter
 public class KnownGraph<KeyType, ValueType> {
+    @Setter
+    private static boolean isElleHistory = false;
+
     private final MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Edge<KeyType>>> readFrom = ValueGraphBuilder
             .directed().build();
     private final MutableValueGraph<Transaction<KeyType, ValueType>, Collection<Edge<KeyType>>> knownGraphA = ValueGraphBuilder
@@ -66,6 +71,22 @@ public class KnownGraph<KeyType, ValueType> {
 
             putEdge(writeTxn, txn, new Edge<KeyType>(EdgeType.WR, ev.getKey()));
         });
+
+        // add WW edges
+        if (isElleHistory) {
+            events.stream().filter(e -> e.getType() == READ).forEach(ev -> {
+                var elleValue = (ElleHistoryLoader.ElleValue) ev.getValue();
+                Integer preVal = null;
+                for(int i = 0; i < elleValue.getList().size(); i++) {
+                    var prevWrite = writes.get(Pair.of(ev.getKey(), new ElleHistoryLoader.ElleValue(preVal, null)));
+                    var nextWrite = writes.get(Pair.of(ev.getKey(), new ElleHistoryLoader.ElleValue(elleValue.getList().get(i), null)));
+                    if (prevWrite != nextWrite) {
+                        putEdge(prevWrite, nextWrite, new Edge<KeyType>(EdgeType.WW, ev.getKey()));
+                    }
+                    preVal = elleValue.getList().get(i);
+                }
+            });
+        }
     }
 
     public void putEdge(Transaction<KeyType, ValueType> u,

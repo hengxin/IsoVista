@@ -2,8 +2,8 @@ package checker.PolySI;
 
 import checker.Checker;
 import checker.IsolationLevel;
+import checker.PolySI.graph.KnownGraph;
 import checker.PolySI.verifier.Pruning;
-import checker.PolySI.verifier.SERVerifier;
 import checker.PolySI.verifier.SIVerifier;
 import config.Config;
 import history.History;
@@ -38,6 +38,11 @@ public class PolySI<VarType, ValType> implements Checker<VarType, ValType> {
     public boolean verify(History<VarType, ValType> history) {
         Pruning.setEnablePruning(!noPruning);
         SIVerifier.setCoalesceConstraints(!noCoalescing);
+
+        if (config.getOrDefault(Config.HISTORY_TYPE, "text").equals("elle")) {
+            history.addInitSessionElle();
+            KnownGraph.setElleHistory(true);
+        }
 
         profiler.startTick("ENTIRE_EXPERIMENT");
         var pass = true;
