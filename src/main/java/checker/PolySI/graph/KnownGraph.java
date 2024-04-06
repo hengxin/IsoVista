@@ -80,7 +80,7 @@ public class KnownGraph<KeyType, ValueType> {
                 for(int i = 0; i < elleValue.getList().size(); i++) {
                     var prevWrite = writes.get(Pair.of(ev.getKey(), new ElleHistoryLoader.ElleValue(preVal, null)));
                     var nextWrite = writes.get(Pair.of(ev.getKey(), new ElleHistoryLoader.ElleValue(elleValue.getList().get(i), null)));
-                    if (prevWrite != nextWrite) {
+                    if (prevWrite != null && nextWrite != null && prevWrite != nextWrite) {
                         putEdge(prevWrite, nextWrite, new Edge<KeyType>(EdgeType.WW, ev.getKey()));
                     }
                     preVal = elleValue.getList().get(i);

@@ -231,13 +231,9 @@ public class ElleHistoryLoader implements HistoryLoader<Integer, ElleHistoryLoad
     }
 
     private void parseErrorList(CharBuffer s) {
-        assertEq(s.charAt(0), '[');
-        advance(s, 1);
-
-        while (s.charAt(0) != ']') {
+        while (s.charAt(0) != ',') {
             advance(s, 1);
         }
-        advance(s, 1);
     }
 
     private void assertEq(char a, char b) {
