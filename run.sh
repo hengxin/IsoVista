@@ -8,7 +8,7 @@ else
     echo "VITE_BACKEND_URL is set to ${VITE_BACKEND_URL}。"
 
     # Find and replace in index-*.js files within /app/dist/asserts/
-    find /app/dist/asserts/ -type f -name 'index-*.js' -exec sed -i "s|http://127.0.0.1:8000/|$VITE_BACKEND_URL|g" {} \;
+    find /app/dist/assets/ -type f -name 'index-*.js' -exec sed -i "s|http://127.0.0.1:8000/|$VITE_BACKEND_URL|g" {} \;
 
     echo "Backend url replacement complete."
 fi
