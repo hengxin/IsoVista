@@ -3,6 +3,8 @@
 IsoVista is a black-box isolation checking system for databases that supports various isolation levels, ensures accurate and efficient bug detection, provides clear bug visualizations, and offers benchmarking for performance analysis. 
 It is designed to comprehensively test and verify the isolation guarantees of databases, helping developers to find and fix issues more effectively.
 
+View the [use cases](docs/use-cases.md) and try IsoVista [here](http://43.129.197.141:8080).
+
 ## Architecture
 
 ![arch](images/arch.png)
@@ -65,7 +67,7 @@ Example of history:
 {:index 4, :type :ok, :process 1, :value [ [ :r 1 [1] ] ]}
 ```
 
-## How to use
+## How to deploy
 
 ### Docker
 
