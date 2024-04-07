@@ -18,12 +18,12 @@ const defaultOption = {
   db_username: 'root',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
-  workload_history: 1,
+  workload_history: '1',
   workload_session: '[5,10,15,20]',
-  workload_transaction: 100,
-  workload_operation: 5,
-  workload_key: 1000,
-  workload_readproportion: 0.5,
+  workload_transaction: '100',
+  workload_operation: '5',
+  workload_key: '1000',
+  workload_readproportion: '0.5',
   workload_variable: '',
   workload_distribution: 'UNIFORM',
   workload_skipgeneration: false,
@@ -40,12 +40,12 @@ const testingOption = reactive({
   db_username: 'root',
   db_password: 'dbtest_pwd',
   workload_type: 'general',
-  workload_history: 1,
+  workload_history: '1',
   workload_session: '[5,10,15,20]',
-  workload_transaction: 100,
-  workload_operation: 5,
-  workload_key: 1000,
-  workload_readproportion: 0.5,
+  workload_transaction: '100',
+  workload_operation: '5',
+  workload_key: '1000',
+  workload_readproportion: '0.5',
   workload_variable: '',
   workload_distribution: 'UNIFORM',
   workload_skipgeneration: false,
@@ -78,15 +78,15 @@ const checkerIsolationLevelOptions = [
   {label: 'Repeatable Read', value: 'REPEATABLE_READ'},
   {label: 'Read Atomicity', value: 'READ_ATOMICITY'},
   {label: 'Transactional Causal Consistency', value: 'TRANSACTIONAL_CAUSAL_CONSISTENCY'},
-  {label: 'Snapshot Isolation', value: 'SNAPSHOT_ISOLATION'},
+  {label: 'Snapshot Isolation(PolySI)', value: 'SNAPSHOT_ISOLATION'},
   {label: 'Serializable', value: 'SERIALIZABLE'},
   {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
   {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'},
-  {label: 'Transactional Causal Consistency(ELLE)', value: 'ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY'},
+  {label: 'Transactional Causal Consistency(Elle)', value: 'ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY'},
 ];
 const historyTypeOptions = [
-  {label: 'Read-Write Register(text)', value: 'text'},
-  {label: 'List-Append(elle)', value: 'elle'},
+  {label: 'Read-Write Register(Text)', value: 'text'},
+  {label: 'List-Append(Elle)', value: 'elle'},
 ];
 const handleSelectionChange = (value: string) => {
   console.log('Selected:', value);
@@ -137,12 +137,31 @@ async function handleSubmit() {
     })
   }
 
+  // if using elle to check rw history
+  if (testingOption.history_type === 'text' && testingOption.checker_isolation.includes('ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY')) {
+    return ElMessage({
+      message: 'Transactional Causal Consistency(Elle) can only check list-append history',
+      type: 'warning'
+    })
+  }
+  // if using viper to check list-append history
+  if (testingOption.history_type === 'elle' && testingOption.checker_isolation.includes('VIPER_SNAPSHOT_ISOLATION')) {
+    return ElMessage({
+      message: 'Snapshot Isolation(Viper) can only check read-write register history',
+      type: 'warning'
+    })
+  }
+
+  testingOption.db_url = testingOption.db_url.trim()
   for (const key in testingOption) {
     if (!testingOption.hasOwnProperty(key) || !key.startsWith("workload_")) {
       continue;
     }
-    if (typeof testingOption[key] === "string" && testingOption[key].startsWith("[")) {
-      testingOption.workload_variable = key.replace('workload_', '')
+    if (typeof testingOption[key] === "string") {
+      testingOption[key] = testingOption[key].replace(/\s+/g, '');
+      if (testingOption[key].startsWith("[")) {
+        testingOption.workload_variable = key.replace('workload_', '')
+      }
     }
   }
   console.log(testingOption)
@@ -258,7 +277,7 @@ async function checkInput(value, inputBox) {
       break
     case 'workload_operation':
       lowerBound.value = 1
-      upperBound.value = 50
+      upperBound.value = 100
       boxName.value = '#Operation/Txn'
       break
     case 'workload_key':
@@ -414,9 +433,9 @@ async function handleReadChange(value) {
                   &nbsp;&nbsp;
                   <el-tooltip placement="top">
                     <template #content>
-                      You can try jdbc:mysql://172.17.0.1:3306/ for MYSQL, jdbc:postgresql://172.17.0.1:5432/ for
-                      PostgreSQL and jdbc:mariadb://172.17.0.1:3307/ for MariaDB.
-                      This URL SHOULD be consistent with the Database option.
+                      You can try jdbc:mysql://172.17.0.1:3306/ for MYSQL, jdbc:postgresql://172.17.0.5:5432/ for
+                      PostgreSQL and jdbc:mariadb://172.17.0.6:3306/ for MariaDB.
+                      This URL SHOULD be consistent with the following Database option.
                     </template>
                     <el-icon color="#409EFF">
                       <InfoFilled/>
