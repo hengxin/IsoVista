@@ -348,8 +348,7 @@ if (typeof window !== 'undefined')
 <template>
   <el-container class="layout-container-demo" style="height: 100%">
     <el-header>
-      <h2>{{ bugName }}
-      </h2>
+<!--      <h2>{{ bugName }} </h2>-->
     </el-header>
     <el-main>
       <el-container id="toolbar">
