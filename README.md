@@ -74,8 +74,8 @@ Example of history:
 Pull Docker image and deploy.
 
 ```bash
-docker pull ghcr.io/hengxin/IsoVista:main
-docker run --name IsoVista -p 8080:8080 -p 8000:8000 --rm -d ghcr.io/hengxin/IsoVista:main
+docker pull ghcr.io/hengxin/isovista:main
+docker run --name IsoVista -p 8080:8080 -p 8000:8000 --rm -d ghcr.io/hengxin/isovista:main
 ```
 
 Then, use the browser to access the address http://127.0.0.1:8080 to use.
