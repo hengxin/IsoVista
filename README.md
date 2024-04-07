@@ -80,6 +80,14 @@ docker run --name IsoVista -p 8080:8080 -p 8000:8000 --rm -d ghcr.io/hengxin/iso
 
 Then, use the browser to access the address http://127.0.0.1:8080 to use.
 
+The default backend address is http://127.0.0.1:8080/. If you want to run IsoVista on a server, you can modify the backend address by passing an environment variable when running Docker.
+
+```bash
+docker run --name IsoVista -e VITE_BACKEND_URL=http://<your_server_ip>:8000/ -p 8080:8080 -p 8000:8000 --rm -d ghcr.io/hengxin/isovista:main
+```
+
+Then, use the browser to access the address http://<your_server_ip>:8080 to use.
+
 ### Build on your own(not recommended)
 
 Refer to the [Dockerfile](Dockerfile).
