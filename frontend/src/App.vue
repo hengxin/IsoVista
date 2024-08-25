@@ -15,4 +15,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
   --el-text-color-regular: black;
   --el-text-color-secondary: black;
 }
+body {
+  font-family: sans-serif;
+}
 </style>
