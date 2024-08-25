@@ -3,3 +3,4 @@ pydot~=1.4.2
 pandas~=2.0.3
 uvicorn~=0.24.0.post1
 python-multipart~=0.0.9
+numpy==1.26.4
