@@ -523,13 +523,16 @@ public class C4<VarType, ValType> implements Checker<VarType, ValType> {
 
     @SafeVarargs
     protected final void vizTap(TAP tap, VarType varX, Node<VarType, ValType>... nodes) {
+        if (!bugGraphs.isEmpty()) {
+            return;
+        }
         if (nodes.length < 1) {
             // do nothing
         } else if (nodes.length == 1) {
             String builder = "digraph " +
                     tap +
                     " {\n" +
-                    String.format("\"%s\" [ops=\"%s\"];\n", nodes[0].getTransaction(), nodes[0].getTransaction().getOps()) +
+                    String.format("\"%s\" [id=\"%s\" ops=\"%s\" relate_to=\"\"];\n", nodes[0].getTransaction(), nodes[0].getTransaction(), nodes[0].getTransaction().getOps()) +
                     "}\n";
             bugGraphs.add(builder);
         } else {

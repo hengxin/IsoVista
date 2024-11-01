@@ -62,12 +62,12 @@ const handleDownloadTikz = () => {
   tikzCode += "\\begin{document}\n";
   tikzCode += "\\begin{tikzpicture}\n";
 
-  data.nodes.forEach(function(node) {
+  data.nodes.forEach(function (node) {
     console.log(node)
     tikzCode += "\\node[draw] at (" + node.x / 25 + "," + -node.y / 25 + ") (" + node.id.match(/\d+/g) + ") {" + node.label + "};\n";
   });
 
-  data.edges.forEach(function(edge) {
+  data.edges.forEach(function (edge) {
     tikzCode += "\\draw[->] (" + edge.source.match(/\d+/g) + ") to node[above] {$" + edge.label + "$} (" + edge.target.match(/\d+/g) + ");\n";
   });
 
@@ -80,10 +80,10 @@ const handleDownloadTikz = () => {
 
 const handleDownloadDot = () => {
   var dotCode = "digraph {\n";
-  data.nodes.forEach(function(node) {
+  data.nodes.forEach(function (node) {
     dotCode += "  \"" + node.id + "\" [label=\"" + node.label + "\"];\n";
   });
-  data.edges.forEach(function(edge) {
+  data.edges.forEach(function (edge) {
     dotCode += "  \"" + edge.source + "\" -> \"" + edge.target + "\" [label=\"" + edge.label + "\"];\n";
   });
   dotCode += "}\n";
@@ -131,7 +131,7 @@ onMounted(async () => {
       content += '<div>Delete</div>';
       if (evt.item._cfg.type === 'edge' && (evt.item.getModel().label.includes("CM")
           || evt.item.getModel().label.includes("WW") || evt.item.getModel().label.includes("RW"))) {
-        if(evt.item.getModel().expanded) {
+        if (evt.item.getModel().expanded) {
           content += '<div>Collapse</div>';
         } else {
           content += '<div>Expand</div>';
@@ -291,52 +291,54 @@ onMounted(async () => {
   })
 
 // highlight cycle
-let cycleNodeList = []
-let cycleEdgeList = []
-if (data.nodes[0].hasOwnProperty("in_cycle") && data.nodes[0].in_cycle !== null) {
-  console.log("data has cycle info")
-  cycleEdgeList = data.edges.filter(edge => edge.in_cycle === "true").map(edge => {
-    return {target: edge.target, source: edge.source}
-  })
-  cycleNodeList = data.nodes.filter(node => node.in_cycle === "true").map(node => node.id)
-  console.log(cycleNodeList)
-  console.log(cycleEdgeList)
-} else {
-  console.log("data has no cycle info, detect cycle")
-  let cycle = detectDirectedCycle(data);
-
-  for (let key in cycle) {
-    cycleNodeList.push(key)
-  }
-  for (let i = 0; i < cycleNodeList.length - 1; i++) {
-    cycleEdgeList.push({target: cycleNodeList[i], source: cycleNodeList[i + 1]})
-  }
-  cycleEdgeList.push({target: cycleNodeList[cycleNodeList.length - 1], source: cycleNodeList[0]})
-}
-console.log(cycleNodeList)
-g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
-  node.setState('marked', true)
-})
-console.log(cycleEdgeList)
-g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
-  console.log(edge)
-  edge.setState('marked', true)
-})
-
-graph.getEdges()
-    .filter(edge => !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID()))
-    .forEach((edge) => {
-      data_extend.edges.push(JSON.parse(JSON.stringify(edge.getModel())))
-      graph.removeItem(edge)
+  let cycleNodeList = []
+  let cycleEdgeList = []
+  if (data.nodes[0].hasOwnProperty("in_cycle") && data.nodes[0].in_cycle !== null) {
+    console.log("data has cycle info")
+    cycleEdgeList = data.edges.filter(edge => edge.in_cycle === "true").map(edge => {
+      return {target: edge.target, source: edge.source}
     })
-g.getNodes().filter(node => !cycleNodeList.includes(node.getID()))
-    .forEach((node) => {
-      data_extend.nodes.push(JSON.parse(JSON.stringify(node.getModel())))
-      graph.removeItem(node)
+    cycleNodeList = data.nodes.filter(node => node.in_cycle === "true").map(node => node.id)
+    console.log(cycleNodeList)
+    console.log(cycleEdgeList)
+  } else {
+    console.log("data has no cycle info, detect cycle")
+    let cycle = detectDirectedCycle(data);
+
+    for (let key in cycle) {
+      cycleNodeList.push(key)
+    }
+    for (let i = 0; i < cycleNodeList.length - 1; i++) {
+      cycleEdgeList.push({target: cycleNodeList[i], source: cycleNodeList[i + 1]})
+    }
+    cycleEdgeList.push({target: cycleNodeList[cycleNodeList.length - 1], source: cycleNodeList[0]})
+  }
+  console.log(cycleNodeList.length)
+  if (cycleNodeList.length > 0) {
+    g.getNodes().filter(node => cycleNodeList.includes(node.getID())).forEach(node => {
+      node.setState('marked', true)
+    })
+    console.log(cycleEdgeList)
+    g.getEdges().filter(edge => cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID())).forEach(edge => {
+      console.log(edge)
+      edge.setState('marked', true)
     })
 
+    graph.getEdges()
+        .filter(edge => !cycleEdgeList.some(cycleEdge => cycleEdge.source === edge.getSource().getID() && cycleEdge.target === edge.getTarget().getID()))
+        .forEach((edge) => {
+          data_extend.edges.push(JSON.parse(JSON.stringify(edge.getModel())))
+          graph.removeItem(edge)
+        })
+    g.getNodes().filter(node => !cycleNodeList.includes(node.getID()))
+        .forEach((node) => {
+          data_extend.nodes.push(JSON.parse(JSON.stringify(node.getModel())))
+          graph.removeItem(node)
+        })
+  }
 
-if (typeof window !== 'undefined')
+
+  if (typeof window !== 'undefined')
     window.onresize = () => {
       if (!graph || graph.get('destroyed')) return;
       if (!container || !container.scrollWidth || !container.scrollHeight) return;
@@ -348,7 +350,7 @@ if (typeof window !== 'undefined')
 <template>
   <el-container class="layout-container-demo" style="height: 100%">
     <el-header>
-<!--      <h2>{{ bugName }} </h2>-->
+            <h2>{{ bugName }} </h2>
     </el-header>
     <el-main>
       <el-container id="toolbar">
