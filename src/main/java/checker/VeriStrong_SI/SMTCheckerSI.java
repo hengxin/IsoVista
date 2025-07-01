@@ -1,4 +1,4 @@
-package checker.SMT_SI;
+package checker.VeriStrong_SI;
 
 import checker.Checker;
 import checker.PolySI.verifier.Utils;

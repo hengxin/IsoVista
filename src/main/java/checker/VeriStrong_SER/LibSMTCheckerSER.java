@@ -1,11 +1,11 @@
-package checker.SMT_SI;
+package checker.VeriStrong_SER;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 
-public interface LibSMTCheckerSI extends Library {
+public interface LibSMTCheckerSER extends Library {
 
-    LibSMTCheckerSI INSTANCE = Native.load("smtchecker-si", LibSMTCheckerSI.class);
+    LibSMTCheckerSER INSTANCE = Native.load("smtchecker-ser", LibSMTCheckerSER.class);
 
     boolean verify(String filepath, String logLevel, boolean pruning, String solverType, String historyType, boolean perf, String perfPath);
 }

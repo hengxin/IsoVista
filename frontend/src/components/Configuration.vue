@@ -79,9 +79,9 @@ const checkerIsolationLevelOptions = [
   {label: 'Read Atomicity', value: 'READ_ATOMICITY'},
   {label: 'Transactional Causal Consistency', value: 'TRANSACTIONAL_CAUSAL_CONSISTENCY'},
   {label: 'Snapshot Isolation(PolySI)', value: 'SNAPSHOT_ISOLATION'},
-  {label: 'Serializable', value: 'SERIALIZABLE'},
+  {label: 'Serializable(VeriStrong)', value: 'SERIALIZABLE'},
   {label: 'Snapshot Isolation(Viper)', value: 'VIPER_SNAPSHOT_ISOLATION'},
-  {label: 'Snapshot Isolation(PolySI+)', value: 'POLYSI+_SNAPSHOT_ISOLATION'},
+  {label: 'Snapshot Isolation(VeriStrong)', value: 'POLYSI+_SNAPSHOT_ISOLATION'},
   {label: 'Transactional Causal Consistency(Elle)', value: 'ELLE_TRANSACTIONAL_CAUSAL_CONSISTENCY'},
 ];
 const historyTypeOptions = [
@@ -653,13 +653,6 @@ async function handleReadChange(value) {
                     </el-option>
                   </el-select>
                 </el-form-item>
-                <el-form-item v-show="false" label="Enable Profiler">
-                  <el-switch
-                      v-model="testingOption.profiler_enable"
-                      class="ml-2"
-                      @change="handleSwitch"
-                  />
-                </el-form-item>
                 <el-form-item>
                 </el-form-item>
               </el-form>
@@ -755,6 +748,10 @@ async function handleReadChange(value) {
 .el-header {
   text-align: right;
 }
+
+ .el-form-item__label {
+   font-size: 20px; /* 根据需要调整字体大小 */
+ }
 
 .el-carousel-item-demo {
   border: 1px solid transparent;
